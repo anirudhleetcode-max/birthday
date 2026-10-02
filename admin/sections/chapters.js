@@ -55,7 +55,7 @@ export function renderChapters() {
     if (fc.id === 'gate' && !site.settings.lock.enabled) warnings.push('The countdown lock is off — the film opens right away.');
     const id = `chap-${fc.id}`;
     const toggle = h('input', {
-      type: 'checkbox', role: 'switch', id, checked: on, disabled: locked, 'data-testid': `chapter-${fc.id}`,
+      type: 'checkbox', role: 'switch', id, checked: on, disabled: locked, 'data-testid': `chapter-${fc.id}`, dataset: { fk: `chap-${fc.id}` },
       'aria-describedby': `${id}-d`,
       onchange: (e) => change((s) => { const x = s.chapters.find((q) => q.id === fc.id); if (x) x.enabled = e.target.checked; }),
     });

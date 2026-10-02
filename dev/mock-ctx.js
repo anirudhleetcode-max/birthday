@@ -80,6 +80,7 @@ export function createMockCtx({ site, root }) {
   });
 
   const sub = document.createElement('div'); sub.className = 'mk-sub'; document.body.appendChild(sub);
+  const fill = (str) => String(str ?? '').replace(/\{name\}/g, (site.her && site.her.name) || 'Deepu');
   const ui = {
     async chapterCard(kicker, title) {
       log('ui.chapterCard', kicker, title);
@@ -94,7 +95,8 @@ export function createMockCtx({ site, root }) {
     },
     async narrate(lines, { hold, gap } = {}) {
       log('ui.narrate', lines);
-      for (const line of lines) {
+      for (const raw of lines) {
+        const line = fill(raw);
         sub.textContent = line; sub.classList.add('on');
         await wait(hold ?? (fast ? 1.0 : 1.4 + line.length * 0.045));
         sub.classList.remove('on');
@@ -104,7 +106,7 @@ export function createMockCtx({ site, root }) {
     say(text) { log('ui.say', text); sub.textContent = text; sub.classList.add('on'); return { hide: async () => sub.classList.remove('on') }; },
     hint(text) {
       log('ui.hint', text);
-      const h = document.createElement('div'); h.className = 'mk-hint'; h.textContent = text; document.body.appendChild(h);
+      const h = document.createElement('div'); h.className = 'mk-hint'; h.textContent = fill(text); document.body.appendChild(h);
       return { remove() { log('ui.hint.remove', text); h.remove(); } };
     },
     waitContinue(label = 'Continue') {
@@ -143,7 +145,7 @@ export function createMockCtx({ site, root }) {
     next(info) { log('ctx.next() — chapter finished', info ? JSON.stringify(info) : ''); window.__nextCalled = true; window.__nextInfo = info || null; },
     handoff(info) { log('ctx.handoff', JSON.stringify(info)); },
     grade(name) { log('ctx.grade', name); },
-    fill: (str) => String(str).replace(/\{name\}/g, (site.her && site.her.name) || 'Deepu'),
+    fill,
     wait, signal: ctrl.signal, device,
   };
   return {

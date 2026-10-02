@@ -184,7 +184,8 @@ export function describeChanges(base, site) {
       tally.moved++;
       items.push({ kind: 'photo-move', id: p.id, text: `Moved to ${chapterShort(p.chapter)} · ${photoName(p)}` });
     }
-    const changedDetails = DETAIL_KEYS.filter((k) => !deepEqual(p[k], b[k]));
+    // a new image brings its own focal point — that's part of the image change, not a separate edit
+    const changedDetails = DETAIL_KEYS.filter((k) => !deepEqual(p[k], b[k]) && !(k === 'focal' && p.src !== b.src));
     if (changedDetails.length) {
       tally.edited++;
       items.push({ kind: 'photo-edit', id: p.id, text: `Details (${changedDetails.map(detailName).join(', ')}) · ${photoName(p)}` });

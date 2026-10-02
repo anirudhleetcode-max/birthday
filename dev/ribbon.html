@@ -196,8 +196,10 @@
     }
     setInterval(() => { if (!window.__bench) stat.textContent = `render ${rib.stats.renderMs.toFixed(2)} ms`; }, 500);
 
+    // for deterministic captures: window.__demo('heart') etc.
+    window.__demo = (name) => { window.__t0 = performance.now(); return paths[name] ? drawPath(name) : buttons[name]?.(); };
     const demo = q.get('demo') || 'seq';
-    if (demo === 'seq') seq();
+    if (demo === 'none') { /* driven from outside */ } else if (demo === 'seq') seq();
     else if (buttons[demo]) {
       if (paths[demo]) drawPath(demo); else buttons[demo]();
     }

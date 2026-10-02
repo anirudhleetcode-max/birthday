@@ -16,7 +16,7 @@ import { radialTexture, starTexture } from './cake/textures.js';
 const DEFAULT_TEXT = {
   kicker: 'Chapter Seven',
   title: 'Twenty Candles',
-  lines: ['Okay… one last thing.', 'Make a wish, Deepu.', 'But first…', 'Twenty candles.'],
+  lines: ['Okay… one last thing.', 'Make a wish, {name}.', 'But first…', 'Twenty candles.'],
   blowHint: 'Now blow — really blow into your phone',
   tapFallback: 'Blow them out',
   afterBlow: 'Whatever you wished for — I hope the universe is already wrapping it.',
@@ -139,6 +139,7 @@ class CakeScene {
   sfx(name) { try { this.ctx.audio?.sfx?.(name); } catch (e) { /* ignore */ } }
   mood(m) { try { this.ctx.audio?.setMood?.(m); } catch (e) { /* ignore */ } }
   fx(name, ...args) { try { this.ctx.fx?.[name]?.(...args); } catch (e) { /* ignore */ } }
+  fill(str) { try { return this.ctx.fill ? this.ctx.fill(str) : String(str).replace(/\{name\}/g, this.ctx.site?.her?.name || 'Deepu'); } catch (e) { return str; } }
   async narrate(lines, opts) {
     if (this.ctx.ui?.narrate) await this.ctx.ui.narrate(lines, opts);
     this.guard();
@@ -265,7 +266,7 @@ class CakeScene {
     // become the golden after-glow (behind / below the cake) once they're out.
     this.pl = [new THREE.PointLight(0xffa24f, 0, 0, 2), new THREE.PointLight(0xffb867, 0, 0, 2)];
     this.plCandle = [new THREE.Vector3(-0.2, t2y + DIM.t2.H + 0.36, 0.34), new THREE.Vector3(0.3, t2y + DIM.t2.H + 0.34, -0.08)];
-    this.plGold = [new THREE.Vector3(0.0, 2.3, -2.3), new THREE.Vector3(0.7, 0.85, 2.2)];
+    this.plGold = [new THREE.Vector3(0.0, 2.3, -2.3), new THREE.Vector3(0.35, 0.75, 1.55)];
     this.pl[0].position.copy(this.plCandle[0]);
     this.pl[1].position.copy(this.plCandle[1]);
     this.hemi = new THREE.HemisphereLight(0x5162b0, 0x1c0e08, 0.2);
@@ -278,7 +279,7 @@ class CakeScene {
     this.fill.position.set(3, 2, 6);
     scene.add(...this.pl, this.hemi, this.key, this.key.target, this.rim, this.fill);
     this.colors = {
-      candle0: new THREE.Color(0xffa24f), candle1: new THREE.Color(0xffb867), gold: new THREE.Color(0xffb54a),
+      candle0: new THREE.Color(0xffa24f), candle1: new THREE.Color(0xffb867), gold: new THREE.Color(0xffa95e),
       rimCool: new THREE.Color(0x9aa8ff), rimGold: new THREE.Color(0xffc86e),
       groundCool: new THREE.Color(0x1c0e08), groundGold: new THREE.Color(0x6a4010),
     };
@@ -493,7 +494,7 @@ class CakeScene {
       this.pl[0].color.copy(C.candle0); this.pl[1].color.copy(C.candle1);
     }
     this.pl[0].intensity = cl + g * 9.0 * (1 + 0.8 * kick);
-    this.pl[1].intensity = cl * 0.85 * (1 + 0.05 * Math.sin(t * 17.0)) + g * 1.5 * (1 + kick);
+    this.pl[1].intensity = cl * 0.85 * (1 + 0.05 * Math.sin(t * 17.0)) + g * 0.9 * (1 + kick);
     if (this.head && this.headOn > 0.01) {
       // the strand carries its own little warm light as it travels
       this.pl[1].position.copy(this.headPos);
@@ -504,7 +505,7 @@ class CakeScene {
     this.hemi.intensity = (0.32 * L.room + 0.14 * L.party) * (1 - 0.35 * hush);
     this.hemi.groundColor.copy(C.groundCool).lerp(C.groundGold, g);
     this.key.intensity = (1.0 + 1.2 * frac) * L.room * (1 - 0.45 * L.party) + 0.85 * L.party + 0.4 * kick;
-    this.rim.intensity = 0.75 * L.room + 1.1 * g;
+    this.rim.intensity = 0.75 * L.room + 0.7 * g;
     this.rim.color.copy(C.rimCool).lerp(C.rimGold, g);
     this.fill.intensity = 0.35 * frac * L.room + 0.28 * L.party;
     const envLevel = 0.06 + 0.22 * L.room * (1 - 0.4 * L.party) + 0.5 * frac * (0.9 + 0.1 * flick) + 0.32 * g + 0.15 * L.party + 0.2 * kick;
@@ -515,7 +516,7 @@ class CakeScene {
     this.dust.uniforms.uBright.value = 0.15 + 0.8 * frac + 0.6 * g;
     this.backdrop.material.uniforms.uRoom.value = (0.25 + 0.6 * L.room + 0.4 * L.party) * (1 - 0.55 * hush);
     this.backdrop.material.uniforms.uWarm.value = g * (1 + 0.5 * kick);
-    this.table.pool.material.opacity = 0.32 * frac * flick + 0.3 * g;
+    this.table.pool.material.opacity = 0.32 * frac * flick + 0.16 * g;
     if (this.bloom) this.bloom.strength = 0.35 + 0.45 * kick;
     this.renderer.toneMappingExposure = L.exposure + 0.06 * kick;
     this.blackEl.style.opacity = L.black.toFixed(3);
@@ -610,7 +611,10 @@ class CakeScene {
       const last = i === n - 1;
       this.to(this.L, { hush: Math.min(0.75, 0.2 + (0.55 * (i + 1)) / n), duration: 2.6, ease: 'sine.inOut' });
       if (!this.reduced) this.to(this.cam, { distK: 1.0 - 0.02 * (i + 1), duration: 3.2, ease: 'sine.inOut' });
-      if (last) ignition = this.wait(0.7).then(() => this.ignite());
+      if (last) {
+        ignition = this.wait(0.7).then(() => this.ignite());
+        ignition.catch(() => {}); // still awaited below; avoid an unhandled rejection if we exit mid-line
+      }
       await this.narrate([lines[i]], { hold: holds[Math.min(i, holds.length - 1)] + (lines[i].length > 18 ? 0.2 : 0), gap: last ? 0.6 : 0.8 });
       if (!last) await this.wait(0.3);
     }
@@ -725,7 +729,7 @@ class CakeScene {
     alt.type = 'button';
     alt.className = 'ck-btn alt';
     alt.innerHTML = '<span class="ck-ico" aria-hidden="true">🌬️</span><span></span>';
-    alt.lastChild.textContent = this.T.tapFallback;
+    alt.lastChild.textContent = this.fill(this.T.tapFallback);
     this.micBtn = primary; this.altBtn = alt;
     if (supported) ui.append(primary);
     ui.append(alt);
@@ -870,7 +874,8 @@ class CakeScene {
     this.later(1.3, () => sparkleAt(new THREE.Vector3(0.6, 2.1, 0.4), 14));
     this.sfx('swell');
     await this.wait(red ? 0.8 : 1.4);
-    await this.narrate([T.afterBlow]);
+    // afterBlow, then the owner's optional second line (messages.json cake.wish)
+    await this.narrate([T.afterBlow, this.ctx.text?.cake?.wish].filter(Boolean));
   }
 
   // --------------------------------------------------------- cutting

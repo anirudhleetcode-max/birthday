@@ -32,7 +32,7 @@
   border-radius: 50% 50% 0 0 / 26% 26% 0 0;
 }
 .nm-subject {
-  position: absolute; left: 50%; top: 46%; width: min(72vw, calc(44vh * .8), 460px); aspect-ratio: .8;
+  position: absolute; left: 50%; top: 49%; width: min(70vw, calc(42vh * .8), 460px); aspect-ratio: .8;
   transform: translate(-50%, -50%);
   -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 48%, #000 58%, transparent 100%);
   mask-image: radial-gradient(ellipse 50% 50% at 50% 48%, #000 58%, transparent 100%);
@@ -44,7 +44,7 @@
 }
 .nm-grass { position: absolute; left: -4%; right: -4%; bottom: 0; pointer-events: none; }
 .nm-grass.back { height: 24%; }
-.nm-grass.front { height: 36%; }
+.nm-grass.front { height: 40%; }
 .nm-grass-svg { width: 100%; height: 100%; display: block; overflow: visible; }
 .nm-blades { transform-box: fill-box; transform-origin: 50% 100%; animation: nm-sway 5.4s ease-in-out infinite alternate; }
 .nm-blades.b1 { animation-duration: 6.6s; animation-delay: -2s; }

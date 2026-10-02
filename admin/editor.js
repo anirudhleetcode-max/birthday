@@ -155,7 +155,7 @@ export async function openEditor(id) {
     className: 'editor-sheet',
     content: h('div.editor', media, fields),
     actions: [
-      h('button.btn.quiet.danger-text', { type: 'button', onclick: () => { s.close(null); deletePhoto(id); } }, icon('trash'), 'Delete'),
+      h('button.btn.quiet.danger-text', { type: 'button', 'aria-label': 'Delete this photo', title: 'Delete this photo', onclick: () => { s.close(null); deletePhoto(id); } }, icon('trash'), h('span.hide-sm', 'Delete')),
       h('span.spacer'),
       h('button.btn.ghost', { type: 'button', onclick: () => s.close(null) }, 'Cancel'),
       saveBtn,

@@ -506,7 +506,7 @@ export default {
     track(rv);
     rv.to(bloomlight, { opacity: 0, scale: 2.4, duration: reduced ? 1.4 : 3.2, ease: 'power2.out', onComplete: () => { bloomlight.style.display = 'none'; flower.style.display = 'none'; } }, 0)
       .fromTo(glow, { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 3, ease: 'power2.out' }, 0)
-      .fromTo(heroEl, { clipPath: 'circle(0% at 50% 58%)', filter: 'brightness(2.2) saturate(.6) blur(6px)' }, { clipPath: 'circle(80% at 50% 58%)', filter: 'brightness(1) saturate(1) blur(0px)', duration: reduced ? 1.6 : 3.2, ease: 'power3.out', clearProps: 'clipPath' }, 0.1)
+      .fromTo(heroEl, { clipPath: 'circle(0% at 50% 58%)', filter: 'brightness(2.2) saturate(.6) blur(6px)' }, { clipPath: 'circle(80% at 50% 58%)', filter: 'brightness(1) saturate(1) blur(0px)', duration: reduced ? 1.6 : 3.2, ease: 'power3.out', clearProps: 'clipPath,filter' }, 0.1)
       .fromTo(heroEl.querySelector('img'), { scale: reduced ? 1 : 1.12 }, { scale: 1, duration: reduced ? 0.1 : 4, ease: 'power2.out' }, 0.1)
       .fromTo(sun, { opacity: 0 }, { opacity: 1, duration: 3.2, ease: 'power2.out' }, 0.5)
       .fromTo(sunSpin, { scale: reduced ? 1 : 0.7, rotation: reduced ? 0 : -24 }, { scale: 1, rotation: 0, duration: 3.6, ease: 'power3.out' }, 0.5);
@@ -562,6 +562,9 @@ export default {
     this.cleanup.push(() => sun.removeEventListener('pointerdown', onSun));
 
     await done(rv);
+    // the name has finished writing itself — drop the mask layer
+    nameEl.style.webkitMaskImage = 'none';
+    nameEl.style.maskImage = 'none';
     await ctx.wait(reduced ? 0.8 : 1.6);
     await ui.waitContinue('Begin her story');
     const sr = sun.getBoundingClientRect();

@@ -363,6 +363,20 @@ async function goSection(page, id) {
     await page.fill('[data-testid="unlock-at"]', '2027-01-02T23:30');
     await page.dispatchEvent('[data-testid="unlock-at"]', 'change');
     ok(await page.evaluate(() => window.__lanternRoom.state.site.settings.lock.unlockAt) === '2027-01-02T23:30:00+05:30', 'unlock time stored as IST (+05:30)');
+    // audio & video
+    await goSection(page, 'audio');
+    await chooseFile(page, () => page.click('[data-testid="media-music-pick"]'), { name: 'our-song.mp3', mimeType: 'audio/mpeg', buffer: Buffer.alloc(4096, 7) });
+    await page.waitForFunction(() => !!window.__lanternRoom.state.site.media.music);
+    const music = await page.evaluate(() => window.__lanternRoom.state.site.media.music);
+    ok(/^media\/music-\d{8}-\d{6}\.mp3$/.test(music) && await page.evaluate((m) => window.__lanternRoom.state.files.has(m), music), `music staged as ${music}`);
+    ok(await page.locator('[data-media="music"] audio').count() === 1, 'music preview player shown');
+    await goSection(page, 'video');
+    await chooseFile(page, () => page.click('[data-testid="media-video-pick"]'), { name: 'big.mp4', mimeType: 'video/mp4', buffer: Buffer.alloc(26 * 1024 * 1024, 1) });
+    await page.waitForSelector('.sheet-title:has-text("big file")');
+    ok(/26(\.\d)? MB/.test(await page.textContent('.sheet .sheet-text')), 'videos over 25 MB ask first (size shown)');
+    await page.click('.sheet button:has-text("Choose another")');
+    ok(await page.evaluate(() => window.__lanternRoom.state.site.media.video) === null, 'declining keeps the video empty');
+
     // every control in every section has an accessible name
     const unlabeled = [];
     for (const sec of ['library', 'chapters', 'messages', 'audio', 'video', 'theme', 'preview', 'settings', 'help']) {
@@ -450,11 +464,12 @@ async function goSection(page, id) {
     ok(JSON.parse(byPath['data/messages.json'].content).invite.greeting === 'Hey {nick1}, it’s finally here.', 'messages.json carries the edit');
     ok(JSON.parse(byPath['data/settings.json'].content).settings.whatsapp === '919812345678', 'settings.json carries the edit');
     const uploads = tree.filter((e) => e.sha && !e.content);
-    const refs = new Set(pub.photos.flatMap((p) => [p.src, p.thumb, p.original]).filter(Boolean));
+    const refs = new Set([...pub.photos.flatMap((p) => [p.src, p.thumb, p.original]), ...Object.values(JSON.parse(byPath['data/settings.json'].content).media)].filter(Boolean));
     ok(uploads.length === blobs.length && uploads.length === staged.length && uploads.every((e) => refs.has(e.path)), `${uploads.length} new image blobs uploaded, all referenced`);
     const deletes = tree.filter((e) => e.sha === null).map((e) => e.path).sort();
     ok(JSON.stringify(deletes) === JSON.stringify(['photos/hero-old.jpg', 'photos/originals/hero-old.jpg', 'photos/thumbs/hero-old.jpg']), `replaced files deleted in the same commit (${deletes.join(', ')})`);
     ok(!deletes.includes('photos/.gitkeep'), 'never deletes .gitkeep / non-managed files');
+    ok(!!byPath[music] && byPath[music].sha, 'the new music file is part of the same commit');
     await page.click('.sheet button:has-text("Lovely")');
     await page.waitForFunction(() => !document.querySelector('.sheet-backdrop'));
     ok(/All live|Connected/.test(await page.textContent('#status')), 'after publishing the status is clean');

@@ -78,9 +78,9 @@ function mediaCard(kind) {
       : h('p.media-none', 'Nothing chosen yet.'),
     textField_,
     h('div.card-actions.wrap',
-      h(`button.btn.sm.${path ? 'ghost' : 'gold-soft'}`, { type: 'button', 'data-testid': `media-${kind}-pick`, onclick: () => pickMedia(kind) }, icon('upload'), path ? 'Replace' : 'Choose file'),
-      path ? h('button.btn.sm.quiet', { type: 'button', onclick: () => removeMedia(kind) }, icon('trash'), 'Remove') : null,
-      isDraft ? h('button.btn.sm.quiet', { type: 'button', onclick: () => undoMedia(kind) }, icon('undo'), 'Undo') : null,
+      h(`button.btn.sm.${path ? 'ghost' : 'gold-soft'}`, { type: 'button', 'data-testid': `media-${kind}-pick`, dataset: { fk: `pick-${kind}` }, onclick: () => pickMedia(kind) }, icon('upload'), path ? 'Replace' : 'Choose file'),
+      path ? h('button.btn.sm.quiet', { type: 'button', dataset: { fk: `remove-${kind}` }, onclick: () => removeMedia(kind) }, icon('trash'), 'Remove') : null,
+      isDraft ? h('button.btn.sm.quiet', { type: 'button', dataset: { fk: `undo-${kind}` }, onclick: () => undoMedia(kind) }, icon('undo'), 'Undo') : null,
       path ? h('button.btn.sm.quiet', { type: 'button', onclick: () => openPreview(cfg.scene) }, icon('eye'), 'Preview in the film') : null));
 }
 

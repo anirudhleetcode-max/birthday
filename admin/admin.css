@@ -599,6 +599,7 @@ details.fs[open] > summary::after { content: "−"; }
 .sheet-text { font: 400 18px/1.45 var(--serif); color: var(--text-2); }
 .sheet-foot { display: flex; gap: 10px; padding: 12px 20px 14px; border-top: 1px solid var(--line); flex-wrap: wrap; }
 .sheet-foot .btn { flex: 1 1 0; white-space: normal; text-align: center; line-height: 1.2; padding: 0 12px; }
+.sheet-foot .btn.danger-text { flex: 0 0 auto; min-width: 46px; }
 .sheet-foot .spacer { display: none; }
 .sheet.drawer { max-height: 88vh; }
 .change-list { list-style: none; padding: 0; display: grid; }
@@ -684,7 +685,7 @@ details.fs[open] > summary::after { content: "−"; }
 /* bulk review */
 .review-top { display: grid; gap: 12px; }
 .review-status { font: 650 14px var(--ui); color: var(--gold-hi); }
-.review-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; align-items: start; }
+.review-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(172px, 1fr)); gap: 12px; align-items: start; }
 .card { position: relative; border-radius: 16px; border: 1px solid var(--line); background: var(--card-bg); overflow: hidden; }
 .card .frame { position: relative; display: grid; place-items: center; width: 100%; background: #120a1f; overflow: hidden; }
 .card .frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -766,6 +767,7 @@ details.fs[open] > summary::after { content: "−"; }
 @media (max-width: 479px) {
   .topbar-mark { display: none; }
   .status { padding: 0 10px; gap: 6px; }
+  .act-publish .badge-count { display: none; }
   .pcard .order-num { display: none; }
   .top-actions { gap: 5px; }
   .top-actions .btn { padding: 0 11px; }
@@ -793,7 +795,6 @@ details.fs[open] > summary::after { content: "−"; }
   .top-actions .act-label { display: inline; }
   .chap-row { grid-template-columns: auto minmax(0, 1fr) auto; }
   .chap-side { grid-column: 3; grid-row: 1 / span 2; align-self: start; margin-top: 0; }
-  .preview-hero { grid-template-columns: auto auto; justify-content: start; }
   .crop-preview { width: 96px; }
   .review-top { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
   /* photo cards become a grid */

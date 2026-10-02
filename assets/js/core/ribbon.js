@@ -613,7 +613,32 @@ export function createRibbon(container, opts = {}) {
   }
 
   let lastFill = '';
-  function chunkPoly(X, Y, HW, a, b, sub) {
+  function chunkPoly(X, Y, HW, a, b, sub, curved) {
+    if (curved && sub === 1 && b - a >= 2) {
+      // long on-screen segments (camera zoom): smooth the outline with midpoint quadratics
+      g.beginPath();
+      g.moveTo(X[a] + rnx[a] * HW[a], Y[a] + rny[a] * HW[a]);
+      for (let k = a + 1; k < b; k++) {
+        const x1 = X[k] + rnx[k] * HW[k];
+        const y1 = Y[k] + rny[k] * HW[k];
+        const x2 = X[k + 1] + rnx[k + 1] * HW[k + 1];
+        const y2 = Y[k + 1] + rny[k + 1] * HW[k + 1];
+        if (k === b - 1) g.quadraticCurveTo(x1, y1, x2, y2);
+        else g.quadraticCurveTo(x1, y1, (x1 + x2) / 2, (y1 + y2) / 2);
+      }
+      g.lineTo(X[b] - rnx[b] * HW[b], Y[b] - rny[b] * HW[b]);
+      for (let k = b - 1; k > a; k--) {
+        const x1 = X[k] - rnx[k] * HW[k];
+        const y1 = Y[k] - rny[k] * HW[k];
+        const x2 = X[k - 1] - rnx[k - 1] * HW[k - 1];
+        const y2 = Y[k - 1] - rny[k - 1] * HW[k - 1];
+        if (k === a + 1) g.quadraticCurveTo(x1, y1, x2, y2);
+        else g.quadraticCurveTo(x1, y1, (x1 + x2) / 2, (y1 + y2) / 2);
+      }
+      g.closePath();
+      g.fill();
+      return;
+    }
     g.beginPath();
     g.moveTo(X[a] + rnx[a] * HW[a], Y[a] + rny[a] * HW[a]);
     for (let k = a + sub; k < b; k += sub) g.lineTo(X[k] + rnx[k] * HW[k], Y[k] + rny[k] * HW[k]);
@@ -656,6 +681,7 @@ export function createRibbon(container, opts = {}) {
     // outline resolution in screen px: ~6px segments for the core, ~11px for the veil
     const spacing = (visLen / Math.max(1, M - 1)) * view.scale;
     const subC = clamp(Math.floor(6 / Math.max(spacing, 0.1)), 1, 6);
+    const curved = spacing > 9;
     const subV = clamp(Math.floor(11 / Math.max(spacing, 0.1)), 1, 8);
     let a = 0;
     while (a < M - 1) {
@@ -671,12 +697,12 @@ export function createRibbon(container, opts = {}) {
         g.globalAlpha = Math.min(1, al * 0.16);
         let fs = ramp.str[lutIndex(um * 0.9)];
         if (fs !== lastFill) { g.fillStyle = fs; lastFill = fs; }
-        chunkPoly(X, Y, rhw2, a, b, subV);
+        chunkPoly(X, Y, rhw2, a, b, subV, curved);
         // core
         g.globalAlpha = Math.min(1, al * 0.86);
         fs = ramp.str[lutIndex(um)];
         if (fs !== lastFill) { g.fillStyle = fs; lastFill = fs; }
-        chunkPoly(X, Y, rhw, a, b, subC);
+        chunkPoly(X, Y, rhw, a, b, subC, curved);
       }
       a = b;
     }

@@ -30,7 +30,5 @@
 }
 #transition .tr-book > .tr-strip { box-shadow: 0 0 40px rgba(20, 8, 30, .35); }
 #transition .tr-strip > canvas { position: absolute; left: 0; top: 0; width: calc(100% + 1px); height: 100%; display: block; }
-#transition .tr-strip > .tr-plight {
-  position: absolute; inset: 0; pointer-events: none; opacity: 0;
-  background: linear-gradient(90deg, rgba(60, 34, 14, .55), rgba(60, 34, 14, .15) 60%, rgba(255, 240, 210, .18));
-}
+/* per-strip shading (set from JS so it blends smoothly across the creases) */
+#transition .tr-strip > .tr-plight { position: absolute; inset: 0; pointer-events: none; }

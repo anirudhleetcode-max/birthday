@@ -1,18 +1,25 @@
 // The lantern engine — thousands of GPU-animated sky lanterns, photo-lanterns
 // (a real photograph inside a softly glowing paper-and-glass frame) and a 3D
 // golden ribbon of light. Shared by `lanterns`, `constellation` and `birthday`.
-// Contract: docs/ARCHITECTURE.md §3.
+// Contract: docs/ARCHITECTURE.md §3. No post-processing: colour is identical on every device.
 //
-//   const field = createLanternField({ scene, camera, renderer, device, max, water, haze, wind });
-//   field.wave({ count, from, start, spread, speed, scale, warmth, brightness })   → slot indices
-//   field.release(pos, { speed, scale })                                            → slot index
-//   field.formShape(points3D, { duration })                                         → Promise<indices> (+ .indices)
-//   field.update(time, dt); field.dispose();
-//   const pl = createPhotoLantern(photo, { size, device });  // THREE.Group: setOpacity, setClarity, update(time, camera), dispose
-//   const r3 = createRibbon3D({ points, color, width });     // THREE.Group: setPoints, setProgress, setOpacity, update(time), dispose
+//   const field = createLanternField({ scene, camera, renderer, device, max, water, haze, wind, size, exposure, intensity });
+//     field.wave({ count, from, start, spread, curve, speed, scale, warmth, brightness, hue, life, keep }) → slot indices
+//     field.release(pos, { delay, speed, scale, warmth, brightness, hue:'rose', lit, keep })             → slot index
+//     field.formShape(points3D, { duration, stagger, indices, spawn }) → Promise<indices> (also promise.indices)
+//     field.releaseShape({ indices, speed });  field.rebase(i, speed);  field.extinguish(i);  field.pin(i, on)
+//     field.positionOf(i, out?, t?) → Vector3|null;  field.screenOf(i, out?) → {x, y, r, dist, visible}|null
+//     field.visible({ near, far, margin }) → indices;  field.nearest(x, y, { maxPx }) → index|-1
+//     field.isAlive(i); field.ageOf(i); field.birthOf(i); field.time; field.capacity; field.object (THREE.Group)
+//     field.setIntensity(k); field.setExposure(k); field.setHaze({ near, far, color })
+//     field.update(time, dt);  field.dispose()
+//   const pl = createPhotoLantern(photo, { size, device, src, billboard, glow });  // THREE.Group
+//     pl.setOpacity(a); pl.setClarity(0..1); pl.update(time, camera); pl.hiRes(); pl.isReady(); pl.ready; pl.size; pl.dispose()
+//   const r3 = createRibbon3D({ points, color, width, strands, segments, opacity, minPixels, dust, device });  // THREE.Group
+//     r3.setPoints(points); r3.setProgress(0..1); r3.setOpacity(a); r3.setWidth(w); r3.head(out); r3.update(time); r3.dispose()
 //
-// Every lantern's motion is a pure function of time evaluated on the GPU; the
-// same maths runs on the CPU (positionOf) for picking, ribbons and hand-offs.
+// Every lantern's motion is a pure function of time evaluated on the GPU; the same
+// maths runs on the CPU (positionOf) for picking, ribbons, shapes and hand-offs.
 import * as THREE from 'three';
 
 const NEVER = 1e9;
@@ -96,6 +103,7 @@ const BODY_VERT = /* glsl */ `
   varying float vHaze;
   varying float vI;
   varying vec2 vTone;
+  varying float vLit;
   void main() {
     float age;
     vec3 c = lfCenter(age);
@@ -117,6 +125,7 @@ const BODY_VERT = /* glsl */ `
     vUv = uv;
     vHaze = lfHaze(uHaze, -mv.z, aParams.y);
     vI = lit * lit * (1.0 - smoothstep(aStart.w - 4.0, aStart.w, age)) * lfFlicker(uTime, aParams.y) * aExtra.y;
+    vLit = lit;
     vTone = vec2(aExtra.x, aExtra.z);
     gl_Position = projectionMatrix * mv;
   }
@@ -130,7 +139,10 @@ const BODY_FRAG = /* glsl */ `
   varying float vHaze;
   varying float vI;
   varying vec2 vTone;
+  varying float vLit;
   void main() {
+    // while its flame catches, the paper materialises (no dark silhouette)
+    if (vLit < 0.99 && fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) > vLit * 1.35) discard;
     float h = vUv.y;
     float w = vTone.x * 0.5 + 0.5;
     vec3 hot = mix(vec3(1.0, 0.9, 0.64), vec3(1.0, 0.82, 0.5), w);
@@ -373,12 +385,15 @@ export function createLanternField({ scene, camera, renderer, device = {}, max, 
     return out.set(x, y, z);
   }
 
-  let rect = { left: 0, top: 0, width: 1, height: 1 };
-  const readRect = () => {
-    const r = renderer.domElement.getBoundingClientRect();
-    rect = { left: r.left, top: r.top, width: r.width || window.innerWidth, height: r.height || window.innerHeight };
+  // canvas rect, read lazily (at most once per frame, and only when a screen position is asked for)
+  let rect = null;
+  const getRect = () => {
+    if (!rect) {
+      const r = renderer.domElement.getBoundingClientRect();
+      rect = { left: r.left, top: r.top, width: r.width || window.innerWidth, height: r.height || window.innerHeight };
+    }
+    return rect;
   };
-  readRect();
   const tv = new THREE.Vector3();
   const tv2 = new THREE.Vector3();
 
@@ -387,12 +402,13 @@ export function createLanternField({ scene, camera, renderer, device = {}, max, 
     const p = positionOf(i, tv, t);
     if (!p) return null;
     const dist = p.distanceTo(camera.position);
+    const R = getRect();
     p.project(camera);
-    out.x = rect.left + (p.x + 1) * 0.5 * rect.width;
-    out.y = rect.top + (1 - p.y) * 0.5 * rect.height;
+    out.x = R.left + (p.x + 1) * 0.5 * R.width;
+    out.y = R.top + (1 - p.y) * 0.5 * R.height;
     out.dist = dist;
     const fy = camera.projectionMatrix.elements[5];
-    out.r = (aParams[i * 4 + 3] * 0.55 * fy * rect.height * 0.5) / Math.max(dist, 0.01);
+    out.r = (aParams[i * 4 + 3] * 0.55 * fy * R.height * 0.5) / Math.max(dist, 0.01);
     out.visible = p.z < 1 && Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1;
     out.ndcX = p.x;
     out.ndcY = p.y;
@@ -423,7 +439,8 @@ export function createLanternField({ scene, camera, renderer, device = {}, max, 
       if (age < 0 && aParams[i * 4 + 2] < NEVER * 0.5) continue; // scheduled, not born yet
       const born = aParams[i * 4 + 2];
       let score;
-      if (born >= NEVER * 0.5 || age > aStart[i * 4 + 3]) score = -2e9 + born; // free / burnt out
+      if (born >= NEVER * 0.5) score = -4e9; // free
+      else if (age > aStart[i * 4 + 3]) score = -2e9 + born; // burnt out
       else if (age > 12 && !onScreen(i)) score = -1e9 + born; // long gone from view
       else score = born; // last resort: the oldest
       cands.push([score, i]);
@@ -476,17 +493,31 @@ export function createLanternField({ scene, camera, renderer, device = {}, max, 
     return slots;
   }
 
-  /** One lantern now (or after `delay` s) at `pos`. Returns its slot index. */
+  /** Set lantern `i`'s flight so that, `A` seconds into it (= now), it is exactly at `p`. */
+  function anchorAt(i, p, A, speed) {
+    const o = i * 4;
+    const s = aParams[o + 3] * motion;
+    const seed = aParams[o + 1];
+    aStart[o] = p.x - (swayX(A, seed) - swayX(0, seed)) * s - W.x * A;
+    aStart[o + 1] = p.y - speed * riseOf(A);
+    aStart[o + 2] = p.z - (swayZ(A, seed) - swayZ(0, seed)) * s - W.z * A;
+    aParams[o] = speed;
+    aParams[o + 2] = time - A;
+    aForm[o + 3] = NEVER;
+    dirty(i);
+  }
+
+  /**
+   * One lantern at `pos`, born now (or after `delay` s): its flame catches, it inflates and rises.
+   * { lit: true } → already burning and exactly at `pos` now. Returns its slot index (-1 if none).
+   */
   function release(pos, { delay = 0, keep = false, lit = false, ...o } = {}) {
     const [i] = allocMany(1);
     if (i == null) return -1;
     const p = v3(pos);
     const s = spec(o, { speed: 1.6, scale: 2.1, warmth: [-0.4, 0.6], brightness: 1.05 });
-    write(i, { x: p.x, y: p.y, z: p.z, birth: time + delay - (lit ? LIT_AGE : 0), ...s });
-    if (lit) {
-      // already burning: rebase so it sits exactly at `pos` now
-      aStart[i * 4 + 1] -= s.speed * riseOf(LIT_AGE);
-    }
+    write(i, { x: p.x, y: p.y, z: p.z, birth: time + delay, ...s });
+    if (lit) anchorAt(i, p, LIT_AGE, s.speed);
     pinned[i] = keep ? 1 : 0;
     return i;
   }
@@ -495,18 +526,7 @@ export function createLanternField({ scene, camera, renderer, device = {}, max, 
   function rebase(i, speed) {
     const p = positionOf(i, new THREE.Vector3());
     if (!p) return;
-    const o = i * 4;
-    const sp = speed != null ? speed : aParams[o];
-    const s = aParams[o + 3] * motion;
-    const seed = aParams[o + 1];
-    const A = LIT_AGE;
-    aStart[o] = p.x - (swayX(A, seed) - swayX(0, seed)) * s - W.x * A;
-    aStart[o + 1] = p.y - sp * riseOf(A);
-    aStart[o + 2] = p.z - (swayZ(A, seed) - swayZ(0, seed)) * s - W.z * A;
-    aParams[o] = sp;
-    aParams[o + 2] = time - A;
-    aForm[o + 3] = NEVER;
-    dirty(i);
+    anchorAt(i, p, LIT_AGE, speed != null ? speed : aParams[i * 4]);
   }
 
   /* ---------------- shapes ---------------- */
@@ -589,7 +609,7 @@ export function createLanternField({ scene, camera, renderer, device = {}, max, 
   function update(t, dt) {
     time = t;
     U.uTime.value = t;
-    readRect();
+    rect = null;
     for (let k = waiters.length - 1; k >= 0; k--) {
       if (t >= waiters[k].t) { waiters[k].res(waiters[k].value); waiters.splice(k, 1); }
     }
@@ -947,6 +967,7 @@ export function createPhotoLantern(photo, { size = 4.4, device = {}, src, billbo
     opacity = clamp(a, 0, 1);
     U.uOpacity.value = opacity;
     group.visible = opacity > 0.001;
+    frame.material.depthWrite = opacity > 0.9; // half-faded, it mustn't hide the lights behind it
   };
   group.setClarity = (c) => { U.uClarity.value = clamp(c, 0, 1); };
   group.getOpacity = () => opacity;

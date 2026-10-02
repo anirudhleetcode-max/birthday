@@ -239,8 +239,9 @@ export function buildTable({ lowPower = false, quality = 2, anisotropy = 4 } = {
   const wood = woodTexture(lowPower ? 512 : 1024);
   wood.anisotropy = anisotropy;
   const mat = quality >= 2
-    ? new THREE.MeshPhysicalMaterial({ map: wood, color: 0xae8a7e, roughness: 0.45, metalness: 0, clearcoat: 0.4, clearcoatRoughness: 0.16 })
-    : new THREE.MeshStandardMaterial({ map: wood, color: 0xae8a7e, roughness: 0.36, metalness: 0 });
+    ? new THREE.MeshPhysicalMaterial({ map: wood, color: 0xa8847a, roughness: 0.6, metalness: 0, clearcoat: 0.25, clearcoatRoughness: 0.3 })
+    : new THREE.MeshStandardMaterial({ map: wood, color: 0xa8847a, roughness: 0.58, metalness: 0 });
+  mat.userData.env = 0.4; // keep the dark wood dark; its sheen comes from the lights
   const top = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.5, 0.12, 160, 1), mat);
   top.position.y = -0.06;
   group.add(top);

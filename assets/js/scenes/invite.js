@@ -360,19 +360,18 @@ export default {
 
     await ctx.wait(reduced ? 0.9 : 1.7);
 
-    // …and let it go
-    ctx.audio.sfx('lanternRise');
+    // …and let it go. The film's 'lantern' transition picks it up from here
+    // (it kindles its own light where ours is, rises and becomes the prologue's dawn).
     const H = window.innerHeight;
     const rise = gsap.timeline();
     this.rise = rise;
-    rise.to(lanternBox, { y: -(r0.top + r0.height * 0.5 - H * 0.2), x: reduced ? 0 : 18, rotation: reduced ? 0 : -2.5, scale: 0.78, duration: reduced ? 1.6 : 3.6, ease: 'power1.in' }, 0)
-      .to(refl, { opacity: 0, scaleY: 0.4, duration: 2.2, ease: 'power2.in' }, 0);
-    if (!reduced) {
-      rise.to(lanternBox.querySelector('svg'), { rotation: 3, duration: 1.4, yoyo: true, repeat: 2, ease: 'sine.inOut', transformOrigin: '50% 0%' }, 0.2);
-    }
-    await ctx.wait(reduced ? 1.0 : 2.3);
+    rise.to(lanternBox, { y: -H * 0.12, x: reduced ? 0 : 8, rotation: reduced ? 0 : -1.5, duration: reduced ? 1.4 : 3, ease: 'sine.in' }, 0)
+      .to(refl, { opacity: 0, scaleY: 0.5, duration: 1.6, ease: 'power2.in' }, 0);
+    await ctx.wait(reduced ? 0.5 : 0.8);
     const r = svg.getBoundingClientRect();
-    ctx.next({ kind: 'lantern', x: r.left + r.width / 2, y: r.top + r.height * 0.55, size: r.width, color: '#ffd98a' });
+    ctx.next({ kind: 'lantern', x: r.left + r.width / 2, y: r.top + r.height * 0.5, size: r.width, color: '#ffd98a' });
+    // hand our lantern over to the transition's (it kindles in place over ~0.35s)
+    gsap.to(lanternBox, { opacity: 0, duration: reduced ? 0.6 : 0.5, delay: 0.15, ease: 'power1.in' });
   },
   async exit() {
     (this.cleanup || []).forEach((fn) => fn());

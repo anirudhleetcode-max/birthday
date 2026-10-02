@@ -634,7 +634,7 @@ async function ribbon(el, swap, o) {
   el.appendChild(host);
   const width = portrait ? 2.3 : 2.8;
   const rib = createRibbon(host, {
-    strands: low ? 3 : 6, width, glow: 1.15, particles: true, device: o.device, samples: low ? 150 : 240,
+    strands: low ? 3 : 6, width, glow: 1.15, particles: true, device: o.device, samples: low ? 160 : 320,
     zoomWidth: 0.6, zoomGlow: 0.9,
   });
   try {
@@ -977,7 +977,7 @@ function valueNoise(gw, gh, seed, cells) {
 async function dust(el, swap, o) {
   const { W, H } = viewport();
   const low = o.low;
-  const gw = Math.round(clamp(W / (low ? 6 : 3.6), 48, low ? 120 : 220));
+  const gw = Math.round(clamp(W / (low ? 6 : 3.6), 48, low ? 140 : 320));
   const gh = Math.max(8, Math.round((gw * H) / W));
   const mask = document.createElement('canvas');
   mask.className = 'tr-layer tr-smooth';
@@ -993,7 +993,8 @@ async function dust(el, swap, o) {
   const origin = hp || { x: W / 2, y: H / 2 };
   const maxD = farthest(origin.x, origin.y, W, H);
   const field = (seed, fromCentre) => {
-    const nz = valueNoise(gw, gh, seed, 4);
+    // noise scale in screen px (~110px blobs), so edges look the same on phones and desktops
+    const nz = valueNoise(gw, gh, seed, Math.round(clamp(W / 110, 4, 12)));
     const out = new Float32Array(gw * gh);
     for (let y = 0; y < gh; y++) {
       for (let x = 0; x < gw; x++) {
@@ -1010,12 +1011,15 @@ async function dust(el, swap, o) {
   const revealF = field(98765 + ((Math.random() * 1e6) | 0), true);
   const parts = particles();
   const data = img.data;
-  const EDGE = 0.026;
+  // softness scales with the cell size, so a coarse (low-tier) grid still has smooth edges
+  const cellPx = W / gw;
+  const EDGE = 0.026 * clamp(cellPx / 3.6, 1, 1.8);
+  const SOFT = 0.02 * clamp(cellPx / 3.6, 1, 2.5);
   // covered where field < thr; a golden burning edge where field ≈ thr
   const paint = (F, thr, edgeA) => {
     for (let i = 0, j = 0; i < F.length; i++, j += 4) {
       const v = F[i];
-      const a = smooth(v - 0.02, v + 0.02, thr);
+      const a = smooth(v - SOFT, v + SOFT, thr);
       const d = (v - thr) / EDGE;
       const eg = Math.exp(-d * d) * edgeA * 0.85;
       const base = mixRgb(dark, darkHi, v);
@@ -1167,7 +1171,7 @@ async function page(el, swap, o) {
   shade.className = 'tr-pshade';
   book.appendChild(shade);
   // the leaf: 3 nested strips so it can curl as it lifts
-  const cuts = low ? [0, 1] : [0, 0.58, 0.84, 1];
+  const cuts = low ? [0, 1] : [0, 0.44, 0.58, 0.69, 0.78, 0.86, 0.93, 1];
   let parent = book;
   const strips = [];
   for (let i = 0; i < cuts.length - 1; i++) {
@@ -1194,16 +1198,22 @@ async function page(el, swap, o) {
   // θ: 0 = flat on the frame, -1 = lifted away to the left (×100°)
   const pose = (lift) => {
     const base = -100 * lift;
-    const curlA = low ? 0 : Math.sin(Math.PI * clamp(lift * 1.15, 0, 1)) * 34;
-    const angles = [base, -curlA * 0.6, -curlA];
+    const curlA = low ? 0 : Math.sin(Math.PI * clamp(lift * 1.15, 0, 1)) * 44;
+    // the bend accumulates toward the free edge, so the sheet curls instead of folding
+    const angles = [base, -curlA * 0.07, -curlA * 0.1, -curlA * 0.13, -curlA * 0.16, -curlA * 0.18, -curlA * 0.2];
     let abs = 0;
+    const shades = [];
     strips.forEach((s, i) => {
       const a = angles[i] || 0;
       abs += a;
       s.el.style.transform = `rotateY(${a.toFixed(2)}deg)`;
-      // light: pages darken as they tilt away; a soft sheen near the curl
-      const tilt = Math.abs(Math.sin((abs * Math.PI) / 180));
-      s.light.style.opacity = String(clamp(tilt * 0.55, 0, 0.6));
+      shades.push(clamp(Math.abs(Math.sin((abs * Math.PI) / 180)) * 0.5, 0, 0.55));
+    });
+    // light: pages darken as they tilt; shading is blended across creases so the sheet reads as one curve
+    strips.forEach((s, i) => {
+      const a0 = (shades[i] + (shades[i - 1] ?? shades[i])) / 2;
+      const a1 = (shades[i] + (shades[i + 1] ?? shades[i])) / 2;
+      s.light.style.background = `linear-gradient(90deg, rgba(60,34,14,${a0.toFixed(3)}), rgba(60,34,14,${a1.toFixed(3)}))`;
     });
     shade.style.opacity = String(0.5 * Math.sin(Math.PI * clamp(lift, 0, 1)));
   };

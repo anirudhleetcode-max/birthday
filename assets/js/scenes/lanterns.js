@@ -124,7 +124,7 @@ const waterFrag = /* glsl */ `
     col += vec3(0.42, 0.19, 0.08) * lane * (0.5 + 0.5 * (r1 + r2 * 2.0)) * 0.3 * uGlow;
     // slow silver sheen lines on the still surface
     float sheen = pow(max(0.0, sin(vWorld.z * 0.33 + rip * 2.0 + uTime * 0.25)), 28.0) * (1.0 - smoothstep(40.0, 420.0, dist));
-    col += vec3(0.5, 0.42, 0.6) * sheen * 0.035;
+    col += vec3(0.5, 0.42, 0.6) * sheen * 0.05;
     gl_FragColor = vec4(col + dither(gl_FragCoord.xy), 1.0);
   }
 `;
@@ -578,10 +578,10 @@ function createChapter(ctx, el) {
   const lampWorld = (out = V()) => { boat.updateMatrixWorld(); return lamp.getWorldPosition(out); };
 
   // mist banks over the water + one high veil of haze
-  const noise = keep(noiseTexture(low ? 128 : 256, low ? 64 : 128));
+  const noise = keep(noiseTexture(low ? 128 : device.mobile ? 192 : 256, low ? 64 : device.mobile ? 96 : 128));
   const mistDefs = low
-    ? [[-260, 2600, 34, 0.32, 0], [-760, 3600, 90, 0.26, 0]]
-    : [[-150, 2200, 22, 0.3, 0], [-330, 2800, 40, 0.3, 0], [-620, 3400, 70, 0.26, 0], [-900, 3800, 110, 0.22, 0], [-820, 3600, 520, 0.1, 1]];
+    ? [[-260, 2600, 34, 0.36, 0], [-760, 3600, 90, 0.3, 0]]
+    : [[-150, 2200, 22, 0.34, 0], [-330, 2800, 40, 0.36, 0], [-620, 3400, 70, 0.32, 0], [-930, 3800, 110, 0.28, 0], [-820, 3600, 520, 0.1, 1]];
   const mists = mistDefs.map(([z, w, hgt, op, band], k) => {
     const g = keep(new THREE.PlaneGeometry(w, hgt));
     const m = keep(new THREE.ShaderMaterial({
@@ -731,12 +731,13 @@ function createChapter(ctx, el) {
   const focusTarget = (s, out) => {
     const { outerW, outerH } = s.pl.size;
     const portrait = camera.aspect < 1;
-    const dW = outerW / (2 * tanW * (portrait ? 0.74 : 0.4));
-    const dH = outerH / (2 * tanV * (portrait ? 0.44 : 0.56));
+    const dW = outerW / (2 * tanW * (portrait ? 0.74 : 0.42));
+    const dH = outerH / (2 * tanV * (portrait ? 0.44 : 0.43));
     const D = Math.max(dW, dH);
     camera.getWorldDirection(fwd);
     camUp.setFromMatrixColumn(camera.matrixWorld, 1);
-    return out.copy(camera.position).addScaledVector(fwd, D).addScaledVector(camUp, tanV * D * 0.1);
+    // a little above centre, leaving room for the caption beneath
+    return out.copy(camera.position).addScaledVector(fwd, D).addScaledVector(camUp, tanV * D * (portrait ? 0.1 : 0.16));
   };
   function openFocus(s) {
     focus = { s, k: 0, phase: 'in', t: 0 };
@@ -751,6 +752,7 @@ function createChapter(ctx, el) {
   }
   function closeFocus() {
     if (!focus || focus.phase === 'out') return;
+    focus.kFrom = focus.k; // glide back from wherever it got to
     focus.phase = 'out';
     focus.t = 0;
     hideCaption();
@@ -776,7 +778,10 @@ function createChapter(ctx, el) {
     const yt = (1 - top.y) * 0.5 * H;
     capEl.classList.add('on');
     const hgt = capEl.offsetHeight || 80;
-    const y = yb + 14 + hgt < H * 0.9 ? yb + 14 : Math.max(H * 0.06, yt - 14 - hgt);
+    const lb = document.querySelector('#letterbox .lb-top');
+    const bar = lb ? lb.getBoundingClientRect().height : 0;
+    const floor = H - bar - Math.max(64, H * 0.08); // keep clear of the hint / continue area
+    const y = yb + 14 + hgt <= floor ? yb + 14 : yt - 14 - hgt >= bar + 10 ? yt - 14 - hgt : Math.max(bar + 10, floor - hgt);
     capEl.style.top = `${Math.round(y)}px`;
     tweens.push(gsap.fromTo(capEl, { opacity: 0, y: 10, filter: 'blur(6px)' }, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 1.1, ease: 'power3.out' }));
     const words = capText.textContent.split(/\s+/).length;
@@ -821,7 +826,7 @@ function createChapter(ctx, el) {
       } else if (f.phase === 'hold') {
         if (f.t > (f.hold || HOLD)) closeFocus();
       } else if (f.phase === 'out') {
-        f.k = 1 - Math.min(1, f.t / OUT);
+        f.k = (f.kFrom ?? 1) * (1 - Math.min(1, f.t / OUT));
       }
       const e = easeInOut(f.k);
       if (s.pl) {
@@ -843,7 +848,7 @@ function createChapter(ctx, el) {
   }
 
   /* ---------------- the golden ribbon: a slowly growing network of memories ---------------- */
-  const RB_MAX = low ? 2 : tier === 'mid' ? 4 : 5;
+  const RB_MAX = low ? 2 : tier === 'mid' ? 4 : 6;
   const ribbons = [];
   let nextRibbonAt = Infinity;
   let ribbonCount = 0;
@@ -948,7 +953,7 @@ function createChapter(ctx, el) {
     scene.add(r3);
     const live = ribbons.filter((r) => r.state !== 'fade');
     if (live.length >= RB_MAX) { live[0].state = 'fade'; live[0].ft = 0; }
-    ribbons.push({ r3, chain, born: skyT, draw: (reduced ? 2.4 : 3.4) + chain.length * 0.75, state: 'draw', ft: 0, alpha: 0.9, check: 0 });
+    ribbons.push({ r3, chain, born: skyT, draw: (reduced ? 2.4 : 3.4) + chain.length * 0.75, state: 'draw', ft: 0, alpha: 0.9, check: 0, life: rnd(18, 26) });
     if (ribbonCount === 0) audio.sfx('shimmer');
     ribbonCount++;
   }
@@ -956,7 +961,7 @@ function createChapter(ctx, el) {
   function updateRibbons(dt, rt) {
     if (skyT >= nextRibbonAt) {
       makeRibbon();
-      nextRibbonAt = skyT + rnd(6.5, 8.5);
+      nextRibbonAt = skyT + (skyT - T0 > 50 ? rnd(5, 6.5) : rnd(6.5, 8.5)); // the network thickens as the night goes on
     }
     for (let k = ribbons.length - 1; k >= 0; k--) {
       const r = ribbons[k];
@@ -972,7 +977,8 @@ function createChapter(ctx, el) {
         r.r3.setProgress(reduced ? Math.min(1, p * 4) : easeInOut(Math.min(1, p)));
         if (p >= 1) r.state = 'hold';
       } else if (r.state === 'hold') {
-        // drifted out of view with its lanterns? let it go
+        // let it go before its lanterns drift apart (or out of view)
+        if (skyT - r.born > r.draw + r.life) { r.state = 'fade'; r.ft = 0; }
         r.check += dt;
         if (r.check > 1) {
           r.check = 0;
@@ -982,8 +988,8 @@ function createChapter(ctx, el) {
       }
       if (r.state === 'fade') {
         r.ft += dt;
-        r.r3.setOpacity(r.alpha * (1 - r.ft / 3));
-        if (r.ft >= 3) { r.r3.dispose(); ribbons.splice(k, 1); continue; }
+        r.r3.setOpacity(r.alpha * (1 - r.ft / 3.5));
+        if (r.ft >= 3.5) { r.r3.dispose(); ribbons.splice(k, 1); continue; }
       }
       r.r3.update(rt);
     }
@@ -1050,7 +1056,7 @@ function createChapter(ctx, el) {
     return best;
   }
   on(canvas, 'pointerdown', (e) => {
-    if (!interactive) return;
+    if (!interactive || (e.pointerType === 'mouse' && e.button !== 0)) return;
     const x = e.clientX;
     const y = e.clientY;
     if (focus) { closeFocus(); return; }
@@ -1064,6 +1070,20 @@ function createChapter(ctx, el) {
     if (now - lastRelease < 160) return;
     lastRelease = now;
     releaseAt(x, y);
+  });
+
+  // keyboard: Enter / Space brings the nearest visible memory close, Escape lets it go
+  on(window, 'keydown', (e) => {
+    if (!interactive) return;
+    const cont = document.getElementById('continue');
+    if (e.key === 'Escape' && focus) { closeFocus(); return; }
+    if ((e.key === 'Enter' || e.key === ' ') && (!cont || cont.hidden)) {
+      if (focus) { closeFocus(); e.preventDefault(); return; }
+      const s = plState
+        .filter((q) => q.state === 'sky' && q.pl && q.pl.getOpacity() > 0.5)
+        .sort((a, b) => a.pl.position.distanceTo(camera.position) - b.pl.position.distanceTo(camera.position))[0];
+      if (s) { openFocus(s); e.preventDefault(); }
+    }
   });
 
   /* ---------------- the loop ---------------- */
@@ -1082,7 +1102,7 @@ function createChapter(ctx, el) {
   });
   const cues = [];
   const cue = (t, fn) => cues.push({ t, fn });
-  const lampPos = V();
+  let nextSustain = 0;
 
   function frame(now) {
     if (!running) return;
@@ -1106,6 +1126,13 @@ function createChapter(ctx, el) {
     lampMat.opacity = 0.75 + 0.12 * Math.sin(rt * 7.3) + 0.06 * Math.sin(rt * 13.1);
     field.update(skyT, dt);
     for (let k = cues.length - 1; k >= 0; k--) if (skyT >= cues[k].t) { const c = cues.splice(k, 1)[0]; c.fn(); }
+    // the sky never empties while she lingers: new lanterns take the places of those long gone
+    if (s > 120 && skyT >= nextSustain) {
+      nextSustain = skyT + 2.5;
+      const n = Math.max(3, Math.round(B * 0.012));
+      field.wave({ count: Math.ceil(n / 2), start: 0, spread: 2.5, from: fromWater(60, 1400) });
+      field.wave({ count: Math.floor(n / 2), start: 0, spread: 2.5, from: fromSky(250, 1700, 1.05, 1.1) });
+    }
     for (let k = waiters.length - 1; k >= 0; k--) if (skyT >= waiters[k].t) waiters.splice(k, 1)[0].res();
     updatePhotos(dt, skyT, rt);
     updateRibbons(dt, rt);
@@ -1113,7 +1140,6 @@ function createChapter(ctx, el) {
     renderer.render(scene, camera);
   }
   raf = requestAnimationFrame(frame);
-  lampWorld(lampPos);
 
   /* ---------------- the story ---------------- */
   async function play() {
@@ -1121,14 +1147,12 @@ function createChapter(ctx, el) {
     fx.dust({ density: 0.1, alpha: 0.8 });
     audio.setMood('hush');
     tweens.push(gsap.fromTo(veil, { opacity: 1 }, { opacity: 0, duration: 4, ease: 'power2.inOut' }));
-    // (TEMP debug: ?lnt=<seconds> skips the title card and jumps the sky clock)
-    const dbg = Number(new URLSearchParams(location.search).get('lnt')) || 0;
-    if (!dbg) await ui.chapterCard(T.kicker, T.title);
+    await ui.chapterCard(T.kicker, T.title);
     T0 = skyT;
     scheduleSky();
-    if (dbg) { skyT = T0 + dbg; window.__ln = { field, camera, get skyT() { return skyT; }, set skyT(v) { skyT = v; }, plState, ribbons, pink, openFocus, focus: () => focus }; }
     nextPhotoAt = T0 + 20;
     nextRibbonAt = T0 + (reduced ? 36 : 33);
+    [1.7, 6.1, 9.3].forEach((t) => cue(T0 + t, () => audio.sfx('lanternRise')));
     cue(T0 + 9, () => audio.setMood('wonder'));
     cue(T0 + 28.5, () => { audio.setMood('soar'); audio.sfx('swell'); });
     cue(T0 + 31, () => placePink(skyT));
@@ -1201,7 +1225,6 @@ function createChapter(ctx, el) {
     disposables.length = 0;
     renderer.dispose();
     renderer.forceContextLoss();
-    if (window.__ln) delete window.__ln;
   }
 
   return { play, dispose };

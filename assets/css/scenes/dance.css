@@ -1,50 +1,136 @@
-/* ---------- dance ---------- */
-.scene-dance { background: linear-gradient(180deg, #1c0d33 0%, #3b1a57 38%, #7b3f78 60%, #d2826e 78%, #f2b27e 90%, #3a1c3e 90.5%, #1d0e26 100%); }
-.dn-sky { position: absolute; inset: 0; z-index: 0; background: radial-gradient(ellipse 80% 40% at 50% 82%, rgba(255, 190, 120, .45), transparent 70%); }
-.dn-far { position: absolute; left: 0; right: 0; bottom: 9.5%; height: 30vh; display: flex; justify-content: center; opacity: .95; z-index: 0; }
-.dn-castle { height: 100%; width: auto; max-width: 140vw; }
-.dn-wins rect { animation: candle 4s ease-in-out infinite; filter: drop-shadow(0 0 4px #ffcf7a); }
+/* ---------- dance · Somewhere Between Chaos and Magic (festival at dusk → night) ---------- */
+.scene-dance {
+  background: linear-gradient(180deg, #1d1140 0%, #3b1f62 26%, #6b3a7e 44%, #a8597e 56%, #e08d74 66%, #f4b783 72%, #3a1c3e 72.5%, #1d0e26 100%);
+  touch-action: none; cursor: grab;
+}
+.scene-dance:active { cursor: grabbing; }
+
+/* sky */
+.dn-sky { position: absolute; inset: 0; pointer-events: none; }
+.dn-sky-night {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, #0b0a26 0%, #141a46 30%, #2a1f5c 52%, rgba(70, 40, 100, .55) 66%, rgba(40, 20, 60, 0) 74%);
+}
+.dn-stars { position: absolute; inset: 0 0 30% 0; -webkit-mask-image: linear-gradient(#000 50%, transparent); mask-image: linear-gradient(#000 50%, transparent); }
+.dn-glow { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 26% at 50% 70%, rgba(255, 190, 120, .45), rgba(255, 190, 120, 0) 72%); transition: opacity 30s ease; }
+.scene-dance.is-night .dn-glow { opacity: .55; }
+.dn-skylanterns { position: absolute; inset: 0; }
+.dn-sl { position: absolute; aspect-ratio: 120 / 170; animation: dn-sl var(--dur) linear forwards; filter: drop-shadow(0 0 6px rgba(255, 180, 90, .8)); }
+.dn-sl .lantern-svg .l-halo { opacity: .55; }
+@keyframes dn-sl { from { transform: translate(0, 0); } to { transform: translate(var(--sw), -42vh); } }
+
+/* town */
+.dn-town { position: absolute; left: 0; right: 0; pointer-events: none; display: flex; justify-content: center; }
+.dn-town svg { width: 100%; height: 100%; display: block; }
+.dn-town.far-wrap { bottom: 27%; height: 21%; opacity: .92; }
+.dn-town.near-wrap { bottom: 26.5%; height: 13%; }
+.dn-win { opacity: .12; transition: opacity 1.8s ease, filter 1.8s ease; }
+.dn-win.lit { opacity: 1; filter: drop-shadow(0 0 3px #ffcf7a); animation: candle 4s ease-in-out infinite; animation-delay: var(--wd); }
+.low-power .dn-win.lit { filter: none; }
+
+/* the photobomb: a little photo that pops up from behind the rooftops */
+.dn-bomb { position: absolute; bottom: 33%; width: clamp(46px, 12vw, 84px); aspect-ratio: 3 / 4; margin-left: calc(clamp(46px, 12vw, 84px) / -2); overflow: hidden; cursor: pointer; }
+.dn-bomb-in { position: absolute; inset: 0; border-radius: 6px; overflow: hidden; background: #24113d; transform-origin: 50% 100%;
+  box-shadow: 0 0 0 2px #f4c463, 0 6px 18px rgba(0, 0, 0, .5); }
+.dn-bomb-in img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* plaza */
 .dn-plaza {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 10%; z-index: 1;
-  background: linear-gradient(180deg, #2a1534, #160a1e);
+  position: absolute; left: 0; right: 0; bottom: 0; height: 27.5%; pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 22%, rgba(255, 186, 120, .26), rgba(255, 186, 120, 0) 70%),
+    linear-gradient(180deg, #3b1d44 0%, #24112e 40%, #140a1c 100%);
 }
-.dn-top { position: absolute; left: -4vw; right: -4vw; top: 0; height: 26vh; pointer-events: none; z-index: 3; }
-.dn-lights { position: absolute; left: 0; top: 2vh; width: 100%; height: 12vh; overflow: visible; }
-.fl-bulb { filter: drop-shadow(0 0 6px #ffcf7a); animation: twinkle 2.4s ease-in-out infinite; animation-delay: var(--d); }
-.dn-bunting { position: absolute; left: 0; top: 7vh; width: 100%; height: 15vh; overflow: visible; }
-.dn-bunting .flag-in { transform-box: fill-box; transform-origin: 50% 0; animation: flag 2.8s ease-in-out infinite alternate; animation-delay: var(--d); }
-@keyframes flag { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } }
-.dn-3d { position: absolute; inset: 0; perspective-origin: 50% 38%; z-index: 2; }
-.dn-world { position: absolute; left: 50%; top: 63%; width: 0; height: 0; transform-style: preserve-3d; }
+.scene-dance.is-night .dn-plaza { transition: filter 30s ease; filter: brightness(.8) saturate(.9); }
+
+/* 3D ring */
+.dn-3d { position: absolute; inset: 0; perspective-origin: 50% 38%; pointer-events: none; }
+.dn-world { position: absolute; left: 50%; top: 71%; width: 0; height: 0; transform-style: preserve-3d; }
 .dn-ring { position: absolute; left: 0; top: 0; transform-style: preserve-3d; }
-.dn-floor { position: absolute; left: 0; top: 0; border-radius: 50%; opacity: .55;
-  background: radial-gradient(circle, rgba(255, 210, 140, .22), rgba(255, 210, 140, 0) 65%); }
-.dn-floor .dn-chalk { width: 100%; height: 100%; opacity: .4; filter: blur(.4px) drop-shadow(0 0 12px rgba(255, 210, 140, .7)); }
-.dn-card { position: absolute; left: 0; top: 0; transform-style: preserve-3d; }
-.dn-bob { width: 100%; height: 100%; animation: bob 2.2s ease-in-out infinite alternate; animation-delay: var(--d); }
-@keyframes bob { from { transform: translateY(0) rotateZ(-1.5deg); } to { transform: translateY(-14px) rotateZ(1.5deg); } }
-.dn-photo {
-  position: relative; width: 100%; height: 100%; border-radius: 10px; overflow: hidden; background: #24113d;
-  box-shadow: 0 0 0 3px #f4c463, 0 0 0 5px rgba(36, 17, 61, .9), 0 0 0 6px rgba(244, 196, 99, .5), 0 20px 50px rgba(0, 0, 0, .5);
-  -webkit-box-reflect: below 14px linear-gradient(transparent 62%, rgba(255, 255, 255, .22));
+.dn-floor { position: absolute; left: 0; top: 0; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 214, 150, .26) 0%, rgba(255, 196, 130, .12) 32%, rgba(255, 190, 120, 0) 64%); }
+.dn-cobbles { position: absolute; inset: 0; border-radius: 50%; opacity: .5;
+  background: repeating-radial-gradient(circle, rgba(255, 230, 200, 0) 0 22px, rgba(255, 230, 200, .07) 22px 24px),
+    repeating-conic-gradient(rgba(255, 230, 200, 0) 0deg 7deg, rgba(255, 230, 200, .05) 7deg 7.6deg);
+  -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 62%); mask-image: radial-gradient(circle, #000 18%, transparent 62%); }
+.dn-floor .dn-chalk { position: absolute; left: 30%; top: 30%; width: 40%; height: 40%; opacity: .75; filter: blur(.3px); }
+.dn-card { position: absolute; left: 0; top: 0; transform-style: preserve-3d; transform: rotateY(var(--ry, 0deg)) translateZ(var(--tz, 200px)); pointer-events: auto; cursor: pointer; border-radius: 10px; }
+.dn-card:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 6px; }
+.dn-bob { width: 100%; height: 100%; transform-style: preserve-3d; animation: dn-bob 2.4s ease-in-out infinite alternate; animation-delay: var(--d); }
+@keyframes dn-bob { from { transform: translateY(0) rotateZ(-1.2deg); } to { transform: translateY(-12px) rotateZ(1.2deg); } }
+.dn-jump { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transform-origin: 50% 100%; }
+.dn-face { position: absolute; inset: 0; border-radius: 10px; overflow: hidden; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.dn-face.front {
+  background: #24113d;
+  box-shadow: 0 0 0 2.5px #f4c463, 0 0 0 5px rgba(28, 12, 42, .92), 0 0 0 6px rgba(244, 196, 99, .45), 0 18px 40px rgba(0, 0, 0, .45);
+  -webkit-box-reflect: below 16px linear-gradient(transparent 66%, rgba(255, 255, 255, .2));
 }
-.dn-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.dn-ribbon {
-  position: absolute; left: 50%; bottom: -16px; width: 56px; height: 22px; margin-left: -28px;
-  background: linear-gradient(180deg, #8a5cc7, #6b3fa0); clip-path: polygon(0 0, 100% 0, 88% 50%, 100% 100%, 0 100%, 12% 50%);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, .4);
+.dn-face.front img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+.dn-shade { position: absolute; inset: 0; background: #120822; opacity: 0; pointer-events: none; }
+.dn-sheen { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(135deg, rgba(255, 240, 210, .18), rgba(255, 240, 210, 0) 40%, rgba(255, 190, 120, 0) 70%, rgba(255, 190, 120, .12)); }
+.dn-face.back {
+  transform: rotateY(180deg); display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 45%, #4a2a78, #24113d 70%);
+  box-shadow: 0 0 0 2.5px #f4c463, 0 0 0 5px rgba(28, 12, 42, .92), inset 0 0 0 7px rgba(244, 196, 99, .25);
+  color: #f4c463; --sun-in: rgba(36, 17, 61, .6);
 }
-.dn-petals { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 4; }
+.dn-face.back svg { width: 46%; height: auto; opacity: .85; }
+
+/* the little one, peeking over the top edge of one card */
+.dn-cham-wrap { position: absolute; bottom: 100%; right: 8%; width: 46%; aspect-ratio: 240 / 190; overflow: hidden; -webkit-backface-visibility: hidden; backface-visibility: hidden; pointer-events: auto; }
+.dn-cham-wrap .chm { left: 0; bottom: -6%; width: 100%; }
+
+/* bunting & fairy lights */
+.dn-top { position: absolute; left: 50%; top: 0; transform: translateX(-50%); pointer-events: none; z-index: 4; }
+.dn-lights { position: absolute; left: 0; top: 0; overflow: visible; }
+.dn-bulb .core { fill: #5a4a52; transition: fill 1s ease; }
+.dn-bulb .halo { opacity: 0; transition: opacity 1.2s ease; }
+.dn-lights.on .dn-bulb .core { fill: #fff3c4; transition-delay: calc(var(--i) * 90ms); }
+.dn-lights.on .dn-bulb .halo { opacity: 1; transition-delay: calc(var(--i) * 90ms); animation: dn-tw var(--tw) ease-in-out infinite alternate; animation-delay: calc(var(--i) * 90ms + 1.2s); }
+.dn-lights.instant .dn-bulb .core, .dn-lights.instant .dn-bulb .halo { transition: none; }
+@keyframes dn-tw { from { opacity: 1; } to { opacity: .5; } }
+.dn-bunting { position: absolute; left: 0; top: 0; }
+.dn-rope { position: absolute; left: 0; top: 0; overflow: visible; }
+.dn-flag { position: absolute; width: clamp(34px, 7.4vw, 58px); aspect-ratio: 5 / 6.4; margin-left: calc(clamp(34px, 7.4vw, 58px) / -2); transform-origin: 50% 0; transform: rotate(var(--a)); perspective: 400px; }
+.dn-flag-in { position: absolute; inset: 0; transform-style: preserve-3d; transform-origin: 50% 0; animation: dn-flag 3s ease-in-out infinite alternate; animation-delay: var(--d); }
+@keyframes dn-flag { from { rotate: -5deg; } to { rotate: 5deg; } }
+.dn-flag-face {
+  position: absolute; inset: 0; display: grid; place-items: center; padding-bottom: 22%;
+  background: linear-gradient(180deg, rgba(0, 0, 0, .18) 0 8%, transparent 8%), var(--c);
+  clip-path: polygon(0 0, 100% 0, 100% 74%, 50% 100%, 0 74%);
+  -webkit-backface-visibility: hidden; backface-visibility: hidden;
+  box-shadow: inset 0 -20px 30px rgba(0, 0, 0, .18);
+}
+.dn-flag-sun { width: 56%; height: auto; opacity: .92; }
+.dn-flag-face.back { transform: rotateY(180deg); padding: 0; background: #24113d; }
+.dn-flag-face.back img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.dn-flag-face.back::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(244, 196, 99, .5) 0 6%, transparent 6%); }
+
+/* petals — a few, slow */
+.dn-petals { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
 .dn-petal {
-  position: absolute; top: -6vh; width: calc(14px * var(--s)); height: calc(10px * var(--s));
-  background: var(--c); border-radius: 80% 0 80% 0; opacity: .85;
-  animation: petal var(--dur) linear infinite; animation-delay: var(--delay);
-  box-shadow: inset -2px -2px 3px rgba(0, 0, 0, .15);
+  position: absolute; top: -5vh; width: calc(13px * var(--s)); height: calc(9px * var(--s));
+  background: radial-gradient(ellipse at 30% 30%, rgba(255, 255, 255, .55), transparent 60%), var(--c);
+  border-radius: 80% 0 80% 0; opacity: .62;
+  animation: dn-petal var(--dur) linear infinite; animation-delay: var(--delay);
 }
-@keyframes petal {
+@keyframes dn-petal {
   0% { transform: translate(0, 0) rotate(0deg) rotateY(0deg); }
-  25% { transform: translate(6vw, 28vh) rotate(90deg) rotateY(180deg); }
-  50% { transform: translate(-3vw, 56vh) rotate(180deg) rotateY(360deg); }
-  75% { transform: translate(5vw, 84vh) rotate(270deg) rotateY(540deg); }
-  100% { transform: translate(0, 112vh) rotate(360deg) rotateY(720deg); }
+  25% { transform: translate(5vw, 28vh) rotate(80deg) rotateY(160deg); }
+  50% { transform: translate(-3vw, 56vh) rotate(170deg) rotateY(340deg); }
+  75% { transform: translate(4vw, 84vh) rotate(260deg) rotateY(520deg); }
+  100% { transform: translate(-1vw, 112vh) rotate(350deg) rotateY(700deg); }
 }
+
+/* the lantern that carries us into the night */
+.dn-rise { position: absolute; left: 0; top: 0; width: clamp(40px, 10vw, 64px); aspect-ratio: 120 / 170; z-index: 6; pointer-events: none;
+  margin: calc(clamp(40px, 10vw, 64px) * -0.7) 0 0 calc(clamp(40px, 10vw, 64px) * -0.5);
+  filter: drop-shadow(0 0 18px rgba(255, 179, 71, .85)) drop-shadow(0 0 50px rgba(255, 150, 60, .5)); }
+
+@media (min-aspect-ratio: 1/1) {
+  .dn-town.far-wrap { bottom: 28%; height: 26%; }
+  .dn-town.near-wrap { bottom: 27%; height: 15%; }
+  .dn-bomb { bottom: 35%; }
+}
+.reduced-motion .dn-bob, .reduced-motion .dn-flag-in, .reduced-motion .dn-sl { animation: none; }
+.reduced-motion .dn-lights.on .dn-bulb .halo { animation: none; }

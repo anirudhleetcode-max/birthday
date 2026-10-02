@@ -696,7 +696,12 @@ export default {
         await ctx.wait(2.0);
       }
       noteEl.textContent = scratchNote;
-      noteEl.style.top = `${nameEl.offsetTop + nameEl.offsetHeight}px`;
+      {
+        // pin the note just under what's actually on screen (the first word)
+        const anchor = (built.words[0] || nameEl).getBoundingClientRect();
+        const tr = title.getBoundingClientRect();
+        noteEl.style.top = `${Math.round(anchor.bottom - tr.top + 4)}px`;
+      }
       gsap.fromTo(noteEl, { opacity: 0, y: 6, rotation: -3 }, { opacity: 1, y: 0, rotation: -2, duration: 0.6, ease: 'power2.out' });
       await ctx.wait(2.6);
 

@@ -2,15 +2,18 @@
  * drafts.js — shared draft storage between the admin portal and the public site.
  *
  * IndexedDB database "deepu-admin" (version 1), object store "drafts" (out-of-line keys):
- *   "site"    → the full draft site object (structured clone)
- *   "files"   → plain object { "photos/tower-3-20261102-101500.jpg": Blob, ... }
- *   "deleted" → array of repo paths that will be deleted on publish
+ *   "site"    → the full draft as ONE combined v2 site object (model.combine() shape:
+ *               { version, her, from, settings, media, chapters, text, photoChapters, photos })
+ *   "files"   → plain object { "photos/tower-3-20261102-101500.webp": Blob, … } — every new,
+ *               not-yet-published file (display images, thumbs, originals, media)
+ *   "deleted" → array of repo paths that will be deleted on publish (informational)
  *   "savedAt" → ISO timestamp of the last save
- *   "base"    → (admin-only, optional) the published site the draft was started from
+ *   "base"    → (admin-only) the published site the draft was started from (for rebasing)
  *
- * The public site calls loadDraft() when opened with ?draft and resolves any path found
- * in `files` to a blob: URL. New photos therefore already carry their final `src` paths
- * inside the draft site object, and the Blob is stored under that same path key.
+ * The film calls loadDraft() when opened with ?draft, runs model.upgrade() on `site` and
+ * resolves any path found in `files` to a blob: URL. New photos therefore already carry their
+ * final `src` / `thumb` paths inside the draft site, and each Blob is stored under that path.
+ * Older drafts (v1 site.json shape) are accepted too — model.upgrade() converts them.
  *
  * No dependencies. ES module.
  */

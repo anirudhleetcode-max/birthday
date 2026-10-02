@@ -132,7 +132,7 @@ function updateChrome() {
   const saveText = state.saving ? 'saving…' : state.saveError ? 'not saved!' : hasUnsavedDraft() ? 'unsaved' : 'saved';
   $('.status-main', chip).textContent = ch.count ? `Draft · ${plural(ch.count, 'unpublished change')}` : connText;
   $('.status-sub', chip).textContent = ch.count ? `${connText} · ${saveText} on this device` : state.source === 'github' ? 'Everything is live' : 'Using the site’s copy';
-  $('.status-short', chip).textContent = ch.count ? `Draft · ${ch.count}` : conn === 'ok' ? 'All live' : conn === 'error' ? 'Problem' : conn === 'checking' ? '…' : 'Connect';
+  $('.status-short', chip).textContent = ch.count ? plural(ch.count, 'change') : conn === 'ok' ? 'All live' : conn === 'error' ? 'Problem' : conn === 'checking' ? '…' : 'Connect';
   chip.setAttribute('aria-label', `${connText}. ${ch.count ? `${plural(ch.count, 'unpublished change')}, ${saveText} on this device.` : 'Nothing unpublished.'}`);
   chip.dataset.save = state.saveError ? 'error' : hasUnsavedDraft() ? 'pending' : 'ok';
   for (const b of document.querySelectorAll('[data-action="publish"]')) {
