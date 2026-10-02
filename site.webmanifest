@@ -1,0 +1,15 @@
+{
+  "name": "For Deepu",
+  "short_name": "For Deepu",
+  "description": "A little film, made with love.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#0b0614",
+  "theme_color": "#0b0614",
+  "icons": [
+    { "src": "assets/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

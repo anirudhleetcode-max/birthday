@@ -277,7 +277,7 @@ export function validate(site) {
     const live = photosFor(site, ch.id).filter((p) => p.src);
     const missing = photosFor(site, ch.id).filter((p) => !p.src);
     if (missing.length) warnings.push({ chapter: ch.id, message: `${ch.short}: ${missing.length} photo spot${missing.length > 1 ? 's are' : ' is'} still empty (a placeholder will show).` });
-    if (ch.min && live.length < ch.min) warnings.push({ chapter: ch.id, message: `${ch.short}: needs at least ${ch.min} photo${ch.min > 1 ? 's' : ''} with an image.` });
+    else if (ch.min && live.length < ch.min) warnings.push({ chapter: ch.id, message: `${ch.short}: needs at least ${ch.min} photo${ch.min > 1 ? 's' : ''}.` });
     if (ch.max && photosFor(site, ch.id).length > ch.max) warnings.push({ chapter: ch.id, message: `${ch.short}: only the first ${ch.max} will be used.` });
   }
   for (const role of ROLES) {

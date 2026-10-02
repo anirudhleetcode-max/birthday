@@ -1,0 +1,18 @@
+{
+  "name": "for-deepu",
+  "version": "2.0.0",
+  "private": true,
+  "description": "A cinematic, interactive birthday film for Deepu's 20th birthday (static site + admin portal).",
+  "type": "module",
+  "scripts": {
+    "serve": "npx http-server . -p 8090 -c-1",
+    "lint": "eslint assets/js admin tests scripts",
+    "test": "node --test \"tests/unit/*.test.mjs\" \"tests/admin/*.test.mjs\"",
+    "check": "node scripts/check-assets.mjs",
+    "e2e": "node tests/e2e/film-smoke.cjs && node tests/e2e/admin-flows.cjs",
+    "e2e:full": "node tests/e2e/film-full.cjs",
+    "shots": "node tests/tools/shoot.cjs",
+    "verify": "npm run check && npm run lint && npm test && npm run e2e"
+  },
+  "engines": { "node": ">=20" }
+}
