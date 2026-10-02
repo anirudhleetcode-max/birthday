@@ -289,7 +289,7 @@ export function buildCake({ lowPower = false, quality = 2, name = 'Deepu', aniso
   const plaqueTex = plaqueTexture({ name, line1: 'Happy 20th' });
   plaqueTex.anisotropy = anisotropy;
   const plaqueSide = pbr({ color: 0xf3e6cf, roughness: 0.45, clearcoat: 0.4, clearcoatRoughness: 0.3 }, hi);
-  const plaqueFace = pbr({ map: plaqueTex, roughness: 0.42, clearcoat: 0.5, clearcoatRoughness: 0.25 }, mid);
+  const plaqueFace = pbr({ map: plaqueTex, color: 0xe6dccd, roughness: 0.5, clearcoat: 0.35, clearcoatRoughness: 0.3 }, mid);
   mats.plaqueSide = plaqueSide; mats.plaqueFace = plaqueFace;
   const plaque = new THREE.Group();
   const side = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.03, 72, 1, true).rotateX(Math.PI / 2), plaqueSide);
@@ -320,8 +320,8 @@ export function buildCake({ lowPower = false, quality = 2, name = 'Deepu', aniso
   rim2.rotation.x = Math.PI / 2; rim2.position.y = 0.033;
   plateGroup.add(rim2);
   const fork = new THREE.Mesh(forkGeometry(), gold);
-  fork.position.set(0.8, 0.0, 0.12);
-  fork.rotation.y = Math.PI / 2 + 0.12;
+  fork.position.set(0.18, 0.0, 0.8);
+  fork.rotation.y = 0.32;
   plateGroup.add(fork);
   root.add(plateGroup);
 

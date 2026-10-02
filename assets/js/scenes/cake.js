@@ -33,7 +33,8 @@ const CSS = /* css */`
 .ck-btn:active{transform:scale(.97)}
 .ck-btn .ck-ico{font-size:18px;filter:saturate(.9)}
 .ck-btn.primary{animation:ck-breathe 3.2s ease-in-out infinite}
-.ck-btn.busy{opacity:.7;pointer-events:none}
+.ck-btn:not(.on),.ck-link:not(.on){pointer-events:none}
+.ck-btn.busy.on{opacity:.7;pointer-events:none}
 .ck-link{pointer-events:auto;appearance:none;-webkit-appearance:none;background:none;border:0;cursor:pointer;font:italic 400 18px/1.2 "Cormorant Garamond",Georgia,serif;color:rgba(232,214,255,.88);padding:8px 14px;text-decoration:underline;text-decoration-color:rgba(244,196,99,.45);text-underline-offset:5px;opacity:0;transition:opacity .7s ease .15s;touch-action:manipulation}
 .ck-link.on{opacity:1}
 .ck-chip{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 18px);transform:translate(-50%,-8px);display:flex;align-items:center;gap:9px;padding:7px 14px 7px 12px;border-radius:999px;background:rgba(24,10,40,.6);border:1px solid rgba(244,196,99,.35);color:#f6e6c4;font:500 13px/1 "Cinzel",Georgia,serif;letter-spacing:.14em;text-transform:uppercase;pointer-events:none;opacity:0;transition:opacity .5s ease,transform .5s ease;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
@@ -168,9 +169,7 @@ class CakeScene {
     this.renderer = renderer;
     renderer.setPixelRatio(this.pixelRatio());
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.NeutralToneMapping;
-    const tm = window.__CAKE_DEV__ && new URLSearchParams(location.search).get('tm');
-    if (tm) renderer.toneMapping = { aces: THREE.ACESFilmicToneMapping, agx: THREE.AgXToneMapping, neutral: THREE.NeutralToneMapping }[tm] ?? renderer.toneMapping;
+    renderer.toneMapping = THREE.NeutralToneMapping; // keeps the lavender & gold true to colour
     renderer.toneMappingExposure = 1.0;
     renderer.setClearColor(0x05020a, 1);
     const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
@@ -269,7 +268,7 @@ class CakeScene {
         const rt = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, samples: 4 });
         const composer = new EffectComposer(renderer, rt);
         composer.addPass(new RenderPass(scene, camera));
-        this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.32, 0.5, 0.96);
+        this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.35, 0.5, 1.1);
         composer.addPass(this.bloom);
         composer.addPass(new OutputPass());
         this.composer = composer;
@@ -385,13 +384,13 @@ class CakeScene {
     this.candleLights[0].intensity = cl;
     this.candleLights[1].intensity = cl * 0.85 * (1 + 0.05 * Math.sin(t * 17.0));
     this.hemi.intensity = 0.32 * L.room + 0.22 * L.party;
-    this.key.intensity = 1.6 * L.party + 2.2 * L.room * (1 - 0.4 * L.party);
+    this.key.intensity = 1.5 * L.party + (1.0 + 1.2 * frac) * L.room * (1 - 0.4 * L.party);
     this.rim.intensity = 0.75 * L.room + 0.55 * L.party;
     this.fill.intensity = 0.45 * L.party + 0.35 * frac * L.room;
     const envLevel = 0.06 + 0.22 * L.room * (1 - 0.5 * L.party) + 0.5 * frac * (0.9 + 0.1 * flick) + 0.42 * L.party;
     for (const [m, k] of this.envMats) m.envMapIntensity = envLevel * k;
     this.bokeh.uniforms.uTime.value = t;
-    this.bokeh.uniforms.uBright.value = 0.25 + 0.6 * L.room + 0.9 * L.party;
+    this.bokeh.uniforms.uBright.value = 0.1 + 0.75 * L.room + 0.75 * L.party;
     this.dust.uniforms.uTime.value = t;
     this.dust.uniforms.uBright.value = 0.15 + 0.8 * frac + 0.7 * L.party;
     this.backdrop.material.uniforms.uRoom.value = 0.25 + 0.6 * L.room + 0.6 * L.party;
@@ -651,7 +650,7 @@ class CakeScene {
     clearTimeout(slow); this.timers.delete(slow);
     if (this.dead || this.phase !== 'blow') { det.stop(); return; }
     this.mood('hush');
-    this.blowBtn.classList.remove('on');
+    this.blowBtn.classList.remove('on', 'busy');
     if (!this.tapMode) this.tapLink.classList.remove('on');
     this.chipEl.classList.add('on');
     this.blowHintH?.remove();
@@ -751,7 +750,7 @@ class CakeScene {
     this.fx('flash', { color: '#ffe3a3', duration: 0.6 });
     this.phase = 'party';
     this.to(this.L, { party: 1, room: 1, vignette: 0.32, duration: this.reduced ? 0.6 : 1.4, ease: 'power2.out' });
-    this.to(this.L, { glint: 0.25, duration: 1.5 });
+    this.to(this.L, { glint: 0, duration: 1.2 });
     this.mood('festive');
     try { Promise.resolve(this.ctx.audio?.happyBirthday?.()).catch(() => {}); } catch (e) { /* ignore */ }
     this.fx('cannons');
@@ -866,7 +865,7 @@ class CakeScene {
     const proxy = { t: 0 };
     // reframe to admire the slice
     const portrait = this.fit.aspect < 0.8;
-    this.to(this.cam, { az: 0.46, el: 0.3, distK: portrait ? 0.84 : 0.78, tx: portrait ? 1.45 : 1.25, ty: -0.62, tz: 0.45, duration: red ? 1.4 : 2.6, ease: 'power2.inOut' });
+    this.to(this.cam, { az: 0.46, el: 0.3, distK: portrait ? 0.98 : 0.78, tx: portrait ? 1.1 : 1.25, ty: portrait ? -0.75 : -0.62, tz: 0.45, duration: red ? 1.4 : 2.6, ease: 'power2.inOut' });
     await this.to(proxy, {
       t: 1, duration: red ? 1.0 : 1.7, ease: 'power2.inOut',
       onUpdate: () => {
@@ -947,7 +946,9 @@ class CakeScene {
       s.inside += CakeScene.clipLen(s.last, p, s.rect);
       s.total += Math.hypot(p.x - s.last.x, p.y - s.last.y);
       s.last = p;
-      this.trail.push({ ...p, t: performance.now() });
+      const now = performance.now();
+      this.trail.push({ ...p, t: now });
+      if (now - (s.lastSpark || 0) > 90) { s.lastSpark = now; this.fx('sparkle', p.x, p.y, 3); }
       const need = Math.max(70, (s.rect.x1 - s.rect.x0) * 0.38);
       if (s.inside >= need) { this.swipe = null; this.cut(); }
     }
@@ -960,7 +961,7 @@ class CakeScene {
 
   tapCandles(x, y) {
     if (this.phase !== 'blow') return;
-    const rad = Math.max(30, Math.min(this.size.w, this.size.h) * 0.055);
+    const rad = Math.max(22, Math.min(this.size.w, this.size.h) * 0.03);
     const hits = [];
     this.candles.forEach((c, i) => {
       if (c.out) return;
@@ -979,7 +980,7 @@ class CakeScene {
     if (!g) return;
     const pts = this.trail;
     if (!pts || !pts.length) { if (this.trailDirty) { g.clearRect(0, 0, this.size.w, this.size.h); this.trailDirty = false; } return; }
-    const life = 260;
+    const life = this.trailLife || 260;
     while (pts.length && now - pts[0].t > life) pts.shift();
     g.clearRect(0, 0, this.size.w, this.size.h);
     this.trailDirty = true;
@@ -989,12 +990,14 @@ class CakeScene {
     g.translate(-r.left, -r.top);
     g.lineCap = 'round'; g.lineJoin = 'round';
     for (let pass = 0; pass < 2; pass++) {
+      g.shadowColor = pass === 0 ? 'rgba(255,200,110,0.9)' : 'rgba(255,255,255,0.8)';
+      g.shadowBlur = pass === 0 ? 16 : 6;
       for (let i = 1; i < pts.length; i++) {
         const a = pts[i - 1], b = pts[i];
         const k = 1 - (now - b.t) / life;
         const w = (i / pts.length);
-        g.strokeStyle = pass === 0 ? `rgba(244,196,99,${0.28 * k})` : `rgba(255,252,240,${0.95 * k})`;
-        g.lineWidth = pass === 0 ? 14 * w * k + 2 : 3.2 * w * k + 0.6;
+        g.strokeStyle = pass === 0 ? `rgba(244,196,99,${0.42 * k})` : `rgba(255,252,240,${0.95 * k})`;
+        g.lineWidth = pass === 0 ? 18 * w * k + 2 : 4.2 * w * k + 0.8;
         g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
       }
     }

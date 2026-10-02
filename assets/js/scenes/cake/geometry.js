@@ -214,40 +214,6 @@ export function dripCurtain(R, H, rc, drips, { phiStart = 0, phiLength = TAU, st
   return g;
 }
 
-// Individual drips: squashed capsules with a fat droplet at the end.
-export function dripGeometry(R, H, rc, drips, { depth = 0.42 } = {}) {
-  const parts = [];
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3();
-  for (const d of drips) {
-    const yTop = H - rc * 0.5, yBot = H - d.len;
-    const span = yTop - yBot;
-    const len = Math.max(0.001, span - 2 * d.w);
-    const cap = new THREE.CapsuleGeometry(d.w, len, 4, 10);
-    cap.translate(0, (yTop + yBot) / 2, 0);
-    const bulb = new THREE.SphereGeometry(d.w * 1.18, 10, 8);
-    bulb.translate(0, yBot + d.w * 1.12, 0);
-    // a wide, soft fillet where the drip leaves the rim (makes a scalloped curtain, not pipes)
-    const fil = new THREE.SphereGeometry(d.w * 1.9, 12, 8);
-    fil.scale(1, 1.25, 1);
-    fil.translate(0, H - rc - d.w * 0.9, 0);
-    for (const g of [cap, bulb, fil]) {
-      // squash radially (local z), then push onto the surface at angle phi
-      sc.set(1, 1, g === fil ? depth * 0.55 : depth);
-      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), d.phi);
-      p.set(Math.sin(d.phi) * (R + 0.002), 0, Math.cos(d.phi) * (R + 0.002));
-      m.compose(p, q, sc);
-      g.applyMatrix4(m);
-      g.deleteAttribute('uv');
-      parts.push(g);
-    }
-  }
-  if (!parts.length) return null;
-  const merged = mergeGeometries(parts, false);
-  parts.forEach((g) => g.dispose());
-  merged.computeVertexNormals();
-  return merged;
-}
-
 // Random-but-natural drip layout. Returns [{phi, len, w}] avoiding the wedge seams.
 export function layoutDrips(R, { seed = 1, spacing = 0.15, minLen = 0.07, maxLen = 0.26, avoid = [] } = {}) {
   const r = rng(seed);
@@ -398,11 +364,30 @@ export function forkGeometry() {
     t.rotateZ(Math.PI / 2); t.scale(1, 0.7, 1); t.translate(0.1, 0.008, -0.024 + k * 0.016);
     parts.push(t);
   }
-  parts.forEach((p) => { if (p.index === null) return; });
   const nonIndexed = parts.map((p) => { const q = p.index ? p.toNonIndexed() : p; q.deleteAttribute('uv'); return q; });
   const g = mergeGeometries(nonIndexed, false);
   parts.forEach((p) => p.dispose());
   nonIndexed.forEach((p) => p.dispose());
   g.computeVertexNormals();
   return g;
+}
+
+// A slim cake knife: blade in the local XY plane (edge along y = 0, tip toward +X),
+// handle toward -X. Returns { blade, handle } geometries.
+export function knifeGeometry() {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0);
+  s.lineTo(0.62, 0);
+  s.quadraticCurveTo(0.74, 0.0, 0.78, 0.035);
+  s.quadraticCurveTo(0.7, 0.09, 0.5, 0.1);
+  s.lineTo(0.02, 0.105);
+  s.quadraticCurveTo(0, 0.105, 0, 0.085);
+  s.lineTo(0, 0);
+  const blade = new THREE.ExtrudeGeometry(s, { depth: 0.004, bevelEnabled: true, bevelThickness: 0.0015, bevelSize: 0.0015, bevelSegments: 1, curveSegments: 10 });
+  blade.translate(0, 0, -0.002);
+  const handle = new THREE.CapsuleGeometry(0.022, 0.26, 4, 12);
+  handle.rotateZ(Math.PI / 2);
+  handle.scale(1, 1.15, 0.7);
+  handle.translate(-0.16, 0.06, 0);
+  return { blade, handle };
 }

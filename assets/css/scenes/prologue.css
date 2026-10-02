@@ -1,0 +1,51 @@
+/* ---------- prologue ---------- */
+.scene-prologue { background: linear-gradient(180deg, #05020c 0%, #0f0720 45%, #24113d 82%, #3b1a57 100%); }
+.pro-sky { position: absolute; inset: 0; }
+.pro-nebula {
+  position: absolute; inset: -20%;
+  background:
+    radial-gradient(ellipse 40% 25% at 30% 30%, rgba(107, 63, 160, .28), transparent 70%),
+    radial-gradient(ellipse 35% 20% at 75% 22%, rgba(242, 167, 195, .14), transparent 70%),
+    radial-gradient(ellipse 60% 30% at 50% 95%, rgba(255, 179, 71, .18), transparent 70%);
+  animation: nebula 40s ease-in-out infinite alternate;
+}
+@keyframes nebula { to { transform: translate(4%, -3%) scale(1.08) rotate(3deg); } }
+.pro-ground {
+  position: absolute; left: -10%; right: -10%; bottom: -8vh; height: 30vh;
+  background: radial-gradient(ellipse 60% 70% at 50% 100%, #2d1645 0%, #1a0c2b 55%, transparent 75%);
+}
+.pro-drop { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 3; }
+.pro-drop i {
+  position: absolute; left: -11px; top: -11px; width: 22px; height: 22px; border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, #fff1c2 30%, #f4c463 55%, rgba(244, 196, 99, 0) 72%);
+  box-shadow: 0 0 30px 12px rgba(255, 210, 120, .55), 0 0 90px 30px rgba(255, 179, 71, .25);
+}
+.pro-ring {
+  position: absolute; left: -40px; top: -40px; width: 80px; height: 80px; border-radius: 50%; opacity: 0;
+  border: 2px solid rgba(255, 227, 163, .8); box-shadow: 0 0 30px rgba(255, 210, 120, .6), inset 0 0 30px rgba(255, 210, 120, .4);
+}
+.pro-flower { position: absolute; left: 50%; bottom: 26vh; width: min(46vw, 260px); transform: translate(-50%, 0); transform-origin: 50% 100%; }
+.pro-flower svg { width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 0 18px rgba(255, 210, 120, .45)); }
+.pro-flower { bottom: 26vh; translate: 0 calc(min(46vw, 260px) * 0.08); }
+.pro-bloomlight {
+  position: absolute; left: 50%; top: 52%; width: 140vmax; height: 140vmax; margin: -70vmax 0 0 -70vmax; border-radius: 50%;
+  opacity: 0; transform: scale(.2); pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 250, 235, 1) 0%, rgba(255, 227, 163, .95) 18%, rgba(244, 196, 99, .55) 35%, rgba(244, 196, 99, 0) 62%);
+}
+.pro-reveal { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.pro-sun {
+  position: absolute; left: 50%; top: 40%; width: min(140vw, 900px, 100vh); aspect-ratio: 1; translate: -50% -50%;
+  opacity: 0; filter: drop-shadow(0 0 40px rgba(244, 196, 99, .35));
+}
+.pro-sun svg { width: 100%; height: 100%; opacity: .42; mix-blend-mode: screen; }
+.pro-hero { position: relative; width: min(64vw, 36vh, 360px); aspect-ratio: 4 / 5; margin-top: -6vh; }
+.pro-title { position: relative; text-align: center; margin-top: -4.4vh; z-index: 2; }
+.pro-name {
+  margin: 0; font-family: var(--f-script); font-weight: 400; line-height: 1; font-size: clamp(76px, 22vw, 150px);
+  background: var(--gold-text); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 24px rgba(244, 196, 99, .5)) drop-shadow(0 4px 16px rgba(0, 0, 0, .7));
+  animation: goldshift 6s ease-in-out infinite alternate; padding: 0 .15em;
+}
+.pro-name div { background: inherit; -webkit-background-clip: text; background-clip: text; }
+.pro-sub { margin: 4px 0 0; font-family: var(--f-caps); font-size: clamp(10.5px, 2.8vw, 15px); letter-spacing: .32em; text-transform: uppercase; color: var(--lilac); }
+.pro-date { margin: 12px 0 0; font-family: var(--f-caps); font-size: 11px; letter-spacing: .3em; color: var(--gold); opacity: 0; }

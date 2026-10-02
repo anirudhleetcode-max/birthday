@@ -1,0 +1,4 @@
+/* ---------- lanterns ---------- */
+.scene-lanterns { background: #04020a; }
+.scene-lanterns canvas.gl { touch-action: none; }
+.ln-veil { position: absolute; inset: 0; background: #04020a; pointer-events: none; }

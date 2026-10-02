@@ -1,0 +1,16 @@
+/* ---------- credits ---------- */
+.scene-credits { background: #05020a; }
+.cr-reel { position: absolute; inset: 0; }
+.cr-frame { position: absolute; inset: 0; overflow: hidden; }
+.cr-frame img { position: absolute; inset: -4%; width: 108%; height: 108%; object-fit: cover; filter: saturate(.9) brightness(.62); }
+.cr-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5, 2, 10, .6), rgba(5, 2, 10, .25) 35%, rgba(5, 2, 10, .25) 65%, rgba(5, 2, 10, .75)); }
+.cr-roll { position: absolute; inset: 0; overflow: hidden; -webkit-mask-image: linear-gradient(transparent 6%, #000 22%, #000 78%, transparent 94%); mask-image: linear-gradient(transparent 6%, #000 22%, #000 78%, transparent 94%); }
+.cr-list { position: absolute; left: 0; right: 0; top: 0; text-align: center; padding: 0 8vw; }
+.cr-item { margin: 0 0 6.5vh; }
+.cr-role { margin: 0 0 .4em; font-family: var(--f-caps); font-size: clamp(10.5px, 2.8vw, 13px); letter-spacing: .38em; text-transform: uppercase; color: var(--lavender); }
+.cr-name { margin: 0; font-size: clamp(22px, 6vw, 34px); color: var(--cream); text-shadow: 0 2px 12px rgba(0, 0, 0, .8); }
+.cr-note { font-style: italic; font-size: clamp(17px, 4.4vw, 22px); color: var(--lilac); }
+.cr-end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 6vw; gap: 10px; }
+.cr-the-end { margin: 0; font-family: var(--f-caps); font-size: clamp(14px, 3.8vw, 20px); letter-spacing: .12em; text-transform: uppercase; color: var(--lavender); }
+.cr-end-sub { margin: 0; font-family: var(--f-script); font-size: clamp(46px, 13vw, 96px); line-height: 1.1; color: var(--gold-hi); text-shadow: 0 0 28px rgba(244, 196, 99, .55); }
+.cr-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 28px; }

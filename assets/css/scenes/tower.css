@@ -1,0 +1,41 @@
+/* ---------- tower ---------- */
+.scene-tower { background: #120810; }
+.tw-room { position: absolute; inset: 0; perspective-origin: 50% 50%; overflow: hidden; }
+.tw-ring { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; }
+.tw-strip, .tw-panel { position: absolute; left: 0; top: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.tw-strip { background-size: 420px 420px; background-repeat: repeat; }
+.tw-strip::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(12, 5, 10, .95) 0%, rgba(12, 5, 10, .2) 26%, rgba(12, 5, 10, 0) 40%, rgba(12, 5, 10, 0) 62%, rgba(12, 5, 10, .35) 76%, rgba(12, 5, 10, .97) 100%);
+}
+.tw-frame {
+  position: relative; width: 100%; height: 100%; padding: 3.6%;
+  background: linear-gradient(135deg, #7a4c18 0%, #e6b45a 18%, #fff0c0 32%, #c98f2b 50%, #f4c463 68%, #fff0c0 80%, #8a5a1f 100%);
+  box-shadow: 0 0 0 1px rgba(60, 30, 5, .6), 0 40px 90px rgba(0, 0, 0, .65), inset 0 0 0 2px rgba(255, 240, 200, .5);
+  border-radius: 4px;
+}
+.tw-frame::before {
+  content: ''; position: absolute; inset: 1.6%; border: 1px solid rgba(90, 50, 10, .55); border-radius: 2px; pointer-events: none;
+}
+.tw-canvas {
+  position: relative; width: 100%; height: 100%; overflow: hidden;
+  background: linear-gradient(160deg, #efe0c4, #d8c2a0); box-shadow: inset 0 0 0 2px rgba(80, 45, 10, .55), inset 0 0 40px rgba(80, 45, 10, .35);
+}
+.tw-paint { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity .3s; }
+.tw-panel.done .tw-canvas::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, rgba(255, 255, 255, .0) 30%, rgba(255, 240, 210, .22) 45%, rgba(255, 255, 255, 0) 60%);
+  background-size: 300% 100%; animation: sheen 3.2s ease-out 1 forwards;
+}
+@keyframes sheen { from { background-position: 120% 0; } to { background-position: -60% 0; } }
+.tw-light {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 62% at 50% 48%, rgba(0, 0, 0, 0) 0%, rgba(24, 9, 18, .35) 60%, rgba(8, 3, 10, .92) 100%);
+}
+.tw-candle {
+  position: absolute; left: 50%; bottom: -30vh; width: 140vmax; height: 90vh; margin-left: -70vmax; pointer-events: none;
+  background: radial-gradient(ellipse 50% 60% at 50% 100%, rgba(255, 170, 80, .30), rgba(255, 140, 60, .10) 45%, rgba(255, 140, 60, 0) 70%);
+  mix-blend-mode: screen; animation: candle 3.4s ease-in-out infinite;
+}
+@keyframes candle { 0%, 100% { opacity: .9; } 30% { opacity: .75; } 55% { opacity: 1; } 78% { opacity: .82; } }

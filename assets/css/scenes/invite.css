@@ -1,0 +1,28 @@
+/* ---------- invite + gate ---------- */
+.scene-invite, .scene-gate { background: radial-gradient(ellipse 120% 80% at 50% 110%, #2a1440 0%, #160b26 45%, #0b0614 100%); }
+.inv-sky { position: absolute; inset: 0; }
+.inv-wrap, .gate-wrap {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 0 8vw; gap: 10px;
+}
+.inv-lantern { width: clamp(90px, 24vw, 140px); height: clamp(128px, 34vw, 200px); margin-bottom: 14px; }
+.inv-greet {
+  margin: 0; font-family: var(--f-script); font-weight: 400; font-size: clamp(54px, 15vw, 110px); line-height: 1.05;
+  color: var(--gold-hi); text-shadow: 0 0 30px rgba(244, 196, 99, .45);
+}
+.inv-lines p { margin: .25em 0; font-style: italic; font-size: clamp(19px, 5vw, 26px); color: var(--lilac); line-height: 1.35; }
+.inv-btn { margin-top: 26px; }
+.inv-foot { margin: 14px 0 0; font-family: var(--f-caps); font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: var(--lavender); }
+
+.gate-kicker { margin: 0; font-family: var(--f-script); font-size: clamp(40px, 11vw, 72px); color: var(--gold-hi); text-shadow: 0 0 24px rgba(244, 196, 99, .4); }
+.gate-title { margin: 0; font-family: var(--f-caps); font-weight: 400; font-size: clamp(13px, 3.4vw, 18px); letter-spacing: .4em; text-transform: uppercase; color: var(--lavender); }
+.gate-count { display: flex; gap: clamp(10px, 4vw, 34px); margin: 18px 0 6px; }
+.gate-count div { display: flex; flex-direction: column; align-items: center; min-width: 54px; }
+.gate-count b {
+  font-family: var(--f-display); font-weight: 400; font-size: clamp(34px, 10vw, 70px); line-height: 1;
+  color: var(--gold-hi); text-shadow: 0 0 22px rgba(244, 196, 99, .45);
+  font-variant-numeric: tabular-nums;
+}
+.gate-count span { margin-top: 6px; font-family: var(--f-caps); font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--lavender); opacity: .75; }
+.gate-sub { margin: 10px 0 0; font-style: italic; font-size: clamp(17px, 4.4vw, 22px); color: var(--lilac); }
+.gate-btn { margin-top: 22px; }

@@ -469,11 +469,11 @@ export function smokeTexture(size = 128, seed = 33) {
 export function envGradientTexture() {
   const c = cnv(4, 256), g = c.getContext('2d');
   const gr = g.createLinearGradient(0, 0, 0, 256);
-  gr.addColorStop(0, '#1a0f2e');
-  gr.addColorStop(0.42, '#3a2154');
-  gr.addColorStop(0.52, '#4a2a3e');
-  gr.addColorStop(0.6, '#1d0f1c');
-  gr.addColorStop(1, '#080406');
+  gr.addColorStop(0, '#0d1230');
+  gr.addColorStop(0.42, '#232a62');
+  gr.addColorStop(0.52, '#3a2c4a');
+  gr.addColorStop(0.6, '#161020');
+  gr.addColorStop(1, '#070508');
   g.fillStyle = gr; g.fillRect(0, 0, 4, 256);
   return toTex(c);
 }

@@ -1,0 +1,30 @@
+/* ---------- finale ---------- */
+.scene-finale { background: radial-gradient(ellipse 100% 80% at 50% 45%, #24113d 0%, #10071c 55%, #05020a 100%); }
+.fn-3d { position: absolute; inset: 0; perspective: 1100px; perspective-origin: 50% 48%; }
+.fn-world { position: absolute; left: 50%; top: 48%; width: 0; height: 0; transform-style: preserve-3d; }
+.fn-tile {
+  position: absolute; left: 0; top: 0; border-radius: 6px; overflow: hidden; backface-visibility: visible; opacity: 0;
+  box-shadow: 0 0 0 1.5px rgba(244, 196, 99, .85), 0 8px 24px rgba(0, 0, 0, .5), 0 0 22px rgba(255, 179, 71, .25);
+}
+.fn-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fn-light { position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at 50% 48%, #fffdf6 0%, #ffe9b8 30%, #f4c463 60%, #b56a2c 100%); }
+.fn-reveal { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 5vw; }
+.fn-sun { position: absolute; left: 50%; top: 36%; width: min(150vw, 110vh, 1100px); aspect-ratio: 1; translate: -50% -50%; opacity: 0; }
+.fn-sun svg { width: 100%; height: 100%; opacity: .45; mix-blend-mode: screen; filter: drop-shadow(0 0 30px rgba(255, 200, 110, .45)); }
+.fn-portrait { position: relative; width: min(46vw, 28vh, 300px); aspect-ratio: 4 / 5; margin-bottom: 2vh; }
+.fn-big { position: relative; margin: 0; font-family: var(--f-display); font-size: clamp(30px, 8.6vw, 74px); letter-spacing: .04em; color: var(--gold-hi);
+  text-shadow: 0 0 24px rgba(244, 196, 99, .55), 0 2px 10px rgba(0, 0, 0, .6); line-height: 1.1; }
+.fn-name { position: relative; margin: -.05em 0 0; font-family: var(--f-script); font-weight: 400; line-height: 1.05; font-size: clamp(84px, 25vw, 190px);
+  color: #ffe9b8; text-shadow: 0 0 30px rgba(244, 196, 99, .7), 0 0 80px rgba(255, 179, 71, .45), 0 4px 16px rgba(0, 0, 0, .6); }
+.fn-sub { position: relative; margin: .2em 0 0; font-style: italic; font-size: clamp(19px, 5vw, 28px); color: var(--lilac); }
+.fn-us { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh; padding: 0 6vw; text-align: center; }
+.fn-us-card { width: min(66vw, 38vh, 340px); padding: 6% 6% 0; }
+.fn-hugline { margin: 0; font-family: var(--f-script); font-size: clamp(34px, 9.4vw, 60px); color: var(--gold-hi); text-shadow: 0 0 24px rgba(244, 196, 99, .45); line-height: 1.1; }
+.fn-hugdone { margin: 0; font-style: italic; font-size: clamp(17px, 4.4vw, 22px); color: var(--lilac); }
+
+.fn-days { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 8vw; gap: 6px; }
+.fn-days-n { margin: 0; font-family: var(--f-display); font-size: clamp(64px, 20vw, 150px); line-height: 1; color: var(--gold-hi);
+  text-shadow: 0 0 30px rgba(244, 196, 99, .55); font-variant-numeric: tabular-nums; }
+.fn-days-l { margin: 0; font-family: var(--f-caps); font-size: clamp(12px, 3.4vw, 17px); letter-spacing: .32em; text-transform: uppercase; color: var(--lavender); opacity: 0; }
+.fn-days-s { margin: 18px 0 0; font-style: italic; font-size: clamp(19px, 5vw, 28px); color: var(--cream); max-width: 620px; opacity: 0; }

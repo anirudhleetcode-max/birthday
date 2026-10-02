@@ -1,0 +1,23 @@
+/* ---------- shared sky ---------- */
+.stars { position: absolute; inset: 0; pointer-events: none; }
+.stars-layer { position: absolute; inset: 0; width: 100%; height: 100%; }
+.stars-layer.l0 { animation: twinkle 5.5s ease-in-out infinite; }
+.stars-layer.l1 { animation: twinkle 3.8s ease-in-out infinite reverse; }
+.stars-layer.l2 { animation: twinkle 2.6s ease-in-out infinite; }
+@keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+.shooting-star {
+  position: absolute; width: 160px; height: 2px; border-radius: 2px; pointer-events: none;
+  background: linear-gradient(90deg, rgba(255, 244, 224, 0), rgba(255, 244, 224, .95));
+  transform-origin: 100% 50%; rotate: -28deg; filter: drop-shadow(0 0 6px rgba(255, 220, 160, .9));
+}
+
+/* ---------- lantern svg states ---------- */
+.lantern-svg { width: 100%; height: 100%; overflow: visible; }
+.lantern-svg .l-body, .lantern-svg .l-halo, .lantern-svg .l-flame { opacity: 0; transition: opacity 1.6s ease; }
+.lantern-svg .l-dark { transition: opacity 1.6s ease; }
+.lantern-svg.is-lit .l-body, .lantern-svg.is-lit .l-halo { opacity: 1; }
+.lantern-svg.is-lit .l-flame { opacity: 1; animation: flicker 0.18s steps(2) infinite alternate; transform-origin: 60px 132px; }
+.lantern-svg.is-lit .l-dark { opacity: 0; }
+.lantern-svg.is-lit .l-halo { animation: halo 2.4s ease-in-out infinite alternate; transform-origin: 60px 100px; }
+@keyframes flicker { from { transform: scale(1, 1); } to { transform: scale(.92, 1.08); } }
+@keyframes halo { from { transform: scale(1); } to { transform: scale(1.12); opacity: .85; } }

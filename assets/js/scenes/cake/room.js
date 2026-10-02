@@ -26,9 +26,9 @@ export function buildEnvironment(renderer) {
   // a broad warm band low in front (what vertical gold surfaces reflect toward the camera)
   panel(40, 5, [1.5, 0.95, 0.45], new THREE.Vector3(0, 2.5, 22), new THREE.Vector3(0, 2.5, 0));
   panel(16, 6, [2.0, 1.3, 0.62], new THREE.Vector3(-14, 4, 12));
-  // cool lavender rim from behind
-  panel(14, 10, [0.55, 0.45, 1.1], new THREE.Vector3(14, 8, -16));
-  panel(8, 8, [0.35, 0.25, 0.7], new THREE.Vector3(-16, 6, -10));
+  // cool indigo rim from behind
+  panel(14, 10, [0.4, 0.5, 1.25], new THREE.Vector3(14, 8, -16));
+  panel(8, 8, [0.22, 0.28, 0.75], new THREE.Vector3(-16, 6, -10));
   // a string of warm fairy-light glints around the horizon
   const R = rng(17);
   for (let i = 0; i < 26; i++) {
@@ -58,13 +58,15 @@ export function buildBackdrop() {
       varying vec3 vDir;
       void main(){
         float y = vDir.y;
-        vec3 top = vec3(0.0033, 0.0018, 0.0070);  // #0b0614 (linear)
-        vec3 mid = vec3(0.0176, 0.0056, 0.0467);  // #24113d (linear)
-        vec3 col = mix(mid, top, smoothstep(-0.05, 0.55, y));
-        col = mix(col, vec3(0.002, 0.001, 0.003), smoothstep(0.0, -0.4, y));
-        // warm haze behind the cake (we look toward -z)
+        vec3 top = vec3(0.0016, 0.0021, 0.0085);  // deep midnight (#05081a)
+        vec3 mid = vec3(0.0075, 0.0100, 0.0560);  // indigo at the horizon (#151a44)
+        vec3 col = mix(mid, top, smoothstep(-0.05, 0.6, y));
+        col = mix(col, vec3(0.001, 0.0012, 0.003), smoothstep(0.0, -0.4, y));
+        // a faint rose-indigo haze behind the cake (we look toward -z)…
         float h = pow(max(0.0, dot(normalize(vDir * vec3(1.0, 1.6, 1.0)), vec3(0.0, 0.05, -1.0))), 6.0);
-        col += vec3(0.045, 0.016, 0.022) * h * (0.4 + uWarm * 0.8);
+        col += vec3(0.02, 0.012, 0.04) * h * 0.6;
+        // …which turns into warm golden light once the candles are out
+        col += vec3(0.11, 0.055, 0.012) * pow(h, 0.7) * uWarm;
         col *= 0.35 + 0.65 * uRoom;
         gl_FragColor = vec4(col, 1.0);
         #include <tonemapping_fragment>
@@ -82,7 +84,7 @@ export function buildBackdrop() {
 export function buildBokeh({ lowPower = false } = {}) {
   const R = rng(99);
   const items = [];
-  const warm = [1.0, 0.78, 0.45], rose = [1.0, 0.6, 0.72], lav = [0.72, 0.62, 1.0], amber = [1.0, 0.62, 0.3];
+  const warm = [1.0, 0.78, 0.45], rose = [1.0, 0.62, 0.72], lav = [0.55, 0.62, 1.0], amber = [1.0, 0.62, 0.3], cream = [1.0, 0.9, 0.75];
   // draped strings of fairy lights across the back of the room
   const strings = lowPower ? 2 : 3;
   for (let s = 0; s < strings; s++) {
@@ -102,7 +104,7 @@ export function buildBokeh({ lowPower = false } = {}) {
     const z = -6 - R() * 12;
     items.push({
       p: [(R() - 0.5) * (14 - z * 0.9), -0.5 + R() * 6.5, z],
-      size: 0.35 + R() * 1.1, col: [warm, rose, lav, warm, amber][Math.floor(R() * 5)], a: 0.14 + R() * 0.32, kind: 0,
+      size: 0.35 + R() * 1.1, col: [warm, rose, lav, cream, amber, warm][Math.floor(R() * 6)], a: 0.14 + R() * 0.32, kind: 0,
     });
   }
   // distant lanterns drifting up

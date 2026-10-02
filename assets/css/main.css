@@ -64,16 +64,30 @@ img { -webkit-user-drag: none; user-select: none; }
 #dust, #fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 #dust { z-index: 6; }
 #fx { z-index: 32; }
+@property --vig { syntax: '<number>'; inherits: false; initial-value: .55; }
+@property --tint-a { syntax: '<color>'; inherits: false; initial-value: rgba(59, 26, 87, .10); }
+@property --tint-b { syntax: '<color>'; inherits: false; initial-value: rgba(255, 179, 71, .05); }
+/* The whole film is colour-graded by chapter: night → dawn → day → sunset →
+   twilight → night → candle → deep → golden. Changes glide over ~3s. */
 #grade {
   position: fixed; inset: 0; z-index: 20; pointer-events: none;
+  --vig: .55; --tint-a: rgba(59, 26, 87, .10); --tint-b: rgba(255, 179, 71, .05);
   background:
-    radial-gradient(ellipse 120% 90% at 50% 45%, transparent 55%, rgba(8, 3, 16, .55) 100%),
-    linear-gradient(180deg, rgba(59, 26, 87, .10), rgba(255, 179, 71, .05));
-  mix-blend-mode: normal;
+    radial-gradient(ellipse 120% 90% at 50% 45%, transparent 55%, rgba(8, 3, 16, var(--vig)) 100%),
+    linear-gradient(180deg, var(--tint-a), var(--tint-b));
+  transition: --vig 3.2s ease, --tint-a 3.2s ease, --tint-b 3.2s ease;
 }
+#grade[data-grade="dawn"] { --vig: .42; --tint-a: rgba(255, 214, 176, .08); --tint-b: rgba(255, 168, 140, .07); }
+#grade[data-grade="day"] { --vig: .34; --tint-a: rgba(255, 236, 205, .07); --tint-b: rgba(255, 196, 140, .06); }
+#grade[data-grade="sunset"] { --vig: .44; --tint-a: rgba(255, 158, 118, .07); --tint-b: rgba(160, 70, 120, .09); }
+#grade[data-grade="twilight"] { --vig: .5; --tint-a: rgba(110, 70, 170, .10); --tint-b: rgba(255, 150, 120, .06); }
+#grade[data-grade="night"] { --vig: .55; --tint-a: rgba(30, 24, 80, .12); --tint-b: rgba(255, 179, 71, .04); }
+#grade[data-grade="candle"] { --vig: .62; --tint-a: rgba(40, 18, 50, .10); --tint-b: rgba(255, 170, 80, .07); }
+#grade[data-grade="deep"] { --vig: .6; --tint-a: rgba(14, 20, 64, .16); --tint-b: rgba(10, 8, 30, .08); }
+#grade[data-grade="golden"] { --vig: .48; --tint-a: rgba(20, 22, 70, .10); --tint-b: rgba(255, 196, 110, .08); }
 #grain {
   position: fixed; inset: -50%; z-index: 21; pointer-events: none;
-  opacity: .075; mix-blend-mode: overlay;
+  opacity: var(--grain, .075); mix-blend-mode: overlay;
   background-size: 180px 180px;
   animation: grain 0.9s steps(6) infinite;
 }
@@ -280,3 +294,21 @@ img { -webkit-user-drag: none; user-select: none; }
 
 [hidden] { display: none !important; }
 .low-power #grain { display: none; }
+
+/* ---------- secrets ---------- */
+.egg-toast {
+  position: absolute; left: 50%; top: calc(var(--safe-t) + 46px); translate: -50% 0; z-index: 70;
+  display: flex; align-items: center; gap: 10px; max-width: min(88vw, 440px); padding: 10px 18px; border-radius: 999px;
+  font-family: var(--f-serif); font-style: italic; font-size: 16px; color: var(--cream);
+  background: rgba(22, 11, 38, .72); border: 1px solid rgba(244, 196, 99, .55);
+  box-shadow: 0 0 30px rgba(244, 196, 99, .22); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+.egg-star { color: var(--gold-hi); text-shadow: 0 0 10px rgba(244, 196, 99, .9); }
+
+/* ---------- focus & accessibility ---------- */
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 3px; border-radius: 8px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.reduced-motion #grain { animation: none; }
+.sub-line.hand { font-family: var(--f-hand); font-style: normal; font-size: clamp(26px, 7vw, 44px); color: var(--cream); }

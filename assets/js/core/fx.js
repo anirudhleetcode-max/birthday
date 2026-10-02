@@ -45,7 +45,7 @@ function hexToRgb(hex) {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
-export function createFX({ dustCanvas, fxCanvas, device }) {
+export function createFX({ dustCanvas, fxCanvas, device, density = 1 }) {
   const dctx = dustCanvas.getContext('2d');
   const fctx = fxCanvas.getContext('2d');
   const dpr = Math.min(window.devicePixelRatio || 1, device.lowPower ? 1.25 : 2);
@@ -102,7 +102,7 @@ export function createFX({ dustCanvas, fxCanvas, device }) {
   /* ---------------- dust ---------------- */
   const dust = [];
   const dustState = { density: 0.5, target: 0.5, warm: 1, speed: 1, alpha: 1, targetAlpha: 1 };
-  const maxDust = device.lowPower ? 55 : device.mobile ? 80 : 140;
+  const maxDust = Math.round((device.lowPower ? 55 : device.mobile ? 80 : 140) * Math.max(0.2, Math.min(1.5, density)) * (device.reducedMotion ? 0.5 : 1));
   function spawnDust(anyY = true) {
     const z = Math.random();
     return {

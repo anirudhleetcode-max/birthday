@@ -1,10 +1,9 @@
-// Loads data/site.json (or the admin's unpublished draft) and resolves photos.
+// Loads the content (data/settings.json + messages.json + photos.json, or the
+// admin's unpublished draft) and gives the chapters a small photo API.
 import { placeholderURL } from './placeholders.js';
+import { FILES, LEGACY_FILE, combine, upgrade, photosFor, parseRatio, daysAlive } from '../shared/model.js';
 
-export function parseRatio(str) {
-  const [w, h] = String(str || '1:1').split(':').map(Number);
-  return w > 0 && h > 0 ? w / h : 1;
-}
+export { parseRatio };
 
 async function loadDraftSafe() {
   try {
@@ -16,78 +15,123 @@ async function loadDraftSafe() {
   }
 }
 
+async function fetchJSON(path) {
+  const res = await fetch(`${path}?v=${Date.now()}`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`${path} ${res.status}`);
+  return res.json();
+}
+
 export async function loadSite({ draft = false } = {}) {
   let site = null;
   let files = null;
   if (draft) {
     const d = await loadDraftSafe();
     if (d && d.site) {
-      site = d.site;
+      site = upgrade(d.site);
       files = d.files;
     }
   }
   if (!site) {
-    const res = await fetch(`data/site.json?v=${Date.now()}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`site.json ${res.status}`);
-    site = await res.json();
+    try {
+      const [settings, messages, photos] = await Promise.all([fetchJSON(FILES.settings), fetchJSON(FILES.messages), fetchJSON(FILES.photos)]);
+      site = combine({ settings, messages, photos });
+    } catch (err) {
+      // an older deploy that still has the single-file format
+      site = upgrade(await fetchJSON(LEGACY_FILE));
+    }
   }
   return createStore(site, files);
 }
+
+const DEFAULT_FOCAL = { x: 0.5, y: 0.4 };
 
 function createStore(site, files) {
   const blobUrls = new Map();
   const resolve = (path) => {
     if (!path) return null;
     if (/^(https?:|data:|blob:)/.test(path)) return path;
-    if (files && files.get && files.get(path)) {
-      if (!blobUrls.has(path)) blobUrls.set(path, URL.createObjectURL(files.get(path)));
+    const blob = files && files.get && files.get(path);
+    if (blob) {
+      if (!blobUrls.has(path)) blobUrls.set(path, URL.createObjectURL(blob));
       return blobUrls.get(path);
     }
     return path;
   };
 
-  const slots = new Map((site.slots || []).map((s, i) => [s.id, { ...s, index: i }]));
+  const herName = (site.her && site.her.name) || 'her';
+  const chapterRank = ['prologue', 'tower', 'hair', 'names', 'dance', 'lanterns', 'letter', 'finale', 'album'];
+  const indexOf = new Map(site.photos.map((p, i) => [p.id, i]));
 
-  const toPhoto = (s, index, kind = 'slot') => {
-    const ratio = parseRatio(s.ratio);
-    const url = resolve(s.src);
+  const toPhoto = (p) => {
+    const ratio = parseRatio(p.ratio);
+    const url = resolve(p.src);
+    const focal = p.focal && Number.isFinite(p.focal.x) ? p.focal : DEFAULT_FOCAL;
+    const placeholder = !url;
+    const purl = placeholder ? placeholderURL({ id: p.id, label: p.label || p.chapter, ratio, index: indexOf.get(p.id) || 0 }) : null;
     return {
-      id: s.id,
-      kind,
-      label: s.label || '',
-      caption: s.caption || '',
+      id: p.id,
+      chapter: p.chapter,
+      order: p.order,
+      role: p.role,
+      label: p.label || '',
+      caption: p.caption || '',
+      date: p.date || '',
+      alt: p.alt || p.caption || `A photo of ${herName}`,
       ratio,
-      ratioStr: s.ratio || '1:1',
-      isPlaceholder: !url,
-      url: url || placeholderURL({ id: s.id, label: s.label, ratio, index }),
+      ratioStr: p.ratio,
+      focal,
+      objectPosition: `${(focal.x * 100).toFixed(1)}% ${(focal.y * 100).toFixed(1)}%`,
+      featured: !!p.featured,
+      heroHair: !!p.heroHair,
+      animation: p.animation || null,
+      effect: p.effect || null,
+      duration: p.duration || null,
+      isPlaceholder: placeholder,
+      url: url || purl,
+      thumbUrl: resolve(p.thumb) || url || purl,
     };
   };
 
-  return {
+  const enabledChapter = new Map((site.chapters || []).map((c) => [c.id, c.enabled !== false]));
+  const byId = new Map(site.photos.map((p) => [p.id, p]));
+
+  const store = {
     site,
     text: site.text || {},
     media: site.media || {},
+    /** All enabled photos of a chapter, in order. `limit` caps the count. */
+    photos(chapter, { limit } = {}) {
+      const list = photosFor(site, chapter).map(toPhoto);
+      return limit ? list.slice(0, limit) : list;
+    },
+    /** Backwards-compatible alias. */
+    chapter(name) { return this.photos(name); },
     photo(id) {
-      const s = slots.get(id);
-      if (!s) return toPhoto({ id, ratio: '1:1', label: id }, 0);
-      return toPhoto(s, s.index);
+      const p = byId.get(id);
+      return p ? toPhoto(p) : toPhoto({ id, ratio: '1:1', label: id, chapter: 'album' });
     },
-    chapter(name) {
-      return (site.slots || []).filter((s) => s.chapter === name).map((s) => this.photo(s.id));
+    /** The photo playing a special part: 'hero' | 'reveal' | 'together'. */
+    role(role) {
+      const p = site.photos.find((x) => x.role === role && x.enabled !== false);
+      if (p) return toPhoto(p);
+      const fallback = { hero: 'prologue', reveal: 'finale', together: 'finale' }[role];
+      const list = this.photos(fallback);
+      return list[role === 'together' ? 1 : 0] || list[0] || this.photo(role);
     },
-    extras() {
-      return (site.extras || []).filter((x) => x.src).map((x, i) => toPhoto(x, 40 + i, 'extra'));
-    },
+    featured() { return this.all().filter((p) => p.featured); },
+    heroHair() { return this.all().find((p) => p.heroHair) || null; },
+    extras() { return this.photos('album').filter((p) => !p.isPlaceholder); },
+    /** Every enabled photo across the film (chapter order), placeholders included. */
     all() {
-      return [...(site.slots || []).map((s) => this.photo(s.id)), ...this.extras()];
+      return chapterRank.flatMap((ch) => this.photos(ch));
     },
-    real() {
-      return this.all().filter((p) => !p.isPlaceholder);
-    },
-    mediaUrl(key) {
-      return resolve(site.media && site.media[key]);
-    },
+    real() { return this.all().filter((p) => !p.isPlaceholder); },
+    count() { return this.real().length; },
+    chapterEnabled(id) { return enabledChapter.has(id) ? enabledChapter.get(id) : true; },
+    mediaUrl(key) { return resolve(site.media && site.media[key]); },
+    daysAlive(when) { return daysAlive(site, when); },
   };
+  return store;
 }
 
 // Decode an image ahead of time so reveals never pop in half-loaded.

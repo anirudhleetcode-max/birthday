@@ -27,9 +27,10 @@ vec3 flameLean(float h, out vec3 right, out vec3 toCam, out float blow){
   blow = clamp(uBlow * (0.55 + 0.6 * gust) + aOut * 0.9, 0.0, 1.6);
   float sway = (vnoise(vec2(t * 0.9, aSeed * 13.0)) - 0.5) * 0.18 + (vnoise(vec2(t * 2.7, aSeed * 7.0)) - 0.5) * 0.08;
   // blowing: flames bow away from her and thrash sideways
-  float lateral = sway + blow * ((vnoise(vec2(t * 11.0, aSeed * 5.0)) - 0.5) * 1.6 + 0.35 * sin(aSeed * 40.0));
-  float bend = h * h;
-  return (-toCam * blow * 1.1 + right * lateral + vec3(0.0, -0.25 * blow, 0.0)) * bend;
+  float lateral = sway + blow * ((vnoise(vec2(t * 11.0, aSeed * 5.0)) - 0.5) * 0.9 + 0.2 * sin(aSeed * 40.0));
+  // mostly a tilt of the whole flame, with a little extra bend near the tip
+  float bend = 0.45 * h + 0.55 * h * h;
+  return (-toCam * blow * 0.75 + right * lateral) * bend;
 }
 `;
 
@@ -66,9 +67,10 @@ export function createFlames(bases, { reduced = false } = {}) {
         vBlow = blow;
         float flick = 1.0 + (vnoise(vec2(uTime * 9.0, aSeed * 17.0)) - 0.5) * 0.22 + (vnoise(vec2(uTime * 23.0, aSeed * 3.0)) - 0.5) * 0.12 * (1.0 + blow * 3.0);
         float lit = smoothstep(0.0, 1.0, aLit);
-        float H = 0.165 * flick * mix(1.0, 0.62, clamp(blow, 0.0, 1.0)) * (0.25 + 0.75 * lit);
-        float W = 0.07 * (0.45 + 0.55 * lit) * (1.0 + 0.3 * clamp(blow, 0.0, 1.0));
-        vec3 p = aBase + vec3(0.0, -0.03, 0.0) + right * position.x * W + vec3(0.0, h * H, 0.0) + lean * H * 2.2;
+        float b1 = clamp(blow, 0.0, 1.0);
+        float H = 0.16 * flick * mix(1.0, 0.55, b1) * (0.25 + 0.75 * lit);
+        float W = 0.085 * (0.45 + 0.55 * lit) * (1.0 + 0.35 * b1);
+        vec3 p = aBase + vec3(0.0, -0.03, 0.0) + right * position.x * W + vec3(0.0, h * H, 0.0) + lean * H * 1.6;
         if (aLit < 0.002) p = aBase; // collapse
         gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
       }`,
@@ -84,10 +86,10 @@ export function createFlames(bases, { reduced = false } = {}) {
         float x = vUv.x - 0.5 - wob;
         float base = 0.26;
         float tip = 0.96 + (n1 - 0.5) * 0.05;
-        float R = 0.17;
+        float R = 0.21;
         float r;
         if (y < base) { float d = (base - y) / base; r = R * sqrt(max(0.0, 1.0 - d * d)); }
-        else { float k = clamp((y - base) / (tip - base), 0.0, 1.0); r = R * pow(1.0 - k, 0.75) * (1.0 + 0.35 * sin(k * 3.1416) * (1.0 - k)); }
+        else { float k = clamp((y - base) / (tip - base), 0.0, 1.0); r = R * pow(1.0 - k, 0.62) * (1.0 + 0.3 * sin(k * 3.1416) * (1.0 - k)); }
         float d = abs(x) / max(r, 1e-4);
         float body = (1.0 - smoothstep(0.55, 1.0, d)) * step(0.001, r);
         float core = (1.0 - smoothstep(0.0, 0.62, d)) * (1.0 - smoothstep(base - 0.06, tip * 0.78, y)) * smoothstep(0.02, 0.16, y);

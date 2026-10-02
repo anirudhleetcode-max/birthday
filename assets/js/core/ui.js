@@ -39,11 +39,15 @@ export function createUI({ audio, reducedMotion }) {
   const cont = document.getElementById('continue');
   const uiRoot = document.getElementById('ui');
   let signal = null;
+  let fill = (t) => t;
 
   function setSignal(s) { signal = s; }
+  /** Token filler for owner-written text ({name}, {creator}, {photoCount}…). */
+  function setFill(fn) { fill = fn || ((t) => t); }
 
   /** Show one line; returns { el, out() } */
-  function showLine(text, { style = '', position } = {}) {
+  function showLine(raw, { style = '', position } = {}) {
+    const text = fill(String(raw ?? ''));
     if (position) subs.className = position === 'bottom' ? '' : position;
     const el = document.createElement('div');
     el.className = `sub-line ${style}`;
@@ -65,13 +69,20 @@ export function createUI({ audio, reducedMotion }) {
     };
   }
 
-  async function narrate(lines, { hold, gap = 0.45, style = '', position = 'bottom', signal: sig } = {}) {
+  /**
+   * Show lines one after another. Options: hold (s), gap (s), style ('' | 'big' |
+   * 'whisper' | 'title' | 'hand'), position ('bottom' | 'top' | 'center'),
+   * duck (0..1 music level while the line is on screen; 'big' lines duck gently by default).
+   */
+  async function narrate(lines, { hold, gap = 0.45, style = '', position = 'bottom', duck, signal: sig } = {}) {
     const s = sig || signal;
     const list = (Array.isArray(lines) ? lines : [lines]).filter(Boolean);
+    const duckTo = duck != null ? duck : /\bbig\b/.test(style) ? 0.7 : null;
     for (const text of list) {
       const line = showLine(text, { style, position });
       const words = String(text).split(/\s+/).length;
       const h = hold != null ? hold : Math.max(2.4, 1.0 + words * 0.36);
+      if (duckTo != null && audio) audio.duck(duckTo, line.duration * 0.6 + h);
       try {
         await sleep(line.duration * 0.6 + h, s);
         await line.out();
@@ -97,10 +108,11 @@ export function createUI({ audio, reducedMotion }) {
     const s = sig || signal;
     const g = gsap();
     card.innerHTML = '';
-    const k = html(`<div class="cc-kicker">${kicker || ''}</div>`);
+    const k = html('<div class="cc-kicker"></div>');
+    k.textContent = fill(String(kicker || ''));
     const t = html('<div class="cc-title"></div>');
     const chars = [];
-    for (const word of String(title).split(' ')) {
+    for (const word of fill(String(title || '')).split(' ')) {
       const wspan = document.createElement('span');
       wspan.style.whiteSpace = 'nowrap';
       wspan.style.display = 'inline-block';
@@ -137,7 +149,7 @@ export function createUI({ audio, reducedMotion }) {
   function waitContinue(label = 'Continue', { delay = 0.6, sig } = {}) {
     const s = sig || signal;
     const g = gsap();
-    cont.querySelector('.continue-label').textContent = label;
+    cont.querySelector('.continue-label').textContent = fill(label);
     return abortable(new Promise((resolve) => {
       setTimeout(() => {
         if (s && s.aborted) return;
@@ -161,8 +173,8 @@ export function createUI({ audio, reducedMotion }) {
   });
 
   function hint(text) {
-    const el = html(`<div class="hint"></div>`);
-    el.textContent = text;
+    const el = html(`<div class="hint" role="status"></div>`);
+    el.textContent = fill(String(text ?? ''));
     uiRoot.appendChild(el);
     gsap().fromTo(el, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.8 });
     return {
@@ -182,5 +194,5 @@ export function createUI({ audio, reducedMotion }) {
     gsap().set(card, { opacity: 0, visibility: 'hidden' });
   }
 
-  return { narrate, say, chapterCard, waitContinue, hint, reset, setSignal, clearSubs };
+  return { narrate, say, chapterCard, waitContinue, hint, reset, setSignal, setFill, clearSubs, fill: (t) => fill(String(t ?? '')) };
 }
