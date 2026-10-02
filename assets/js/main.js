@@ -349,6 +349,15 @@ async function boot() {
   };
   app.fill = (str) => String(str ?? '').replace(/\{(\w+)\}/g, (m, k) => (k in tokens ? tokens[k] : m));
   app.ui.setFill(app.fill);
+  // "Chapter Five" → the real position among the chapters that are switched on
+  const NUM = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve'];
+  app.ui.setKicker((kicker) => {
+    const m = /^Chapter (\w+)/.exec(kicker);
+    if (!m || !NUM.includes(m[1])) return kicker;
+    const numbered = app.list.filter((c) => /^Chapter \w+/.test(String(store.text[c.id]?.kicker || '')));
+    const i = numbered.findIndex((c) => c.id === app.list[app.index]?.id);
+    return i >= 0 && NUM[i + 1] ? kicker.replace(m[1], NUM[i + 1]) : kicker;
+  });
   app.list = CHAPTERS.filter((c) => (!c.when || c.when(store)) && store.chapterEnabled(c.id));
   setupMute();
   setupKeyboardSecret();

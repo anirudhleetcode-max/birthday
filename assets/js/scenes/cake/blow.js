@@ -5,14 +5,18 @@
 //   rms      — time-domain loudness (full scale = 1)
 //   lowDb    — mean power 40–1200 Hz, compared with the ambient baseline
 //   lowFrac  — share of 40–6000 Hz power that lies below 1200 Hz
-//   flatness — spectral flatness (geometric / arithmetic mean) over 100–1500 Hz;
-//              voiced speech, singing and music are harmonic (low flatness),
-//              wind/breath noise is not
+//   flatness — sub-band spectral flatness: geometric / arithmetic mean inside
+//              ~190 Hz bands, averaged over 100–1500 Hz. Insensitive to the
+//              overall slope of wind noise, but voiced speech, singing and
+//              music put a harmonic or two in every band (peaks & valleys),
+//              which pulls it down hard
 //   peak     — max bin / mean power over 80–2000 Hz (rejects pure tones)
+// The spectral shape features are smoothed over ~120 ms (wind is steadily
+// noise-like; music and speech flicker between peaky and flat frames).
 // The ambient baseline is calibrated for ~0.7 s, then drifts slowly (and falls
 // quickly, so a blow during calibration cannot poison it). A frame "counts"
 // only when every gate passes; a blow is >= 150 ms of counting frames
-// (tiny dropouts tolerated). Output: a smoothed intensity 0..1, plus a raw
+// (tiny dropouts tolerated). All timings use real elapsed time. Output: a smoothed intensity 0..1, plus a raw
 // `level` (loudness above ambient) used to make the flames react before any
 // candle goes out.
 
@@ -21,9 +25,10 @@ export const BLOW = {
   minRms: 0.04,          // absolute RMS floor
   rmsOverBase: 3.5,      // ...and >= 3.5x the ambient RMS
   lowRiseDb: 12,         // low band must rise >= 12 dB over ambient
-  minLowFrac: 0.62,      // >= 62% of the energy below 1.2 kHz
-  minFlatness: 0.22,     // breath/wind ≈ 0.3–0.6; voiced speech/music ≈ 0.02–0.15
-  maxPeakiness: 18,      // breath ≈ 3–10; a pure tone ≈ 40+
+  minLowFrac: 0.6,       // >= 60% of the energy below 1.2 kHz (smoothed)
+  minFlatness: 0.58,     // smoothed sub-band flatness: breath/wind ≈ 0.65–0.85; speech ≈ 0–0.3; music ≈ 0.1–0.5
+  maxPeakiness: 12.5,    // smoothed max/mean: breath ≈ 3–11; music ≈ 14–18; a pure tone ≈ 40+
+  smoothSec: 0.12,
   sustainSec: 0.15,      // >= 150 ms
   dropoutSec: 0.08,
   attack: 0.06, release: 0.22,
@@ -40,6 +45,7 @@ export class BlowDetector {
     this.calT = 0; this.run = 0; this.quiet = 0;
     this.intensity = 0; this.level = 0; this.active = false;
     this.lastHeard = 0; this.listenT = 0;
+    this.sm = null; // smoothed spectral features
   }
 
   static supported() {
@@ -76,7 +82,7 @@ export class BlowDetector {
     this.fd = new Float32Array(this.an.frequencyBinCount);
     const hz = ac.sampleRate / this.an.fftSize;
     const bin = (f) => Math.max(1, Math.min(this.fd.length - 1, Math.round(f / hz)));
-    this.b = { low0: bin(40), low1: bin(1200), all1: bin(6000), fl0: bin(100), fl1: bin(1500), pk0: bin(80), pk1: bin(2000) };
+    this.b = { low0: bin(40), low1: bin(1200), all1: bin(6000), fl0: bin(100), fl1: bin(1500), pk0: bin(80), pk1: bin(2000), band: Math.max(4, Math.round(190 / hz)) };
     this.state = 'calibrating';
     this.calT = 0;
   }
@@ -92,9 +98,13 @@ export class BlowDetector {
     const p = (i) => Math.pow(10, Math.max(-160, this.fd[i]) / 10);
     let low = 0, all = 0;
     for (let i = b.low0; i <= b.all1; i++) { const v = p(i); all += v; if (i <= b.low1) low += v; }
-    let lnSum = 0, sum = 0, nF = 0;
-    for (let i = b.fl0; i <= b.fl1; i++) { const v = p(i) + 1e-14; lnSum += Math.log(v); sum += v; nF++; }
-    const flatness = Math.exp(lnSum / nF) / (sum / nF);
+    let fSum = 0, fN = 0;
+    for (let i0 = b.fl0; i0 + b.band <= b.fl1 + 1; i0 += b.band) {
+      let lnSum = 0, sum = 0;
+      for (let i = i0; i < i0 + b.band; i++) { const v = p(i) + 1e-14; lnSum += Math.log(v); sum += v; }
+      fSum += Math.exp(lnSum / b.band) / (sum / b.band); fN++;
+    }
+    const flatness = fN ? fSum / fN : 0;
     let mx = 0, mean = 0;
     for (let i = b.pk0; i <= b.pk1; i++) { const v = p(i); mean += v; if (v > mx) mx = v; }
     mean /= (b.pk1 - b.pk0 + 1);
@@ -130,12 +140,19 @@ export class BlowDetector {
       return 0;
     }
     this.listenT += dt;
+    const k = Math.min(1, dt / B.smoothSec);
+    if (!this.sm) this.sm = { flat: m.flatness, peak: m.peak, low: m.lowFrac };
+    const sm = this.sm;
+    sm.flat += (m.flatness - sm.flat) * k;
+    sm.peak += (m.peak - sm.peak) * k;
+    sm.low += (m.lowFrac - sm.low) * k;
     const thr = Math.max(B.minRms, this.base.rms * B.rmsOverBase);
     const rise = m.lowDb - this.base.lowDb;
     const loud = m.rms > thr;
-    const gates = loud && rise > B.lowRiseDb && m.lowFrac > B.minLowFrac && m.flatness > B.minFlatness && m.peak < B.maxPeakiness;
+    const shape = sm.low > B.minLowFrac && sm.flat > B.minFlatness && sm.peak < B.maxPeakiness;
+    const gates = loud && rise > B.lowRiseDb && shape;
     // raw breath level for the flames' live reaction (noise-like input only)
-    const noiseLike = m.flatness > B.minFlatness * 0.8 && m.peak < B.maxPeakiness * 1.3;
+    const noiseLike = sm.flat > B.minFlatness * 0.85 && sm.peak < B.maxPeakiness * 1.25;
     this.level = noiseLike ? Math.max(0, Math.min(1, (m.rms - this.base.rms * 1.6) / 0.1)) : this.level * 0.85;
     let score = 0;
     if (gates) {
@@ -156,7 +173,7 @@ export class BlowDetector {
     const tau = target > this.intensity ? B.attack : B.release;
     this.intensity += (target - this.intensity) * Math.min(1, dt / tau);
     if (this.active) this.lastHeard = this.listenT;
-    this.last = { ...m, thr, rise, score, gates };
+    this.last = { ...m, thr, rise, score, gates, smFlat: sm.flat, smPeak: sm.peak, smLow: sm.low };
     return this.intensity;
   }
 

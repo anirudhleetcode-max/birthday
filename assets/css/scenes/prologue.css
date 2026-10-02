@@ -1,51 +1,176 @@
-/* ---------- prologue ---------- */
-.scene-prologue { background: linear-gradient(180deg, #05020c 0%, #0f0720 45%, #24113d 82%, #3b1a57 100%); }
-.pro-sky { position: absolute; inset: 0; }
-.pro-nebula {
-  position: absolute; inset: -20%;
+/* ==========================================================================
+   Prologue — Once Upon a Deepu. Night → dawn; the drop, the flower, her.
+   ========================================================================== */
+.scene-prologue { background: #070a22; }
+.pro-world, .pro-sky, .pro-stars { position: absolute; inset: 0; pointer-events: none; }
+.pro-night {
   background:
-    radial-gradient(ellipse 40% 25% at 30% 30%, rgba(107, 63, 160, .28), transparent 70%),
-    radial-gradient(ellipse 35% 20% at 75% 22%, rgba(242, 167, 195, .14), transparent 70%),
-    radial-gradient(ellipse 60% 30% at 50% 95%, rgba(255, 179, 71, .18), transparent 70%);
-  animation: nebula 40s ease-in-out infinite alternate;
+    radial-gradient(ellipse 80% 30% at 50% var(--hy, 80%), rgba(107, 63, 160, .3), transparent 70%),
+    linear-gradient(180deg, #04061a 0%, #0a0d2c 36%, #141743 62%, #261851 var(--hy, 80%), #120b28 100%);
 }
-@keyframes nebula { to { transform: translate(4%, -3%) scale(1.08) rotate(3deg); } }
-.pro-ground {
-  position: absolute; left: -10%; right: -10%; bottom: -8vh; height: 30vh;
-  background: radial-gradient(ellipse 60% 70% at 50% 100%, #2d1645 0%, #1a0c2b 55%, transparent 75%);
+.pro-predawn {
+  background:
+    radial-gradient(ellipse 70% 34% at 50% var(--hy, 80%), rgba(255, 170, 120, .45), transparent 72%),
+    linear-gradient(180deg, #141640 0%, #2d265f 28%, #5c3a7c 52%, #b0617f 70%, #ef9f7a var(--hy, 80%), #f4b38c 100%);
 }
-.pro-drop { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 3; }
+.pro-dawn {
+  background: linear-gradient(180deg, #a697d2 0%, #c4a5d6 15%, #e9b4c8 33%, #f8cbb6 50%, #ffdfc0 64%, #ffefd6 calc(var(--hy, 80%) - 4vh), #fff4e2 100%);
+}
+.pro-sunrise {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 62% 42% at 50% var(--hy, 80%), rgba(255, 246, 220, .95), rgba(255, 222, 170, .55) 34%, rgba(255, 196, 160, .16) 60%, transparent 76%);
+}
+.pro-land { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.pro-mist {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, transparent calc(var(--hy, 80%) - 13vh), rgba(255, 244, 230, .62) calc(var(--hy, 80%) - 1vh), rgba(255, 240, 228, .4) calc(var(--hy, 80%) + 6vh), rgba(255, 238, 226, .1) calc(var(--hy, 80%) + 16vh), transparent 100%);
+}
+/* the tiny lantern far away — the one she just lit */
+.pro-far { position: absolute; left: 77%; top: calc(var(--hy, 80%) - 13vh); width: 7px; height: 9px; --dawn: 0; pointer-events: none; }
+.pro-far i {
+  position: absolute; inset: 0; border-radius: 45% 45% 30% 30% / 55% 55% 28% 28%;
+  background: linear-gradient(180deg, #ffd58a, #ff9c4e);
+  box-shadow: 0 0 6px 2px rgba(255, 196, 120, calc(.75 - var(--dawn) * .35)), 0 0 22px 8px rgba(255, 170, 90, calc(.32 - var(--dawn) * .2));
+}
+
+/* ---------- the storybook title card ---------- */
+.pro-frame-wrap { position: absolute; left: 0; right: 0; top: 0; height: 100%; z-index: 3; pointer-events: none; color: rgba(244, 196, 99, .62); }
+.pro-frame { display: block; width: 100%; height: 100%; overflow: visible; }
+.pro-frame .pf-dot { fill: currentColor; }
+.pro-card {
+  position: absolute; inset: 0; z-index: 4; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 9vw;
+}
+.pro-glyph { width: clamp(30px, 8vw, 40px); height: auto; color: var(--gold-hi); overflow: visible; margin-bottom: clamp(10px, 2vh, 18px); filter: drop-shadow(0 0 8px rgba(244, 196, 99, .45)); }
+.pro-kicker {
+  margin: 0; font-family: var(--f-caps); font-size: clamp(11px, 2.9vw, 13.5px); letter-spacing: .55em; margin-right: -.55em;
+  text-transform: uppercase; color: var(--lavender);
+}
+.pro-flourish { display: block; width: min(300px, 68vw); height: 26px; color: rgba(244, 196, 99, .78); overflow: visible; }
+.pro-flourish.top { margin: clamp(10px, 2vh, 16px) 0 clamp(6px, 1.2vh, 12px); }
+.pro-flourish.bottom { margin-top: clamp(4px, 1vh, 10px); }
+.pro-card-title { margin: 0; display: flex; flex-direction: column; align-items: center; font-weight: 400; }
+.pct-a {
+  font-family: var(--f-display); font-size: clamp(17px, min(5vw, 3.6vh), 32px); letter-spacing: .1em; line-height: 1.3;
+  color: var(--gold-hi); text-shadow: 0 0 18px rgba(244, 196, 99, .35);
+}
+.pct-name {
+  --wp: -15%; position: relative; display: inline-block;
+  font-family: var(--f-script); font-size: clamp(76px, min(24vw, 16vh), 150px); line-height: 1.02;
+  -webkit-mask-image: linear-gradient(100deg, #000 var(--wp), transparent calc(var(--wp) + 16%));
+  mask-image: linear-gradient(100deg, #000 var(--wp), transparent calc(var(--wp) + 16%));
+}
+/* script names: a clean gradient ink over a separate soft glow (no filter on clipped text) */
+.pn-ink, .pn-glow { display: inline-block; padding: .04em .3em .12em; }
+.pn-glow { position: absolute; left: 0; top: 0; color: transparent; pointer-events: none; }
+.pn-ink { position: relative; -webkit-background-clip: text; background-clip: text; color: transparent; background-size: 220% 100%; }
+.pct-name .pn-glow { text-shadow: 0 0 24px rgba(244, 196, 99, .5), 0 0 6px rgba(255, 227, 163, .35); }
+.pct-name .pn-ink { background-image: var(--gold-text); animation: goldshift 6s ease-in-out infinite alternate; }
+
+/* ---------- the drop, the ring, the flower ---------- */
+.pro-motes { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.pro-motes i {
+  position: absolute; left: 0; top: 0; margin: -3px 0 0 -3px; border-radius: 50%;
+  background: radial-gradient(circle, #fffbe8 0%, #ffe3a3 35%, rgba(244, 196, 99, 0) 72%);
+  box-shadow: 0 0 8px 2px rgba(255, 210, 130, .45);
+}
+.pro-drop { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 6; pointer-events: none; }
 .pro-drop i {
   position: absolute; left: -11px; top: -11px; width: 22px; height: 22px; border-radius: 50%;
   background: radial-gradient(circle, #fff 0%, #fff1c2 30%, #f4c463 55%, rgba(244, 196, 99, 0) 72%);
   box-shadow: 0 0 30px 12px rgba(255, 210, 120, .55), 0 0 90px 30px rgba(255, 179, 71, .25);
 }
 .pro-ring {
-  position: absolute; left: -40px; top: -40px; width: 80px; height: 80px; border-radius: 50%; opacity: 0;
+  position: absolute; left: -40px; top: -40px; width: 80px; height: 80px; border-radius: 50%; opacity: 0; z-index: 5; pointer-events: none;
   border: 2px solid rgba(255, 227, 163, .8); box-shadow: 0 0 30px rgba(255, 210, 120, .6), inset 0 0 30px rgba(255, 210, 120, .4);
 }
-.pro-flower { position: absolute; left: 50%; bottom: 26vh; width: min(46vw, 260px); transform: translate(-50%, 0); transform-origin: 50% 100%; }
-.pro-flower svg { width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 0 18px rgba(255, 210, 120, .45)); }
-.pro-flower { bottom: 26vh; translate: 0 calc(min(46vw, 260px) * 0.08); }
+.pro-flower {
+  position: absolute; left: 50%; top: var(--ground, 84%); z-index: 4; pointer-events: none;
+  width: min(50vw, 260px, 31vh); translate: -50% -97%;
+}
+.pro-flower svg { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 0 18px rgba(255, 210, 120, .45)); }
 .pro-bloomlight {
-  position: absolute; left: 50%; top: 52%; width: 140vmax; height: 140vmax; margin: -70vmax 0 0 -70vmax; border-radius: 50%;
+  position: absolute; left: 50%; top: 60%; width: 140vmax; height: 140vmax; margin: -70vmax 0 0 -70vmax; border-radius: 50%; z-index: 7;
   opacity: 0; transform: scale(.2); pointer-events: none;
-  background: radial-gradient(circle, rgba(255, 250, 235, 1) 0%, rgba(255, 227, 163, .95) 18%, rgba(244, 196, 99, .55) 35%, rgba(244, 196, 99, 0) 62%);
+  background: radial-gradient(circle, rgba(255, 253, 244, 1) 0%, rgba(255, 240, 210, .96) 18%, rgba(255, 222, 170, .6) 36%, rgba(255, 214, 160, 0) 62%);
 }
-.pro-reveal { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+/* ---------- the reveal ---------- */
+.pro-reveal {
+  position: absolute; left: 0; right: 0; top: 10%; height: 70%; z-index: 6; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.pro-portrait { position: relative; flex: none; width: var(--pw, 260px); height: var(--ph, 325px); margin-top: calc(var(--ph, 325px) * .09); }
+.pro-glow {
+  position: absolute; inset: -45% -85%; z-index: 0; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255, 250, 236, .95), rgba(255, 232, 186, .55) 42%, rgba(255, 214, 170, .18) 70%, transparent 100%);
+}
 .pro-sun {
-  position: absolute; left: 50%; top: 40%; width: min(140vw, 900px, 100vh); aspect-ratio: 1; translate: -50% -50%;
-  opacity: 0; filter: drop-shadow(0 0 40px rgba(244, 196, 99, .35));
+  position: absolute; z-index: 1; pointer-events: auto; --glow: 0; -webkit-tap-highlight-color: transparent;
+  /* rays fade out toward their tips; the mask sits on this static wrapper, the rotation below is a cheap composited transform */
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 46%, rgba(0, 0, 0, .5) 68%, transparent 94%);
+  mask-image: radial-gradient(circle closest-side, #000 46%, rgba(0, 0, 0, .5) 68%, transparent 94%);
 }
-.pro-sun svg { width: 100%; height: 100%; opacity: .42; mix-blend-mode: screen; }
-.pro-hero { position: relative; width: min(64vw, 36vh, 360px); aspect-ratio: 4 / 5; margin-top: -6vh; }
-.pro-title { position: relative; text-align: center; margin-top: -4.4vh; z-index: 2; }
+.pro-sun-spin, .pro-sun-in { width: 100%; height: 100%; }
+.pro-sun-in { will-change: transform; }
+.pro-sun svg { display: block; width: 100%; height: 100%; overflow: visible; opacity: calc(.62 + var(--glow) * .38); }
+.pro-sun-glow {
+  position: absolute; inset: 8%; border-radius: 50%; opacity: 0; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255, 240, 200, .95), rgba(255, 214, 140, .5) 45%, transparent 100%);
+}
+/* a quiet, engraved sun: hairline rays with the faintest wash — never louder than her */
+.pro-sun .sun-rays path { fill: rgba(255, 243, 214, calc(.3 + var(--glow) * .5)); stroke: rgba(196, 140, 66, calc(.55 + var(--glow) * .3)); stroke-width: .42; }
+.pro-hero {
+  position: absolute; inset: 0; z-index: 2; overflow: hidden; background: #f6dcc8;
+  border-radius: calc(var(--pw, 260px) / 2) calc(var(--pw, 260px) / 2) 10px 10px;
+  box-shadow: 0 0 0 1px rgba(255, 244, 220, .95), 0 0 0 4px rgba(255, 236, 200, .35), 0 26px 60px rgba(120, 56, 86, .28), 0 0 60px rgba(255, 222, 160, .45);
+}
+.pro-hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.pro-ink-host { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.pro-arch-ink { position: absolute; overflow: visible; }
+.pro-arch-ink .ai-line { stroke: #b98843; stroke-width: 1.5; }
+.pro-arch-ink .ai-hair { stroke: rgba(185, 136, 67, .5); stroke-width: .8; }
+.pro-arch-ink .ai-curl { stroke: #b98843; stroke-width: 1.3; }
+.pro-arch-ink .ai-finial circle { fill: rgba(255, 226, 160, .6); stroke: #b98843; stroke-width: 1.2; }
+.pro-arch-ink .ai-finial path { stroke: #b98843; stroke-width: 1.2; }
+.pro-arch-ink .ai-stem { fill: none; stroke: #7f9160; stroke-width: 1.3; stroke-linecap: round; }
+.pro-arch-ink .ai-leaf { fill: rgba(150, 178, 118, .62); stroke: #6c8150; stroke-width: 1; }
+.pro-arch-ink .ai-petals ellipse { stroke-width: .9; }
+.pro-arch-ink .ai-petals.rose ellipse { fill: rgba(242, 167, 195, .9); stroke: rgba(176, 92, 128, .65); }
+.pro-arch-ink .ai-petals.peach ellipse { fill: rgba(255, 199, 164, .92); stroke: rgba(196, 116, 86, .6); }
+.pro-arch-ink .ai-petals.cream ellipse { fill: rgba(255, 244, 222, .96); stroke: rgba(196, 150, 96, .6); }
+.pro-arch-ink .ai-heart { fill: #e7ad4c; }
+.pro-arch-ink .ai-gem { fill: rgba(255, 226, 160, .7); stroke: #b98843; stroke-width: 1.1; }
+
+.pro-title { position: relative; z-index: 4; margin-top: var(--gap, 16px); text-align: center; display: flex; flex-direction: column; align-items: center; }
 .pro-name {
-  margin: 0; font-family: var(--f-script); font-weight: 400; line-height: 1; font-size: clamp(76px, 22vw, 150px);
-  background: var(--gold-text); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
-  filter: drop-shadow(0 0 24px rgba(244, 196, 99, .5)) drop-shadow(0 4px 16px rgba(0, 0, 0, .7));
-  animation: goldshift 6s ease-in-out infinite alternate; padding: 0 .15em;
+  --wp: -15%; position: relative;
+  margin: 0; font-family: var(--f-script); font-weight: 400; font-size: var(--name, 84px); line-height: .98;
+  -webkit-mask-image: linear-gradient(100deg, #000 var(--wp), transparent calc(var(--wp) + 16%));
+  mask-image: linear-gradient(100deg, #000 var(--wp), transparent calc(var(--wp) + 16%));
 }
-.pro-name div { background: inherit; -webkit-background-clip: text; background-clip: text; }
-.pro-sub { margin: 4px 0 0; font-family: var(--f-caps); font-size: clamp(10.5px, 2.8vw, 15px); letter-spacing: .32em; text-transform: uppercase; color: var(--lilac); }
-.pro-date { margin: 12px 0 0; font-family: var(--f-caps); font-size: 11px; letter-spacing: .3em; color: var(--gold); opacity: 0; }
+.pro-name .pn-glow { text-shadow: 0 0 14px rgba(255, 248, 234, .95), 0 0 3px rgba(255, 250, 242, .95); }
+.pro-name .pn-ink {
+  background-image: linear-gradient(100deg, #5a2752 0%, #86365f 26%, #b8644b 44%, #dd9b4c 50%, #86365f 68%, #5a2752 100%);
+  background-size: 240% 100%; animation: goldshift 7s ease-in-out infinite alternate;
+}
+.pro-sub {
+  margin: .1em 0 0; max-width: min(34em, 86vw); font-family: var(--f-caps); font-size: clamp(10px, 2.7vw, 13px); line-height: 1.6;
+  letter-spacing: .3em; margin-right: -.3em; text-transform: uppercase; color: #7a5274; text-wrap: balance;
+  text-shadow: 0 0 10px rgba(255, 248, 236, .9);
+}
+.pro-date {
+  margin: .75em 0 0; font-family: var(--f-caps); font-size: clamp(10.5px, 2.6vw, 12.5px); letter-spacing: .36em; margin-right: -.36em;
+  color: #a8743a; text-shadow: 0 0 10px rgba(255, 248, 236, .9);
+}
+
+/* ---------- film UI while the prologue plays (scoped to this chapter) ---------- */
+:root:has(.scene-prologue) #subtitles .sub-line { text-wrap: balance; }
+:root:has(.scene-prologue.is-dawn) #subtitles .sub-line {
+  color: #4a2247; transition: color 1.2s ease;
+  text-shadow: 0 0 18px rgba(255, 248, 238, .95), 0 0 4px rgba(255, 248, 238, .9);
+}
+:root:has(.scene-prologue) #continue { white-space: nowrap; }
+
+/* ---------- reduced motion ---------- */
+.reduced-motion .pn-ink { animation: none; }

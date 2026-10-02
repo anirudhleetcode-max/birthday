@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0b0614">
+  <title>Dev · Golden ribbon</title>
+  <link rel="stylesheet" href="../assets/fonts/fonts.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "../assets/vendor/three/three.module.min.js",
+        "three/addons/": "../assets/vendor/three/addons/"
+      }
+    }
+  </script>
+  <script src="../assets/vendor/gsap/gsap.min.js"></script>
+  <script src="../assets/vendor/gsap/CustomEase.min.js"></script>
+  <script src="../assets/vendor/gsap/DrawSVGPlugin.min.js"></script>
+  <script src="../assets/vendor/gsap/MotionPathPlugin.min.js"></script>
+  <script src="../assets/vendor/gsap/SplitText.min.js"></script>
+  <script src="../assets/vendor/gsap/Physics2DPlugin.min.js"></script>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0614; color: #fff4e0; font-family: 'Cormorant Garamond', Georgia, serif; }
+    #stage { position: fixed; inset: 0; overflow: hidden; }
+    .bg { position: absolute; inset: 0; transition: opacity 1s ease; }
+    .bg-dusk { background: radial-gradient(120% 80% at 50% 110%, #6b3fa0 0%, #3b1a57 35%, #160b26 70%, #0b0614 100%); }
+    .bg-day { background: linear-gradient(180deg, #ffe9cf 0%, #f7c9a6 55%, #d98f8a 100%); opacity: 0; }
+    .bg-photo { background: center / cover no-repeat; opacity: 0; filter: saturate(.9) brightness(.62); }
+    body.day .bg-day { opacity: 1; }
+    body.photo .bg-photo { opacity: 1; }
+    .vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 120% 90% at 50% 45%, transparent 55%, rgba(8, 3, 16, .55) 100%); }
+    #ribbons { position: absolute; inset: 0; }
+    .bar { position: fixed; left: 8px; right: 8px; top: 8px; z-index: 9; display: flex; flex-wrap: wrap; gap: 6px; }
+    .bar button { font: 12px/1 ui-monospace, monospace; padding: 7px 9px; background: rgba(20, 10, 34, .7); color: #f6e7c9; border: 1px solid rgba(244, 196, 99, .4); border-radius: 6px; cursor: pointer; }
+    .bar button:hover { border-color: #f4c463; }
+    #stat { position: fixed; left: 10px; bottom: 10px; z-index: 9; font: 12px/1.4 ui-monospace, monospace; color: #d9c8f5; opacity: .8; }
+    #label { position: fixed; left: 0; right: 0; bottom: 8vh; text-align: center; z-index: 5; font-style: italic; font-size: clamp(18px, 4.6vw, 28px); color: #fff4e0; text-shadow: 0 2px 14px rgba(0, 0, 0, .8); pointer-events: none; transition: opacity .6s; }
+    body.clean .bar, body.clean #stat { display: none; }
+  </style>
+</head>
+<body>
+  <main id="stage">
+    <div class="bg bg-dusk"></div>
+    <div class="bg bg-day"></div>
+    <div class="bg bg-photo"></div>
+    <div class="vignette"></div>
+    <div id="ribbons"></div>
+  </main>
+  <div class="bar" id="bar"></div>
+  <div id="label"></div>
+  <div id="stat"></div>
+  <script type="module">
+    import { createRibbon, ribbonPaths, sampleSpline } from '../assets/js/core/ribbon.js';
+
+    // ?demo=seq|bench|<path>  ?bg=day|photo  ?low  ?reduced  ?strands=5  ?clean (hide the dev bar)
+    const q = new URLSearchParams(location.search);
+    const device = {
+      tier: q.has('low') ? 'low' : 'mid', lowPower: q.has('low'), reducedMotion: q.has('reduced'), mobile: true,
+    };
+    if (q.get('bg')) document.body.classList.add(q.get('bg'));
+    if (q.has('clean')) document.body.classList.add('clean');
+    if (q.get('bg') === 'photo') {
+      // any real photo from the library, purely as a backdrop to judge the light against
+      fetch('../data/photos.json').then((r) => r.json()).then((d) => {
+        const p = (d.photos || []).find((x) => x.src);
+        if (p) document.querySelector('.bg-photo').style.backgroundImage = `url(../${p.src})`;
+      }).catch(() => {});
+    }
+    const host = document.getElementById('ribbons');
+    const label = document.getElementById('label');
+    const stat = document.getElementById('stat');
+    const W = () => host.clientWidth;
+    const H = () => host.clientHeight;
+    const strands = Number(q.get('strands') || 5);
+    let rib = createRibbon(host, { strands, device });
+    window.__rib = rib;
+    const say = (t) => { label.textContent = t; };
+    const sleep = (s) => new Promise((r) => setTimeout(r, s * 1000));
+    const minDim = () => Math.min(W(), H());
+
+    const paths = {
+      wave: () => ribbonPaths.wave(W(), H(), { y: 0.5, amp: 0.1 }),
+      heart: () => ribbonPaths.heart(W() / 2, H() * 0.47, minDim() * 0.68),
+      twenty: () => {
+        const bw = Math.min(W() * 0.84, 620);
+        const bh = bw * 0.58;
+        return ribbonPaths.twenty({ x: (W() - bw) / 2, y: H() * 0.46 - bh / 2, w: bw, h: bh });
+      },
+      timeline: () => ribbonPaths.timeline(W() * 0.1, W() * 0.9, H() * 0.5, 7),
+      circle: () => ribbonPaths.circle(W() / 2, H() * 0.47, minDim() * 0.3, 48, 1.2),
+      spiral: () => ribbonPaths.spiral(W() / 2, H() * 0.47, minDim() * 0.38, 8, 2.6, 90),
+      through: () => ribbonPaths.through([
+        { x: W() * 0.06, y: H() * 0.3 }, { x: W() * 0.3, y: H() * 0.38 }, { x: W() * 0.55, y: H() * 0.32 },
+        { x: W() * 0.8, y: H() * 0.42 }, { x: W() * 0.94, y: H() * 0.36 },
+      ], { loose: 0.8, sag: H() * 0.04 }),
+    };
+
+    async function drawPath(name, dur = 2.4) {
+      say(name);
+      rib.setPath(paths[name]());
+      rib.fade(1, 0);
+      rib.flow(true);
+      await rib.draw({ duration: dur, ease: 'power2.inOut' });
+    }
+
+    async function seq() {
+      await sleep(0.3);
+      await drawPath('wave', 2.4);
+      await sleep(0.8);
+      say('morph → heart');
+      await rib.morph(paths.heart(), { duration: 1.9 });
+      await sleep(1.2);
+      say('morph → twenty');
+      await rib.morph(paths.twenty(), { duration: 1.9 });
+      await sleep(1.2);
+      say('morph → timeline');
+      await rib.morph(paths.timeline(), { duration: 1.7 });
+      await sleep(1.0);
+      say('dissolve');
+      await rib.dissolve({ duration: 2.0 });
+      say('done');
+    }
+
+    function follow() {
+      say('follow');
+      const t0 = performance.now();
+      rib.setPath(paths.wave());
+      rib.draw({ duration: 1.5 });
+      rib.flow(true);
+      rib.follow(() => {
+        const t = (performance.now() - t0) / 1000;
+        const pts = [];
+        for (let i = 0; i < 6; i++) {
+          const a = t * 0.8 + i * 1.1;
+          pts.push({ x: W() * (0.12 + i * 0.152) + Math.sin(a) * 30, y: H() * 0.5 + Math.cos(a * 1.3) * H() * 0.12 });
+        }
+        return pts;
+      });
+    }
+
+    async function split() {
+      say('split: one strand → many');
+      rib.setPath(paths.wave());
+      rib.set({ split: 0 });
+      rib.flow(true);
+      rib.draw({ duration: 1.6, trail: 0.55 });
+      await sleep(0.9);
+      rib.tween('split', 1, 1.2);
+      rib.tween('width', 3.4, 1.4);
+      await sleep(1.4);
+      rib.set({ trail: null });
+    }
+
+    async function bench() {
+      rib.destroy();
+      rib = createRibbon(host, { strands: 5, samples: 300, device });
+      window.__rib = rib;
+      rib.setPath(paths.wave());
+      rib.flow(true);
+      rib.draw({ duration: 0.01 });
+      await sleep(0.5);
+      const xs = [];
+      const t0 = performance.now();
+      while (performance.now() - t0 < 3000) {
+        await new Promise((r) => requestAnimationFrame(r));
+        xs.push(rib.stats.renderMs);
+        (window.__parts ||= []).push([rib.stats.strandsMs, rib.stats.glowMs, rib.stats.medMs, rib.stats.coreMs]);
+      }
+      // deterministic: render 300× back to back (with the twist advancing)
+      const tb = performance.now();
+      for (let i = 0; i < 300; i++) rib._render();
+      const tight = (performance.now() - tb) / 300;
+      xs.sort((a, b) => a - b);
+      const avg = xs.reduce((a, b) => a + b, 0) / xs.length;
+      const res = { tight: +tight.toFixed(3), frames: xs.length, avg: +avg.toFixed(3), p50: +xs[xs.length >> 1].toFixed(3), p90: +xs[Math.floor(xs.length * 0.9)].toFixed(3) };
+      window.__bench = res;
+      stat.textContent = `tight ${res.tight} ms · render ms avg ${res.avg} p50 ${res.p50} p90 ${res.p90} (${res.frames} frames)`;
+    }
+
+    const buttons = {
+      seq, follow, split, bench,
+      dissolve: () => rib.dissolve({ duration: 2 }),
+      'flow off': () => rib.flow(false),
+      reset: () => { rib.destroy(); rib = createRibbon(host, { strands, device }); window.__rib = rib; },
+    };
+    for (const name of Object.keys(paths)) {
+      buttons[name] = () => (rib.progress > 0.5 ? rib.morph(paths[name](), { duration: 1.8 }) : drawPath(name));
+    }
+    const bar = document.getElementById('bar');
+    for (const [name, fn] of Object.entries(buttons)) {
+      const b = document.createElement('button');
+      b.textContent = name;
+      b.addEventListener('click', () => fn());
+      bar.appendChild(b);
+    }
+    setInterval(() => { if (!window.__bench) stat.textContent = `render ${rib.stats.renderMs.toFixed(2)} ms`; }, 500);
+
+    const demo = q.get('demo') || 'seq';
+    if (demo === 'seq') seq();
+    else if (buttons[demo]) {
+      if (paths[demo]) drawPath(demo); else buttons[demo]();
+    }
+  </script>
+</body>
+</html>

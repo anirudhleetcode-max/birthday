@@ -1,185 +1,270 @@
 {
   "version": 2,
+  "gate": {
+    "kicker": "Not yet, {nick2}.",
+    "title": "Twenty lanterns, waiting for midnight",
+    "sub": "Refreshing won’t make it faster. I’ve tried.",
+    "openKicker": "3 January · midnight",
+    "openTitle": "The lanterns are awake.",
+    "openSub": "All twenty of them. Look who’s twenty.",
+    "button": "Come in"
+  },
   "invite": {
-    "greeting": "Hey Pinky.",
+    "greeting": "Hey {nick1}.",
     "lines": [
       "I made you something.",
-      "Find a quiet corner. Lights low. Headphones on.",
-      "And don't skip anything — I'll know."
+      "It got slightly out of hand.",
+      "Don’t skip anything. I’ll know."
     ],
-    "button": "Light the lantern"
+    "button": "Light the lantern",
+    "foot": "headphones on · lights low"
   },
   "prologue": {
+    "kicker": "Prologue",
+    "title": "Once Upon a {name}",
     "lines": [
-      "Once upon a time…",
-      "on the third of January, two thousand and seven,",
-      "a single drop of sunlight slipped out of the sky.",
-      "It fell, and fell, and fell —",
-      "and where it landed, the world got a little warmer."
+      "Once upon a time — 3 January 2007, to be precise —",
+      "the sun got careless and spilled a drop of light.",
+      "It fell quietly through the dark. Nobody noticed.",
+      "Where it landed, something golden bloomed.",
+      "By morning, everyone noticed."
     ],
-    "titleSub": "the girl who lights up every sky"
+    "titleSub": "the sunlight, twenty years later",
+    "date": "03 · 01 · 2007"
   },
   "tower": {
-    "title": "The Girl in the Tower",
     "kicker": "Chapter One",
+    "title": "A Tower Full of You",
     "lines": [
-      "Rapunzel painted every wall of her tower with the things she loved.",
-      "If I ever got a tower,",
-      "every single wall would be you."
-    ]
+      "Imagine a tower, a lot of free time, and far too much paint.",
+      "Some people would paint the sky. Or flowers. Or the sea.",
+      "I’d run out of wall long before I ran out of you."
+    ],
+    "windowLine": "Wait. Something golden just drifted past the window. Follow it.",
+    "hint": "Drag to look around"
   },
   "hair": {
-    "title": "Every Strand, a Memory",
     "kicker": "Chapter Two",
+    "title": "The Golden Thread",
     "lines": [
-      "Her hair was seventy feet long.",
-      "Ours would need to be longer.",
-      "We have too many memories for seventy feet."
-    ]
+      "Some people keep their memories in a shoebox.",
+      "Ours needed something longer. About the length of your hair.",
+      "Every laugh, every rant, every terrible idea — all on one golden thread."
+    ],
+    "heroHairLine": "The original. The golden thread is just doing an impression.",
+    "endLine": "Still plenty of thread left. Good — we’re nowhere near done."
   },
   "names": {
-    "title": "A Girl of Many Names",
-    "kicker": "Chapter Three",
+    "kicker": "Chapter Three (a very serious one)",
+    "title": "A Legend of Many Names",
+    "fieldKicker": "Field notes",
+    "subject": "Subject: {name} (extremely rare)",
+    "documentary": [
+      "Here, in her natural habitat, we observe the rare {name}.",
+      "Most active after midnight. Usually when she should be asleep.",
+      "Approach slowly, with snacks. Never touch the hair.",
+      "Do not startle her. She has access to a frying pan.",
+      "Remarkably, she answers to several names. Each more legendary than the last."
+    ],
+    "aka": "also known as…",
     "items": [
       {
         "name": "Deepu",
-        "line": "To the world, she's Deepu.",
-        "sub": "Lamp. Light. Literally named after the thing she does to every room."
+        "line": "Keeper of the Lamp. Bringer of Chaos.",
+        "sub": "Her name literally has a lamp in it. She took that personally."
       },
       {
         "name": "Pinky",
-        "line": "When she's being cute, she's Pinky.",
-        "sub": "Which, honestly, is most of the time."
+        "line": "The Softest Menace in the Realm",
+        "sub": "Sounds harmless. Has never once been harmless."
       },
       {
-        "name": "Kuchu Puchu",
-        "line": "And when she's impossibly adorable…",
-        "sub": "There is no other word. There never will be."
+        "name": "Kuchi Puchi",
+        "line": "The Final Form. Witnessed by very few.",
+        "sub": "Threat level: dangerously huggable."
       }
-    ]
+    ],
+    "scratch": "okay. we tried. this one is too cute for the scary font.",
+    "finale": "Three names. One legend. Absolutely impossible to recast."
   },
   "dance": {
-    "title": "The Kingdom Dance",
     "kicker": "Chapter Four",
+    "title": "Somewhere Between Chaos and Magic",
     "lines": [
-      "Every kingdom has a festival everyone waits for all year.",
-      "In mine, it's you."
-    ]
+      "Being your friend is roughly sixty percent chaos.",
+      "The other forty percent? Honestly, magic.",
+      "Look up. The sky’s starting to notice."
+    ],
+    "hint": "Swipe to spin"
   },
   "lanterns": {
-    "title": "The Night the Sky Lit Up",
     "kicker": "Chapter Five",
+    "title": "The Night of Lanterns",
     "lines": [
-      "Every year, on the day she was born,",
-      "a whole kingdom lit lanterns and let them go,",
-      "hoping the light would find its way to her.",
-      "Tonight, the sky is doing it for you."
+      "One lantern is just a little light.",
+      "A hundred is a celebration.",
+      "Thousands? That’s the sky making a point.",
+      "And tonight, the point is you."
     ],
-    "tapHint": "Tap anywhere to send a lantern of your own",
-    "after": "Every single one of them knows your name."
-  },
-  "cake": {
-    "title": "Make a Wish",
-    "kicker": "Chapter Six",
-    "lines": [
-      "Twenty candles.",
-      "One wish.",
-      "Close your eyes, Kuchu Puchu…"
-    ],
-    "blowHint": "Now blow — really blow into your phone 🌬️",
-    "tapFallback": "or tap the candles",
-    "afterBlow": "Whatever you wished for — I hope the universe is already wrapping it.",
-    "cutHint": "Now swipe across the cake to cut it",
-    "afterCut": "First slice is yours. Obviously. It's always yours."
+    "tapHint": "Tap the sky to send up a lantern of your own",
+    "photoHint": "Some of these lanterns are carrying memories. Tap one.",
+    "after": "Your name has a lamp hidden in it. Tonight, the sky took the hint.",
+    "secret": "Of course you found the pink one, {nick1}. It was looking for you."
   },
   "letter": {
-    "title": "A Letter, Sealed with Sunlight",
-    "kicker": "Chapter Seven",
-    "salutation": "My dearest Deepu,",
+    "kicker": "Chapter Six",
+    "title": "A Letter You Were Supposed to Read",
+    "tapSeal": "Tap the seal to open",
+    "fasterHint": "Reading faster than I can write? Tap to skip ahead.",
+    "salutation": "Dear {name},",
     "body": [
-      "I've tried to write this so many times, and every version felt too small for you. So I'm just going to say it the way I feel it.",
-      "You are the best thing that ever walked into my life without knocking. Somewhere between the stupid jokes and the 2 a.m. talks and the days I didn't even have to explain myself, you stopped being someone I knew and became someone I can't imagine my life without.",
-      "You're twenty now. I've watched you grow into someone so kind, so ridiculously funny, so brave in all the quiet ways nobody claps for. I see them. I always have.",
-      "On the days the world feels too loud, I hope you remember this: there is someone who will always pick up, always show up, always be on your side — even when you're wrong. (Especially when you're wrong.)",
-      "Thank you for being my Deepu, my Pinky, my Kuchu Puchu. Thank you for being the light I didn't know I was waiting for.",
-      "Happy birthday, sunshine. The world got luckier the day you were born. So did I."
+      "Okay. Before you say anything: yes, I know this is a lot. Yes, I made you an entire film instead of just saying all this to your face. That’s how bad I am at saying things out loud. No, I will not be taking questions at this time. Please put the frying pan down.",
+      "Then again, let’s be honest: you’re a lot too. You are chaos with excellent hair. You can turn a completely normal day into a story I’m still telling weeks later. And I mean every word of that as the highest compliment I know how to give.",
+      "So, the serious part, while I can still keep a straight face. Thank you. Not for anything big — for the small stuff. For the late-night talks that were supposed to be ‘just ten minutes’. For the jokes that only make sense to us and would get us thrown out of most rooms. For knowing something’s wrong from a single ‘ok’. For showing up without being asked, every single time.",
+      "Somewhere along the way, you became the first person I want to tell things to. Good news, bad news, completely pointless news. Half my thoughts now come with a little note attached: send this to {name}. Some people make life easier. You make it lighter. That’s different, and so much rarer.",
+      "I don’t think you know what you’re like from the outside. You make rooms easier to be in. You make people feel like they’re not too much (I’d know). And I’ve had a front-row seat to you becoming more and more yourself — braver about some things, softer about others, still completely ridiculous about most. I’m unreasonably proud of you. I don’t say it enough, so I’m writing it down where you can’t argue with it.",
+      "Here’s what I want for your twenties. The things you’re a little scared to want. The good kind of tired — from laughing, from dancing, from building things you’re proud of. Days so good you forget to check your phone (text me after). Hair that keeps growing, and worries that don’t. And on the days that go badly — some will — I hope you remember exactly who to call.",
+      "So here’s my promise, in writing, so you can hold me to it: I’ll pick up. I’ll show up — for the big days and the boring ones, the good news and the 2 a.m. overthinking. I’ll tell you the truth when you need it, and take your side when you need that more. I’ll keep making fun of you, because that’s how you’ll know everything’s fine. Twenty, thirty, eighty: I’m not going anywhere. Pinky promise.",
+      "Happy birthday, {nick2}. Thank you for being my best friend. Of everything I’ve ever been lucky about, you’re right at the top. (You’re allowed to screenshot that part.) Now go back to the film — there’s cake."
     ],
-    "signoff": "Yours, in every lifetime,"
+    "signoff": "Stuck with me forever. No refunds,"
   },
-  "finale": {
+  "cake": {
+    "kicker": "Chapter Seven",
+    "title": "Twenty Candles",
     "lines": [
-      "Twenty years ago today,",
-      "the sky lost a little sunlight…",
-      "and I got a best friend."
+      "Okay… one last thing.",
+      "Make a wish, {name}.",
+      "But first…",
+      "Twenty candles."
     ],
-    "big": "Happy Birthday",
-    "name": "Deepu",
-    "sub": "Welcome to twenty, my Kuchu Puchu.",
-    "hugLine": "Now stop crying and come here.",
-    "hugButton": "Send a hug",
-    "hugMessage": "I watched it. I'm crying. Come here right now 🫂",
-    "hugDone": "Hug received. Coming over with the biggest one.",
-    "daysLine": "days of you on this planet",
-    "daysSub": "and the world got a little brighter on every single one of them."
+    "blowHint": "Wish first. Then blow into your phone. All twenty. No pressure.",
+    "tapFallback": "Blow them out",
+    "afterBlow": "Show-off. Whatever you wished for, I’m already on its side.",
+    "cutHint": "Now swipe across the cake to cut it",
+    "afterCut": "First slice is yours. The last one is… under negotiation.",
+    "wish": "I snuck in a wish too: that you get yours, plus whatever you forgot to ask for."
+  },
+  "constellation": {
+    "kicker": "Chapter Eight",
+    "title": "Every Little Piece of You",
+    "lines": [
+      "On their own, they’re just moments.",
+      "Connect them, and look what they were making all along."
+    ],
+    "handwritten": "That’s my best friend, by the way."
+  },
+  "birthday": {
+    "title": "The Last Lantern",
+    "years": "20 years.",
+    "months": "240 months.",
+    "days": "7,305 days.",
+    "somehow": "And somehow…",
+    "interesting": "you’ve managed to make all of them more interesting.",
+    "lanterns": [
+      "Every one of those days deserved a lantern.",
+      "Tonight, they all get one."
+    ],
+    "big": "Happy 20th Birthday",
+    "name": "{name}",
+    "loved": [
+      "In case you ever forget, on some bad day:",
+      "you are loved. Not politely. Properly.",
+      "The ‘text me when you get home’ kind.",
+      "The kind that would build you a whole sky. And did."
+    ],
+    "closing": "I’m really glad you were born. That’s the whole film."
+  },
+  "hug": {
+    "title": "One Last Thing",
+    "lines": [
+      "Okay, final step.",
+      "Send me a hug."
+    ],
+    "holdHint": "Press and hold",
+    "done": [
+      "Hug received. Excellent technique. Very strong.",
+      "Now go send me the real one."
+    ],
+    "message": "I watched the whole thing. You’re ridiculous. Come here. Hug. Now. 🫂"
   },
   "credits": {
-    "lines": [
+    "opening": "A little birthday film for…",
+    "roles": [
       [
         "Starring",
-        "Deepu, as herself"
+        "{name}, as herself"
       ],
       [
-        "Also starring",
-        "Pinky  ·  Kuchu Puchu"
+        "Written, designed & made with way too much effort by",
+        "{creator}"
+      ],
+      [
+        "Featuring",
+        "{photoCount} photographs of {name}"
+      ],
+      [
+        "Special appearances by",
+        "Pinky · Kuchi Puchi · the chameleon · twenty candles · thousands of lanterns"
       ],
       [
         "Best supporting role",
-        "Me. Always. Forever."
-      ],
-      [
-        "Written & directed by",
-        "Someone who loves you a ridiculous amount"
-      ],
-      [
-        "Filmed on location",
-        "Everywhere you've ever smiled"
-      ],
-      [
-        "Original soundtrack",
-        "Your laugh (it's still the best song)"
-      ],
-      [
-        "Catering",
-        "One very large birthday cake"
+        "Still me. Not giving it up."
       ],
       [
         "Lighting",
-        "Ten thousand lanterns & one Deepu"
+        "{name}. The lanterns were mostly for show."
       ],
       [
-        "Special thanks",
-        "January 3rd, 2007 — for everything"
+        "Original score",
+        "Her laugh. Uncredited, unlicensed, irreplaceable."
+      ],
+      [
+        "Hair & makeup",
+        "Her hair, as itself. The longest-running role in the film."
+      ],
+      [
+        "Filmed on location",
+        "A tower, a lake, and a few thousand late-night conversations"
+      ],
+      [
+        "Continuity",
+        "Said “one last thing” at least three times. Regrets: none."
+      ],
+      [
+        "Catering",
+        "One birthday cake, minus one slice (see post-credits)"
       ],
       [
         "Emergency equipment",
-        "One frying pan (unused… mostly)"
+        "One frying pan. Mostly for pancakes. Mostly."
       ],
       [
-        "Security",
-        "A very serious horse"
+        "Certification",
+        "U/A: Unreasonably Adorable"
       ],
       [
-        "Rating",
-        "Best. Day. Ever."
+        "Special thanks",
+        "3 January 2007, the day the sun got careless"
       ],
       [
         "",
-        "No chameleons were harmed in the making of this film."
+        "No chameleons were harmed in the making of this film. One was mildly embarrassed."
       ]
     ],
     "end": "The end of chapter nineteen.",
     "endSub": "Chapter twenty begins now.",
-    "extrasTitle": "More pages, still being written",
-    "extrasSub": "Memories added along the way"
+    "postCredits": [
+      "Wait. Where did the last slice go?",
+      "The chameleon is now exactly the colour of frosting.",
+      "It says happy birthday. With its mouth full."
+    ],
+    "extrasTitle": "The Extended Edition",
+    "extrasSub": "Everything that didn’t fit, and everything still to come.",
+    "secrets": "Secrets found: {found} of {total}"
+  },
+  "gallery": {
+    "allKicker": "The full reel",
+    "allTitle": "All of You, So Far"
   }
 }

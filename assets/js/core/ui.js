@@ -44,6 +44,9 @@ export function createUI({ audio, reducedMotion }) {
   function setSignal(s) { signal = s; }
   /** Token filler for owner-written text ({name}, {creator}, {photoCount}…). */
   function setFill(fn) { fill = fn || ((t) => t); }
+  let kickerMap = (k) => k;
+  /** Lets the projector renumber "Chapter Five" when chapters are switched off. */
+  function setKicker(fn) { kickerMap = fn || ((k) => k); }
 
   /** Show one line; returns { el, out() } */
   function showLine(raw, { style = '', position } = {}) {
@@ -109,7 +112,7 @@ export function createUI({ audio, reducedMotion }) {
     const g = gsap();
     card.innerHTML = '';
     const k = html('<div class="cc-kicker"></div>');
-    k.textContent = fill(String(kicker || ''));
+    k.textContent = fill(kickerMap(String(kicker || '')));
     const t = html('<div class="cc-title"></div>');
     const chars = [];
     for (const word of fill(String(title || '')).split(' ')) {
@@ -194,5 +197,5 @@ export function createUI({ audio, reducedMotion }) {
     gsap().set(card, { opacity: 0, visibility: 'hidden' });
   }
 
-  return { narrate, say, chapterCard, waitContinue, hint, reset, setSignal, setFill, clearSubs, fill: (t) => fill(String(t ?? '')) };
+  return { narrate, say, chapterCard, waitContinue, hint, reset, setSignal, setFill, setKicker, clearSubs, fill: (t) => fill(String(t ?? '')) };
 }

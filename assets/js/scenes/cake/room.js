@@ -66,7 +66,7 @@ export function buildBackdrop() {
         float h = pow(max(0.0, dot(normalize(vDir * vec3(1.0, 1.6, 1.0)), vec3(0.0, 0.05, -1.0))), 6.0);
         col += vec3(0.02, 0.012, 0.04) * h * 0.6;
         // …which turns into warm golden light once the candles are out
-        col += vec3(0.11, 0.055, 0.012) * pow(h, 0.7) * uWarm;
+        col += vec3(0.075, 0.036, 0.008) * pow(h, 1.1) * smoothstep(0.55, -0.05, y) * uWarm;
         col *= 0.35 + 0.65 * uRoom;
         gl_FragColor = vec4(col, 1.0);
         #include <tonemapping_fragment>
@@ -239,8 +239,8 @@ export function buildTable({ lowPower = false, quality = 2, anisotropy = 4 } = {
   const wood = woodTexture(lowPower ? 512 : 1024);
   wood.anisotropy = anisotropy;
   const mat = quality >= 2
-    ? new THREE.MeshPhysicalMaterial({ map: wood, color: 0xb59a8a, roughness: 0.42, metalness: 0, clearcoat: 0.7, clearcoatRoughness: 0.14 })
-    : new THREE.MeshStandardMaterial({ map: wood, color: 0xb59a8a, roughness: 0.3, metalness: 0 });
+    ? new THREE.MeshPhysicalMaterial({ map: wood, color: 0xae8a7e, roughness: 0.45, metalness: 0, clearcoat: 0.4, clearcoatRoughness: 0.16 })
+    : new THREE.MeshStandardMaterial({ map: wood, color: 0xae8a7e, roughness: 0.36, metalness: 0 });
   const top = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.5, 0.12, 160, 1), mat);
   top.position.y = -0.06;
   group.add(top);

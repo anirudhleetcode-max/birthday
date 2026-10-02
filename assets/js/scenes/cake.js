@@ -265,7 +265,7 @@ class CakeScene {
     // become the golden after-glow (behind / below the cake) once they're out.
     this.pl = [new THREE.PointLight(0xffa24f, 0, 0, 2), new THREE.PointLight(0xffb867, 0, 0, 2)];
     this.plCandle = [new THREE.Vector3(-0.2, t2y + DIM.t2.H + 0.36, 0.34), new THREE.Vector3(0.3, t2y + DIM.t2.H + 0.34, -0.08)];
-    this.plGold = [new THREE.Vector3(0.1, 1.0, -1.9), new THREE.Vector3(0.5, 0.22, 1.75)];
+    this.plGold = [new THREE.Vector3(0.0, 2.3, -2.3), new THREE.Vector3(0.7, 0.85, 2.2)];
     this.pl[0].position.copy(this.plCandle[0]);
     this.pl[1].position.copy(this.plCandle[1]);
     this.hemi = new THREE.HemisphereLight(0x5162b0, 0x1c0e08, 0.2);
@@ -343,7 +343,8 @@ class CakeScene {
     const phi0 = C[0].phi, phiL = C[C.length - 1].phi;
     const wick = (c) => c.tip.clone().add(new THREE.Vector3(0, 0.022, 0));
     const pts = [];
-    [[-4.5, 1.64, 0.5], [-3.6, 1.52, 0.82], [-2.7, 1.36, 1.16], [-1.8, 1.14, 1.5], [-1.0, 0.88, top - 0.04], [-0.45, 0.68, top + 0.17]]
+    // rises from the table at her left, sweeping up around the visible front of the cake
+    [[-2.75, 1.85, 0.3], [-2.2, 1.7, 0.62], [-1.65, 1.52, 0.98], [-1.15, 1.3, 1.36], [-0.72, 1.02, top - 0.12], [-0.36, 0.74, top + 0.14]]
       .forEach(([d, r, y]) => pts.push(P(phi0 + d, r, y)));
     C.forEach((c) => pts.push(wick(c)));
     pts.push(P(phiL + 0.28, 0.68, top + 0.15), P(phiL + 0.6, 0.86, top + 0.02));
@@ -424,7 +425,8 @@ class CakeScene {
   tick(now) {
     if (this.dead) return;
     this.raf = requestAnimationFrame(this.tick);
-    const dt = clamp((now - this.last) / 1000, 0, 0.05);
+    const rawDt = clamp((now - this.last) / 1000, 0, 0.25);
+    const dt = Math.min(rawDt, 0.05);
     this.last = now;
     this.time += dt;
     this.frames++;
@@ -433,7 +435,7 @@ class CakeScene {
     // --- breath / blow input ---
     const B = this.blow;
     let mic = 0, micLevel = 0;
-    if (this.det) { mic = this.det.update(dt); micLevel = this.det.level; }
+    if (this.det) { mic = this.det.update(rawDt); micLevel = this.det.level; } // real time for calibration/sustain
     B.key += ((B.keyDown ? 0.85 : 0) - B.key) * Math.min(1, dt * (B.keyDown ? 6 : 5));
     let wave = 0;
     if (B.wave) {
@@ -490,8 +492,8 @@ class CakeScene {
       this.pl[0].position.copy(this.plCandle[0]); this.pl[1].position.copy(this.plCandle[1]);
       this.pl[0].color.copy(C.candle0); this.pl[1].color.copy(C.candle1);
     }
-    this.pl[0].intensity = cl + g * 7.5 * (1 + 0.8 * kick);
-    this.pl[1].intensity = cl * 0.85 * (1 + 0.05 * Math.sin(t * 17.0)) + g * 2.4 * (1 + kick);
+    this.pl[0].intensity = cl + g * 9.0 * (1 + 0.8 * kick);
+    this.pl[1].intensity = cl * 0.85 * (1 + 0.05 * Math.sin(t * 17.0)) + g * 1.5 * (1 + kick);
     if (this.head && this.headOn > 0.01) {
       // the strand carries its own little warm light as it travels
       this.pl[1].position.copy(this.headPos);
@@ -606,7 +608,7 @@ class CakeScene {
     let ignition = null;
     for (let i = 0; i < n; i++) {
       const last = i === n - 1;
-      this.to(this.L, { hush: Math.min(0.85, 0.25 + (0.6 * (i + 1)) / n), duration: 2.6, ease: 'sine.inOut' });
+      this.to(this.L, { hush: Math.min(0.75, 0.2 + (0.55 * (i + 1)) / n), duration: 2.6, ease: 'sine.inOut' });
       if (!this.reduced) this.to(this.cam, { distK: 1.0 - 0.02 * (i + 1), duration: 3.2, ease: 'sine.inOut' });
       if (last) ignition = this.wait(0.7).then(() => this.ignite());
       await this.narrate([lines[i]], { hold: holds[Math.min(i, holds.length - 1)] + (lines[i].length > 18 ? 0.2 : 0), gap: last ? 0.6 : 0.8 });
@@ -625,7 +627,7 @@ class CakeScene {
     this.headPath = path;
     this.headS = red ? this.sweepS : this.candleS;
     this.headOn = 0;
-    this.head = { tau: 0, s: 0, L: red ? 0.9 : 1.2, emitAcc: 0 };
+    this.head = { tau: 0, s: 0, L: red ? 1.2 : 2.1, emitAcc: 0 };
     this.strand.uniforms.uRing.value = 0;
     this.strand.uniforms.uOpacity.value = 0;
     this.to(this.strand.uniforms.uOpacity, { value: 1, duration: 0.5 });
@@ -677,7 +679,7 @@ class CakeScene {
     this.strand.update(path, s0, h.s, t, { wobble: wob });
     path.at(h.s, this.headPos);
     this.spark.position.copy(this.headPos);
-    this.spark.scale.setScalar(0.18 + 0.04 * Math.sin(t * 17) + 0.02 * Math.sin(t * 31));
+    this.spark.scale.setScalar(0.26 + 0.05 * Math.sin(t * 17) + 0.025 * Math.sin(t * 31));
     // light wicks as the strand passes them
     this.headS.forEach((sc, i) => { if (!this.candles[i].target && h.s >= sc) this.lightCandle(i, i); });
     // a few sparkles shed from the head

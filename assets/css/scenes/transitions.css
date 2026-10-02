@@ -1,1 +1,36 @@
-/* transitions chapter styles */
+/* ==========================================================================
+   Film transitions (core/transitions.js) — everything lives inside #transition
+   and is removed when the transition ends.
+   ========================================================================== */
+#transition.tr-on { opacity: 1; overflow: hidden; contain: layout paint; }
+#transition .tr-layer {
+  position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+  display: block; pointer-events: none;
+}
+/* the dust mask is a tiny canvas scaled up: let the browser blur it softly */
+#transition .tr-smooth { image-rendering: auto; }
+#transition .tr-host { position: absolute; inset: 0; pointer-events: none; }
+
+/* lantern */
+#transition .tr-lantern {
+  position: absolute; left: 0; top: 0; will-change: transform, opacity;
+  filter: drop-shadow(0 0 18px rgba(255, 179, 71, .55));
+}
+#transition .tr-lantern .lantern-svg { display: block; }
+
+/* page */
+#transition .tr-book { position: absolute; inset: 0; perspective-origin: 50% 50%; transform-style: preserve-3d; }
+#transition .tr-pshade {
+  position: absolute; inset: 0; opacity: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(10, 4, 18, .55), rgba(10, 4, 18, .18) 55%, rgba(10, 4, 18, 0));
+}
+#transition .tr-strip {
+  position: absolute; top: 0; height: 100%;
+  transform-origin: 0 50%; transform-style: preserve-3d; will-change: transform;
+}
+#transition .tr-book > .tr-strip { box-shadow: 0 0 40px rgba(20, 8, 30, .35); }
+#transition .tr-strip > canvas { position: absolute; left: 0; top: 0; width: calc(100% + 1px); height: 100%; display: block; }
+#transition .tr-strip > .tr-plight {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background: linear-gradient(90deg, rgba(60, 34, 14, .55), rgba(60, 34, 14, .15) 60%, rgba(255, 240, 210, .18));
+}

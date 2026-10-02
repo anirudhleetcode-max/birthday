@@ -89,7 +89,7 @@ export function createStrand({ segments = 150, fibres = 3 } = {}) {
         vec2 nrm = vec2(-dir.y, dir.x);
         nrm.x /= aspect;
         bool glow = aStrand < 0.5;
-        float w = glow ? 0.07 : 0.0075;
+        float w = glow ? 0.13 : 0.013;
         // tail tapers to nothing, head is rounded; a closed ring is even all round
         float taper = mix(smoothstep(0.0, 0.5, aU) * (1.0 - smoothstep(0.97, 1.0, aU) * 0.6), 1.0, uRing);
         float pulse = glow ? 1.0 : 0.75 + 0.25 * sin(aU * 26.0 + aStrand * 2.1 - uTime * 3.0);
@@ -105,7 +105,7 @@ export function createStrand({ segments = 150, fibres = 3 } = {}) {
         float across = exp(-vSide * vSide * (glow ? 3.2 : 2.4));
         float along = mix(pow(vU, 1.4), 1.0, uRing);
         float shimmer = 0.78 + 0.22 * sin(vU * 70.0 - uTime * 9.0 + vStrand * 1.7);
-        vec3 col = glow ? vec3(1.0, 0.6, 0.22) * 0.32 : vec3(1.0, 0.8, 0.42) * 1.25 * shimmer;
+        vec3 col = glow ? vec3(1.0, 0.6, 0.22) * 0.42 : vec3(1.0, 0.8, 0.42) * 1.35 * shimmer;
         // the hot head
         col += vec3(1.0, 0.93, 0.75) * pow(vU, 14.0) * (glow ? 0.6 : 2.2) * (1.0 - uRing);
         gl_FragColor = vec4(col * across * along * uOpacity, 1.0);
@@ -141,7 +141,7 @@ export function createStrand({ segments = 150, fibres = 3 } = {}) {
           if (s > 0) {
             // fibres twist around each other, loosening toward the tail
             const a = d * 14.0 + time * 2.2 + (s * Math.PI * 2) / (S - 1);
-            const r = 0.006 + 0.012 * (1 - t) * wobble;
+            const r = 0.009 + 0.022 * (1 - t) * wobble;
             Q.addScaledVector(N1, Math.cos(a) * r).addScaledVector(N2, Math.sin(a) * r);
           }
           pts[s * N + i].copy(Q);

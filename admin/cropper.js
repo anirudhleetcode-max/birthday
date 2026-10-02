@@ -1,27 +1,31 @@
 /**
  * cropper.js — full-screen, touch-friendly cropper LOCKED to a ratio.
  *
- *   openCropper({ source, ratio, shapes?, title, rule, step?, strength, initialRect?,
- *                 allowSkip?, confirmLabel?, caption? })
- *     → Promise<{ rect, ratio, caption } | { skip: true } | null>
+ *   openCropper({ source, ratio, shapes?, title, rule, step?, grade?, initialRect?, focal?,
+ *                 allowSkip?, confirmLabel? })
+ *     → Promise<{ rect, ratio } | { skip: true } | null>
  *
- * Drag to pan (pointer events), pinch with two fingers, mouse-wheel or slider to zoom.
- * The image always covers the frame, so the result is always exactly the ratio.
+ * Drag to pan (pointer events), pinch with two fingers, mouse-wheel / slider / keyboard
+ * to zoom and move. The image always covers the frame, so the result is always exactly
+ * the ratio. `shapes` (ratio strings) shows a shape picker (only when adding photos).
  */
-import { h, icon, clearToasts } from './ui.js';
-import { parseRatio } from './model.js';
-import { drawRegion, previewCrop, autoCropRect } from './images.js';
+import { h, icon, clearToasts, trapFocus } from './ui.js';
+import { intRatio, ratioWords } from './util.js';
+import { drawRegion, renderPreview, autoCropRect } from './images.js';
 
 const DISPLAY_MAX = 1800;
 const MAX_ZOOM = 6;
 
+const shapeName = (r) => ({ portrait: 'Portrait', landscape: 'Landscape', square: 'Square' })[ratioWords(r)];
+
 export function openCropper(opts) {
   const {
-    source, shapes = null, title = 'Crop', rule = '', step = '', strength = 0.85,
-    initialRect = null, allowSkip = false, confirmLabel = 'Use this crop', caption = null,
+    source, shapes = null, title = 'Crop', rule = '', step = '', grade = null,
+    initialRect = null, focal = null, allowSkip = false, confirmLabel = 'Use this crop',
   } = opts;
-  let ratio = opts.ratio || (shapes && shapes[0].ratio) || '1:1';
-  const srcW = source.width, srcH = source.height;
+  let ratio = opts.ratio || (shapes && shapes[0]) || '1:1';
+  const srcW = source.width;
+  const srcH = source.height;
 
   return new Promise((resolve) => {
     // ---------- display bitmap ----------
@@ -33,10 +37,12 @@ export function openCropper(opts) {
     // ---------- DOM ----------
     const frame = h('div.crop-frame', h('i.third.v1'), h('i.third.v2'), h('i.third.h1'), h('i.third.h2'),
       h('i.corner.tl'), h('i.corner.tr'), h('i.corner.bl'), h('i.corner.br'));
-    const stage = h('div.crop-stage', { tabindex: '0', 'aria-label': 'Drag to move the photo, pinch or scroll to zoom' }, disp, frame);
-    const ruleText = h('span.crop-rule-text', rule);
-    const ruleBadge = h('span.ratio-badge', parseRatio(ratio).label);
-    const ruleBar = h('div.crop-rule', ruleBadge, ruleText);
+    const stage = h('div.crop-stage', {
+      tabindex: '0', role: 'application',
+      'aria-label': 'Crop area. Drag to move the photo, pinch or scroll to zoom. Arrow keys move, plus and minus zoom, Enter confirms.',
+    }, disp, frame);
+    const ruleBadge = h('span.ratio-badge.locked', intRatio(ratio).label);
+    const ruleBar = h('div.crop-rule', h('span.crop-lock', icon('lock'), ruleBadge), h('span.crop-rule-text', rule));
 
     const zoom = h('input.zoom-range', { type: 'range', min: '0', max: '1000', step: '1', value: '0', 'aria-label': 'Zoom' });
     const zoomRow = h('div.zoom-row',
@@ -49,24 +55,21 @@ export function openCropper(opts) {
     if (shapes && shapes.length) {
       shapeRow = h('div.shape-row', { role: 'radiogroup', 'aria-label': 'Shape' },
         shapes.map((s) => {
-          const r = parseRatio(s.ratio);
+          const r = intRatio(s);
           const box = 22;
-          const bw = r.value >= 1 ? box : box * r.value, bh = r.value >= 1 ? box / r.value : box;
+          const bw = r.value >= 1 ? box : box * r.value;
+          const bh = r.value >= 1 ? box / r.value : box;
           return h('button.shape-chip', {
-            type: 'button', role: 'radio', 'aria-checked': String(s.ratio === ratio), dataset: { ratio: s.ratio },
-            onclick: () => setRatio(s.ratio),
-          }, h('span.shape-glyph', { style: { width: `${bw}px`, height: `${bh}px` } }), h('span.shape-txt', h('b', s.label), h('small', s.sub)));
+            type: 'button', role: 'radio', 'aria-checked': String(s === ratio), dataset: { ratio: s },
+            onclick: () => setRatio(s),
+          }, h('span.shape-glyph', { style: { width: `${bw}px`, height: `${bh}px` } }), h('span.shape-txt', h('b', shapeName(s)), h('small', r.label)));
         }));
     }
 
     const pv = h('canvas.crop-preview-canvas');
-    const preview = h('figure.crop-preview', h('div.crop-preview-box', pv), h('figcaption', 'How it will look'));
-    let captionInput = null;
-    if (caption !== null) {
-      captionInput = h('input.input', { type: 'text', value: caption || '', placeholder: 'Caption (optional)', maxlength: '140', 'aria-label': 'Caption' });
-    }
+    const preview = h('figure.crop-preview', h('div.crop-preview-box', pv), h('figcaption', grade ? 'Graded preview' : 'Preview'));
 
-    const btnConfirm = h('button.btn.gold', { type: 'button', onclick: () => finish('ok') }, icon('check'), confirmLabel);
+    const btnConfirm = h('button.btn.gold', { type: 'button', 'data-testid': 'crop-confirm', onclick: () => finish('ok') }, icon('check'), confirmLabel);
     const actions = h('div.crop-actions',
       h('button.btn.ghost', { type: 'button', onclick: () => finish(null) }, 'Cancel'),
       btnConfirm,
@@ -83,25 +86,28 @@ export function openCropper(opts) {
       h('div.crop-panel',
         shapeRow,
         zoomRow,
-        h('p.crop-tip', 'Drag to move · pinch or scroll to zoom'),
-        h('div.crop-bottom', preview, h('div.crop-side', captionInput, actions)),
+        h('p.crop-tip', 'Drag to move · pinch or scroll to zoom · the shape stays locked'),
+        h('div.crop-bottom', preview, h('div.crop-side', actions)),
       ),
     );
     clearToasts();
     document.body.append(root);
     document.body.classList.add('has-cropper');
+    const untrap = trapFocus(root);
     requestAnimationFrame(() => root.classList.add('in'));
 
     // ---------- state ----------
-    let fx = 0, fy = 0, fw = 100, fh = 100; // frame box in stage coords
-    let S = 1, ox = 0, oy = 0;             // CSS px per source px; image offset relative to frame
-    let sMin = 1, sMax = 6;
+    let fx = 0; let fy = 0; let fw = 100; let fh = 100; // frame box in stage coords
+    let S = 1; let ox = 0; let oy = 0; //              CSS px per source px; image offset relative to frame
+    let sMin = 1; let sMax = 6;
 
     function layout(keepRect) {
-      const r = parseRatio(ratio).value;
-      const sw = stage.clientWidth, sh = stage.clientHeight;
+      const r = intRatio(ratio).value;
+      const sw = stage.clientWidth;
+      const sh = stage.clientHeight;
       const pad = Math.max(14, Math.min(36, Math.min(sw, sh) * 0.06));
-      const aw = Math.max(40, sw - pad * 2), ah = Math.max(40, sh - pad * 2);
+      const aw = Math.max(40, sw - pad * 2);
+      const ah = Math.max(40, sh - pad * 2);
       fw = Math.min(aw, ah * r);
       fh = fw / r;
       fx = (sw - fw) / 2;
@@ -114,7 +120,8 @@ export function openCropper(opts) {
 
     function setFromRect(rect) {
       S = clamp(fw / rect.w, sMin, sMax);
-      const cx = rect.x + rect.w / 2, cy = rect.y + rect.h / 2;
+      const cx = rect.x + rect.w / 2;
+      const cy = rect.y + rect.h / 2;
       ox = fw / 2 - cx * S;
       oy = fh / 2 - cy * S;
       clampPos();
@@ -122,12 +129,12 @@ export function openCropper(opts) {
     }
 
     function currentRect() {
-      const r = parseRatio(ratio).value;
+      const r = intRatio(ratio).value;
       let w = Math.min(srcW, fw / S);
       let hh = w / r;
       if (hh > srcH) { hh = srcH; w = hh * r; }
-      let x = clamp(-ox / S, 0, srcW - w);
-      let y = clamp(-oy / S, 0, srcH - hh);
+      const x = clamp(-ox / S, 0, srcW - w);
+      const y = clamp(-oy / S, 0, srcH - hh);
       return { x, y, w, h: hh };
     }
 
@@ -140,7 +147,7 @@ export function openCropper(opts) {
       const k = S / dsf;
       disp.style.transform = `translate3d(${fx + ox}px, ${fy + oy}px, 0) scale(${k})`;
       const t = Math.log(S / sMin) / Math.log(sMax / sMin);
-      zoom.value = String(Math.round(clamp(isFinite(t) ? t : 0, 0, 1) * 1000));
+      zoom.value = String(Math.round(clamp(Number.isFinite(t) ? t : 0, 0, 1) * 1000));
       schedulePreview();
     }
 
@@ -159,7 +166,7 @@ export function openCropper(opts) {
       const prev = currentRect();
       const zoomRel = S / sMin;
       ratio = next;
-      ruleBadge.textContent = parseRatio(ratio).label;
+      ruleBadge.textContent = intRatio(ratio).label;
       if (shapeRow) for (const b of shapeRow.children) b.setAttribute('aria-checked', String(b.dataset.ratio === ratio));
       layout(null);
       S = clamp(sMin * zoomRel, sMin, sMax);
@@ -185,7 +192,7 @@ export function openCropper(opts) {
     }
 
     stage.addEventListener('pointerdown', (e) => {
-      if (e.button !== undefined && e.button !== 0 && e.pointerType === 'mouse') return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
       stage.setPointerCapture?.(e.pointerId);
       pts.set(e.pointerId, local(e));
       stage.classList.add('dragging');
@@ -200,10 +207,11 @@ export function openCropper(opts) {
       if (gesture.type === 'pinch' && p.length >= 2) {
         const [a, b] = p;
         const d = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+        const mx = (a.x + b.x) / 2;
+        const my = (a.y + b.y) / 2;
         const newS = clamp(gesture.s0 * (d / gesture.d0), sMin, sMax);
-        // the source point under the starting midpoint follows the fingers
-        const sx = (gesture.mx - gesture.ox0) / gesture.s0, sy = (gesture.my - gesture.oy0) / gesture.s0;
+        const sx = (gesture.mx - gesture.ox0) / gesture.s0;
+        const sy = (gesture.my - gesture.oy0) / gesture.s0;
         S = newS;
         ox = mx - sx * S;
         oy = my - sy * S;
@@ -239,8 +247,8 @@ export function openCropper(opts) {
       else if (e.key === 'ArrowRight') ox -= stepPx;
       else if (e.key === 'ArrowUp') oy += stepPx;
       else if (e.key === 'ArrowDown') oy -= stepPx;
-      else if (e.key === '+' || e.key === '=') { zoomBy(1.15); return e.preventDefault(); }
-      else if (e.key === '-' || e.key === '_') { zoomBy(1 / 1.15); return e.preventDefault(); }
+      else if (e.key === '+' || e.key === '=') { zoomBy(1.15); e.preventDefault(); return; }
+      else if (e.key === '-' || e.key === '_') { zoomBy(1 / 1.15); e.preventDefault(); return; }
       else used = false;
       if (used) { e.preventDefault(); clampPos(); apply(); }
     });
@@ -249,18 +257,21 @@ export function openCropper(opts) {
       zoomAt(sMin * Math.pow(sMax / sMin, t), fw / 2, fh / 2);
     });
 
-    // ---------- live graded preview ----------
-    let pvTimer = 0, pvBusy = false, pvAgain = false;
+    // ---------- live (graded) preview ----------
+    let pvTimer = 0;
+    let pvBusy = false;
+    let pvAgain = false;
     function schedulePreview(now) {
       clearTimeout(pvTimer);
-      pvTimer = setTimeout(renderPreview, now ? 30 : 140);
+      pvTimer = setTimeout(renderPv, now ? 30 : 160);
     }
-    async function renderPreview() {
+    async function renderPv() {
       if (pvBusy) { pvAgain = true; return; }
       pvBusy = true;
       try {
-        const c = await previewCrop(source, currentRect(), ratio, strength, 360);
-        pv.width = c.width; pv.height = c.height;
+        const c = await renderPreview(source, { ratio, rectPx: currentRect(), grade, longPx: 360 });
+        pv.width = c.width;
+        pv.height = c.height;
         pv.getContext('2d').drawImage(c, 0, 0);
         pv.style.aspectRatio = `${c.width} / ${c.height}`;
       } catch (err) {
@@ -282,25 +293,26 @@ export function openCropper(opts) {
     // ---------- init ----------
     requestAnimationFrame(() => {
       layout(null);
-      const r0 = initialRect && Math.abs((initialRect.w / initialRect.h) / parseRatio(ratio).value - 1) < 0.02
-        ? initialRect
-        : autoCropRect(srcW, srcH, ratio);
-      setFromRect(r0);
+      const fits = initialRect && Math.abs((initialRect.w / initialRect.h) / intRatio(ratio).value - 1) < 0.02;
+      setFromRect(fits ? initialRect : autoCropRect(srcW, srcH, ratio, focal || undefined));
       stage.focus({ preventScroll: true });
     });
 
-    const onKey = (e) => { if (e.key === 'Escape') finish(null); else if (e.key === 'Enter' && document.activeElement === stage) finish('ok'); };
-    document.addEventListener('keydown', onKey);
+    const onKey = (e) => {
+      if (e.key === 'Escape') { e.stopPropagation(); finish(null); }
+      else if (e.key === 'Enter' && document.activeElement === stage) finish('ok');
+    };
+    document.addEventListener('keydown', onKey, true);
 
     let finished = false;
     function finish(kind) {
       if (finished) return;
       finished = true;
-      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('keydown', onKey, true);
+      untrap();
       if (ro) ro.disconnect(); else window.removeEventListener('resize', relayout);
       clearTimeout(pvTimer);
-      const out = kind === 'ok' ? { rect: currentRect(), ratio, caption: captionInput ? captionInput.value.trim() : undefined }
-        : kind === 'skip' ? { skip: true } : null;
+      const out = kind === 'ok' ? { rect: currentRect(), ratio } : kind === 'skip' ? { skip: true } : null;
       root.classList.remove('in');
       root.classList.add('out');
       setTimeout(() => {

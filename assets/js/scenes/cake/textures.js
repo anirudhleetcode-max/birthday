@@ -184,8 +184,11 @@ function fondantBase(g, W, H, top, bot, R) {
   }
 }
 
-export function paintedSideTexture({ W = 2048, H = 256, repeats = 12, seed = 3 } = {}) {
-  const c = cnv(W, H), g = c.getContext('2d');
+export function paintedSideTexture({ W: CW = 2048, H: CH = 256, repeats = 12, seed = 3 } = {}) {
+  // paint in a fixed 2048×256 logical space so low-res canvases keep the same motif scale
+  const W = 2048, H = 256;
+  const c = cnv(CW, CH), g = c.getContext('2d');
+  g.scale(CW / W, CH / H);
   const R = rng(seed);
   fondantBase(g, W, H, '#d2bdf7', '#bea6ee', R);
   const Y = (v) => (1 - v) * H;
@@ -251,9 +254,11 @@ export function paintedSideTexture({ W = 2048, H = 256, repeats = 12, seed = 3 }
 
 // Top tier: plain fondant + edible gold-leaf flecks. Returns {map, mr} where
 // `mr` drives roughness (G) & metalness (B) so the flecks really glint.
-export function goldLeafSideTextures({ W = 1536, H = 256, seed = 11 } = {}) {
-  const c = cnv(W, H), g = c.getContext('2d');
-  const m = cnv(W, H), gm = m.getContext('2d');
+export function goldLeafSideTextures({ W: CW = 1536, H: CH = 256, seed = 11 } = {}) {
+  const W = 1536, H = 256;
+  const c = cnv(CW, CH), g = c.getContext('2d');
+  const m = cnv(CW, CH), gm = m.getContext('2d');
+  g.scale(CW / W, CH / H); gm.scale(CW / W, CH / H);
   const R = rng(seed);
   fondantBase(g, W, H, '#d6c2f8', '#c3abef', R);
   gm.fillStyle = 'rgb(0,150,0)'; gm.fillRect(0, 0, W, H);

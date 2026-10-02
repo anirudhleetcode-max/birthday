@@ -106,7 +106,7 @@ export function createCrumbs(max = 60) {
           x: pos.x + (Math.random() - 0.5) * 0.04, y: pos.y, z: pos.z + (Math.random() - 0.5) * 0.04,
           vx: (Math.random() - 0.5) * 0.5 + (away ? away.x * 0.25 : 0), vy: 0.5 + Math.random() * 0.7, vz: (Math.random() - 0.5) * 0.5 + (away ? away.z * 0.25 : 0),
           rx: Math.random() * 6, ry: Math.random() * 6, vr: (Math.random() - 0.5) * 12,
-          size: 0.006 + Math.random() * 0.01, floor: floorY, age: 0, life: 2.6 + Math.random(), color: c, rest: false,
+          size: 0.009 + Math.random() * 0.013, floor: floorY, age: 0, life: 2.6 + Math.random(), color: c, rest: false,
         });
       }
     },

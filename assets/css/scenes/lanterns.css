@@ -1,4 +1,40 @@
-/* ---------- lanterns ---------- */
+/* ---------- lanterns: The Night of Lanterns ---------- */
 .scene-lanterns { background: #04020a; }
-.scene-lanterns canvas.gl { touch-action: none; }
+.scene-lanterns canvas.gl { touch-action: none; cursor: pointer; }
 .ln-veil { position: absolute; inset: 0; background: #04020a; pointer-events: none; }
+
+/* a soft vignette that gathers the eye while a memory is close */
+.ln-focus {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background: radial-gradient(ellipse 78% 62% at 50% 44%, rgba(4, 2, 12, 0) 34%, rgba(4, 2, 12, .62) 100%);
+}
+
+/* the caption of a photo-lantern brought close */
+.ln-caption {
+  position: absolute; left: 50%; top: 0; margin: 0;
+  width: min(84vw, 560px); transform: translateX(-50%);
+  text-align: center; pointer-events: none; opacity: 0; visibility: hidden; isolation: isolate;
+}
+.ln-caption.on { visibility: visible; }
+.ln-caption::before {
+  content: ''; position: absolute; inset: -22px -8%; z-index: -1; border-radius: 50%;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(6, 3, 16, .62) 0%, rgba(6, 3, 16, .38) 55%, rgba(6, 3, 16, 0) 100%);
+}
+.ln-caption figcaption { display: grid; justify-items: center; gap: 9px; }
+.ln-cap-text {
+  font-family: var(--f-serif); font-style: italic; font-weight: 300;
+  font-size: clamp(19px, 4.9vw, 29px); line-height: 1.28; letter-spacing: .01em;
+  color: var(--cream); text-wrap: balance; overflow-wrap: anywhere;
+  text-shadow: 0 0 20px rgba(255, 190, 110, .35), 0 2px 12px rgba(0, 0, 0, .85);
+}
+.ln-cap-rule {
+  display: block; width: 56px; height: 1px;
+  background: linear-gradient(90deg, rgba(244, 196, 99, 0), rgba(244, 196, 99, .9), rgba(244, 196, 99, 0));
+}
+.ln-cap-date {
+  font-family: var(--f-caps); font-size: clamp(10px, 2.6vw, 12.5px);
+  letter-spacing: .36em; margin-right: -.36em; text-transform: uppercase;
+  color: var(--gold-hi); opacity: .88;
+  text-shadow: 0 0 12px rgba(255, 190, 110, .4), 0 1px 8px rgba(0, 0, 0, .8);
+}
+.ln-caption [hidden] { display: none; }

@@ -1,14 +1,16 @@
 /**
  * github.js — tiny GitHub REST client for the admin portal (browser + Node-testable).
  *
- * Reads data/site.json through the Contents API (fresh, no CDN) and publishes everything
- * as ONE commit through the Git Data API:
- *   GET ref → GET commit → GET site.json@commit → GET tree (recursive)
- *   → POST blobs → POST tree (base_tree; new files, site.json, sha:null deletions)
+ * Reads data/settings.json, data/messages.json and data/photos.json through the
+ * Contents API (fresh, no CDN, decoded as UTF-8) and publishes everything as ONE
+ * commit through the Git Data API:
+ *   GET ref → GET commit → GET the three files @commit → GET tree (recursive)
+ *   → POST blobs → POST tree (base_tree; new files, changed JSON, sha:null deletions)
  *   → POST commit → PATCH ref   (409/422 on the way → re-fetch, re-merge, retry once)
  *
  * `fetch` is injectable so request building can be unit-checked with a mock.
  */
+import { FILES, LEGACY_FILE, combine, upgrade } from '../assets/js/shared/model.js';
 
 const API = 'https://api.github.com';
 
@@ -55,6 +57,9 @@ export async function blobToBase64(blob) {
   return btoa(bin);
 }
 
+/** The JSON text we write: 2-space indent + trailing newline. */
+export const jsonText = (obj) => `${JSON.stringify(obj, null, 2)}\n`;
+
 export class GitHub {
   /**
    * @param {{owner:string, repo:string, branch?:string, token?:string, fetch?:Function}} cfg
@@ -98,7 +103,7 @@ export class GitHub {
   }
 
   /**
-   * Low-level request. `path` is relative to /repos/{owner}/{repo} unless it starts with "/" + "user" etc.
+   * Low-level request. `path` is relative to /repos/{owner}/{repo} unless `absolute`.
    * @returns parsed JSON, a Blob (raw), or null (204)
    */
   async request(method, path, body, { raw = false, absolute = false } = {}) {
@@ -116,7 +121,7 @@ export class GitHub {
     let res;
     try {
       res = await this.fetch(url, init);
-    } catch (err) {
+    } catch {
       throw new GitHubError(this.friendly(0), 0, null, 'network');
     }
     if (!res.ok) {
@@ -149,26 +154,47 @@ export class GitHub {
 
   /** GET a text file via the Contents API, decoded as UTF-8. */
   async getText(path, ref = this.branch) {
-    const data = await this.request('GET', `/contents/${encodePath(path)}?ref=${encodeURIComponent(ref)}`);
+    const q = `/contents/${encodePath(path)}?ref=${encodeURIComponent(ref)}`;
+    const data = await this.request('GET', q);
     if (Array.isArray(data)) throw new GitHubError(`${path} is a folder, not a file.`, 0, null, 'notfile');
     if (data.encoding === 'base64' && typeof data.content === 'string' && (data.content.length || !data.size)) {
       return { text: decodeBase64Utf8(data.content), sha: data.sha };
     }
     // > 1 MB files come back without content → ask for the raw bytes
-    const blob = await this.request('GET', `/contents/${encodePath(path)}?ref=${encodeURIComponent(ref)}`, undefined, { raw: true });
+    const blob = await this.request('GET', q, undefined, { raw: true });
     return { text: await blob.text(), sha: data.sha };
   }
 
-  /** Current data/site.json (parsed) + its blob sha. */
-  async getSite(ref = this.branch) {
-    const { text, sha } = await this.getText('data/site.json', ref);
-    let site;
+  async getJSON(path, ref = this.branch) {
+    const { text, sha } = await this.getText(path, ref);
     try {
-      site = JSON.parse(text);
+      return { json: JSON.parse(text), text, sha };
     } catch {
-      throw new GitHubError('data/site.json on GitHub isn’t valid JSON. Fix it on GitHub (or restore an older version) and try again.', 0, null, 'json');
+      throw new GitHubError(`${path} on GitHub isn’t valid JSON. Fix it on GitHub (or restore an older version) and try again.`, 0, null, 'json');
     }
-    return { site, sha };
+  }
+
+  /**
+   * The published content: the three v2 files combined (or an old data/site.json, upgraded).
+   * @returns {Promise<{site: object, texts: {settings?:string, messages?:string, photos?:string}, legacy: boolean}>}
+   */
+  async getContent(ref = this.branch) {
+    const keys = Object.keys(FILES);
+    const got = await Promise.all(keys.map((k) => this.getJSON(FILES[k], ref).catch((err) => {
+      if (err.status === 404) return null;
+      throw err;
+    })));
+    if (got.every((g) => g === null)) {
+      const legacy = await this.getJSON(LEGACY_FILE, ref).catch((err) => {
+        if (err.status === 404) throw new GitHubError(`The repository has no ${FILES.settings} / ${FILES.messages} / ${FILES.photos}. Push the website files first.`, 404, null, 'nocontent');
+        throw err;
+      });
+      return { site: upgrade(legacy.json), texts: {}, legacy: true };
+    }
+    const parts = {};
+    const texts = {};
+    keys.forEach((k, i) => { if (got[i]) { parts[k] = got[i].json; texts[k] = got[i].text; } });
+    return { site: combine(parts), texts, legacy: false };
   }
 
   /** Raw bytes of any file as a Blob. */
@@ -185,10 +211,11 @@ export class GitHub {
    * Publish in ONE commit.
    * @param {{
    *   message: string,
-   *   prepare: (remoteSite: object, existing: Set<string>) => ({site: object, files: Map<string, Blob>, deletes: string[]} | Promise<…>),
+   *   prepare: (remote: {site, texts}, existing: Set<string>) => ({site: object, json: Object<string, object>, files: Map<string, Blob>, deletes: string[]} | Promise<…>),
    *   onProgress?: (fraction: number, label: string) => void,
    * }} opts
-   * @returns {Promise<{commitSha: string, site: object, uploaded: string[], deleted: string[], retried: boolean}>}
+   *   `json` maps repo paths (data/*.json) to objects; only include files that changed.
+   * @returns {Promise<{commitSha: string, site: object, uploaded: string[], written: string[], deleted: string[], retried: boolean}>}
    */
   async publish({ message, prepare, onProgress = () => {} }) {
     const uploadedShas = new Map(); // Blob → sha (re-used on retry)
@@ -200,18 +227,18 @@ export class GitHub {
         const headSha = ref.object.sha;
         const commit = await this.request('GET', `/git/commits/${headSha}`);
         const baseTree = commit.tree.sha;
-        const { site: remoteSite } = await this.getSite(headSha);
+        const remote = await this.getContent(headSha);
         const treeData = await this.request('GET', `/git/trees/${baseTree}?recursive=1`);
         const existing = new Set((treeData.tree || []).filter((e) => e.type === 'blob').map((e) => e.path));
 
-        const plan = await prepare(remoteSite, existing);
+        const plan = await prepare(remote, existing);
         const files = plan.files instanceof Map ? plan.files : new Map(Object.entries(plan.files || {}));
         const entries = [];
         const total = files.size;
         let i = 0;
         for (const [path, blob] of files) {
-          const label = /^media\//.test(path) ? 'file' : 'photo';
-          onProgress(0.08 + 0.78 * (i / Math.max(1, total)), `Uploading ${label} ${i + 1} of ${total}…`);
+          const label = /^media\//.test(path) ? 'file' : 'image';
+          onProgress(0.08 + 0.76 * (i / Math.max(1, total)), `Uploading ${label} ${i + 1} of ${total}…`);
           let sha = uploadedShas.get(blob);
           if (!sha) {
             const content = await blobToBase64(blob);
@@ -222,14 +249,22 @@ export class GitHub {
           entries.push({ path, mode: '100644', type: 'blob', sha });
           i++;
         }
-        onProgress(0.88, 'Saving your words & settings…');
-        entries.push({ path: 'data/site.json', mode: '100644', type: 'blob', content: JSON.stringify(plan.site, null, 2) + '\n' });
+        onProgress(0.86, 'Saving your words, photos & settings…');
+        const written = [];
+        for (const [path, obj] of Object.entries(plan.json || {})) {
+          entries.push({ path, mode: '100644', type: 'blob', content: jsonText(obj) });
+          written.push(path);
+        }
         const deleted = [];
         for (const p of plan.deletes || []) {
-          if (existing.has(p) && !files.has(p) && p !== 'data/site.json') {
+          if (existing.has(p) && !files.has(p) && !written.includes(p)) {
             entries.push({ path: p, mode: '100644', type: 'blob', sha: null });
             deleted.push(p);
           }
+        }
+        if (!entries.length) {
+          onProgress(1, 'Nothing to change.');
+          return { commitSha: headSha, site: plan.site, uploaded: [], written, deleted, retried, noop: true };
         }
         const tree = await this.request('POST', '/git/trees', { base_tree: baseTree, tree: entries });
         onProgress(0.93, 'Creating the update…');
@@ -237,7 +272,7 @@ export class GitHub {
         onProgress(0.97, 'Publishing…');
         await this.request('PATCH', `/git/refs/heads/${encodePath(this.branch)}`, { sha: newCommit.sha, force: false });
         onProgress(1, 'Published!');
-        return { commitSha: newCommit.sha, site: plan.site, uploaded: [...files.keys()], deleted, retried };
+        return { commitSha: newCommit.sha, site: plan.site, uploaded: [...files.keys()], written, deleted, retried };
       } catch (err) {
         if (attempt === 0 && err instanceof GitHubError && (err.status === 409 || err.status === 422) && !/empty/i.test((err.data && err.data.message) || '')) {
           retried = true;

@@ -1,28 +1,215 @@
-/* ---------- invite + gate ---------- */
-.scene-invite, .scene-gate { background: radial-gradient(ellipse 120% 80% at 50% 110%, #2a1440 0%, #160b26 45%, #0b0614 100%); }
-.inv-sky { position: absolute; inset: 0; }
-.inv-wrap, .gate-wrap {
-  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  text-align: center; padding: 0 8vw; gap: 10px;
-}
-.inv-lantern { width: clamp(90px, 24vw, 140px); height: clamp(128px, 34vw, 200px); margin-bottom: 14px; }
-.inv-greet {
-  margin: 0; font-family: var(--f-script); font-weight: 400; font-size: clamp(54px, 15vw, 110px); line-height: 1.05;
-  color: var(--gold-hi); text-shadow: 0 0 30px rgba(244, 196, 99, .45);
-}
-.inv-lines p { margin: .25em 0; font-style: italic; font-size: clamp(19px, 5vw, 26px); color: var(--lilac); line-height: 1.35; }
-.inv-btn { margin-top: 26px; }
-.inv-foot { margin: 14px 0 0; font-family: var(--f-caps); font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: var(--lavender); }
+/* ==========================================================================
+   Gate (countdown) + Invite — the night lake, the paper lantern, the first tap.
+   ========================================================================== */
 
-.gate-kicker { margin: 0; font-family: var(--f-script); font-size: clamp(40px, 11vw, 72px); color: var(--gold-hi); text-shadow: 0 0 24px rgba(244, 196, 99, .4); }
-.gate-title { margin: 0; font-family: var(--f-caps); font-weight: 400; font-size: clamp(13px, 3.4vw, 18px); letter-spacing: .4em; text-transform: uppercase; color: var(--lavender); }
-.gate-count { display: flex; gap: clamp(10px, 4vw, 34px); margin: 18px 0 6px; }
-.gate-count div { display: flex; flex-direction: column; align-items: center; min-width: 54px; }
-.gate-count b {
-  font-family: var(--f-display); font-weight: 400; font-size: clamp(34px, 10vw, 70px); line-height: 1;
-  color: var(--gold-hi); text-shadow: 0 0 22px rgba(244, 196, 99, .45);
-  font-variant-numeric: tabular-nums;
+/* ---------- the night lake (shared by gate + invite) ---------- */
+.scene-invite, .scene-gate { background: #070617; }
+.ns { position: absolute; inset: 0; pointer-events: none; }
+.ns-sky {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 90% 38% at 50% var(--hy, 74%), rgba(107, 63, 160, .34), transparent 70%),
+    linear-gradient(180deg, #05061a 0%, #0b1030 34%, #141a46 62%, #2a1a55 calc(var(--hy, 74%) - 2px), #2a1a55 var(--hy, 74%), #070616 100%);
 }
-.gate-count span { margin-top: 6px; font-family: var(--f-caps); font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--lavender); opacity: .75; }
-.gate-sub { margin: 10px 0 0; font-style: italic; font-size: clamp(17px, 4.4vw, 22px); color: var(--lilac); }
-.gate-btn { margin-top: 22px; }
+.ns-band { /* a faint milky band, very soft */
+  position: absolute; left: -30%; right: -30%; top: 6%; height: 34%; rotate: -16deg; opacity: .55;
+  background:
+    radial-gradient(ellipse 40% 48% at 32% 50%, rgba(185, 163, 227, .13), transparent 70%),
+    radial-gradient(ellipse 34% 40% at 64% 46%, rgba(242, 167, 195, .07), transparent 70%),
+    radial-gradient(ellipse 60% 22% at 50% 52%, rgba(255, 244, 224, .05), transparent 72%);
+  filter: blur(6px);
+}
+.ns-stars { position: absolute; inset: 0; -webkit-mask-image: linear-gradient(180deg, #000 0, #000 calc(var(--hy, 74%) - 16vh), transparent calc(var(--hy, 74%) - 1vh)); mask-image: linear-gradient(180deg, #000 0, #000 calc(var(--hy, 74%) - 16vh), transparent calc(var(--hy, 74%) - 1vh)); }
+.ns-warm { /* the promise of light on the horizon; scenes raise its opacity */
+  position: absolute; left: 0; right: 0; top: calc(var(--hy, 74%) - 34vh); height: 52vh; opacity: .22;
+  background: radial-gradient(ellipse 55% 46% at 50% 66%, rgba(255, 196, 120, .5), rgba(244, 164, 110, .16) 45%, transparent 72%);
+}
+.ns-land { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ns-shimmer { animation: ns-shimmer 11s ease-in-out infinite alternate; }
+@keyframes ns-shimmer { from { transform: translateX(-10px); opacity: .7; } to { transform: translateX(12px); opacity: 1; } }
+.ns-window { animation: ns-window 5s ease-in-out infinite alternate; }
+@keyframes ns-window { from { opacity: .5; } to { opacity: 1; } }
+
+/* ---------- the paper lantern (original drawing) ---------- */
+svg.lt { display: block; width: 100%; height: 100%; overflow: visible; }
+.lt .lt-halo, .lt .lt-flame { opacity: 0; }
+.lt .lt-ribs { stroke: rgba(201, 184, 240, .17); transition: stroke 1.6s ease; }
+.lt .lt-warmth { animation: lt-warm 2.8s ease-in-out infinite alternate; }
+@keyframes lt-warm { from { opacity: .45; } to { opacity: 1; } }
+.lt .lt-edge { stroke: rgba(214, 198, 250, .5); transition: stroke 1.6s ease; }
+.lt .lt-cap, .lt .lt-ring { stroke: #8d77c6; transition: stroke 1.6s ease; }
+.lt .lt-wire { stroke: rgba(141, 119, 198, .7); transition: stroke 1.6s ease; }
+.lt .lt-cell { fill: #2c2150; transition: fill 1.6s ease; }
+.lt .lt-ember { transform-box: fill-box; transform-origin: 50% 50%; animation: lt-ember 2.8s ease-in-out infinite alternate; }
+@keyframes lt-ember { from { opacity: .45; transform: scale(.8); } to { opacity: 1; transform: scale(1.12); } }
+.lt.is-lit .lt-ribs { stroke: rgba(190, 84, 34, .3); }
+.lt.is-lit .lt-edge { stroke: rgba(255, 214, 150, .75); }
+.lt.is-lit .lt-cap, .lt.is-lit .lt-ring { stroke: #ffd58e; }
+.lt.is-lit .lt-wire { stroke: rgba(255, 213, 142, .7); }
+.lt.is-lit .lt-cell { fill: #ffe2a0; }
+.lt.is-lit .lt-flame { animation: lt-flicker .16s steps(2) infinite alternate; }
+@keyframes lt-flicker { from { filter: brightness(1); } to { filter: brightness(1.18); } }
+
+/* ---------- invite ---------- */
+.inv-copy {
+  position: absolute; left: 0; right: 0; top: calc(var(--safe-t) + 10.5vh); z-index: 2;
+  padding: 0 7vw; text-align: center;
+}
+.inv-greet {
+  margin: 0 auto; max-width: 14ch; font-family: var(--f-script); font-weight: 400; line-height: 1.02;
+  font-size: clamp(54px, min(16vw, 10.5vh), 112px); color: var(--gold-hi);
+  text-shadow: 0 0 28px rgba(244, 196, 99, .38), 0 0 2px rgba(255, 227, 163, .4);
+  padding: 0 .12em;
+}
+.inv-lines { margin: clamp(10px, 2.2vh, 22px) auto 0; max-width: 30em; }
+.inv-lines p {
+  margin: .32em 0; font-family: var(--f-serif); font-style: italic; font-weight: 300;
+  font-size: clamp(18px, min(4.9vw, 3.1vh), 25px); line-height: 1.38; color: #e4d7fb; letter-spacing: .01em;
+  text-wrap: balance;
+}
+
+.inv-light {
+  position: absolute; left: 50%; top: var(--hy, 74%); z-index: 3;
+  translate: -50% calc(-100% - 7.5vh);
+  display: flex; flex-direction: column; align-items: center; gap: clamp(12px, 2.2vh, 22px);
+  padding: 10px 26px 6px; margin: 0; border: 0; background: none; cursor: pointer; color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.inv-light:focus-visible { outline: none; }
+.inv-lantern {
+  position: relative; display: block;
+  height: clamp(112px, 19vh, 204px); aspect-ratio: 100 / 140;
+}
+.inv-label {
+  position: relative; display: inline-flex; align-items: center; gap: 14px;
+  font-family: var(--f-caps); font-size: clamp(11.5px, 3.1vw, 13.5px); letter-spacing: .34em; margin-right: -.34em;
+  text-transform: uppercase; color: var(--gold-hi); white-space: nowrap; padding: 8px 4px;
+  text-shadow: 0 0 14px rgba(244, 196, 99, .5);
+}
+.inv-label::before, .inv-label::after {
+  content: ''; width: clamp(18px, 6vw, 34px); height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(244, 196, 99, .8));
+}
+.inv-label::after { background: linear-gradient(270deg, transparent, rgba(244, 196, 99, .8)); margin-right: .34em; }
+.inv-light:focus-visible .inv-label { border-radius: 999px; box-shadow: 0 0 0 1.5px rgba(255, 227, 163, .9), 0 0 22px rgba(244, 196, 99, .35); }
+@media (hover: hover) {
+  .inv-light.ready:hover .inv-label { color: #fff3d0; text-shadow: 0 0 20px rgba(255, 210, 120, .85); }
+  .inv-light.ready:hover .lt-ember { animation-duration: 1s; }
+}
+.inv-ripple {
+  position: absolute; left: 50%; top: 90%; width: 30%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%;
+  border: 1px solid rgba(255, 210, 130, .55); opacity: 0; pointer-events: none;
+}
+.inv-light.ready:not(.lit) .inv-ripple { animation: inv-ripple 3.6s cubic-bezier(.2, .6, .3, 1) infinite; }
+.inv-light.ready:not(.lit) .inv-ripple.r2 { animation-delay: 1.8s; }
+@keyframes inv-ripple { 0% { opacity: .8; scale: .3; } 100% { opacity: 0; scale: 3.2; } }
+.inv-light:disabled { cursor: default; }
+
+.inv-refl { /* the lantern's light on the water */
+  position: absolute; top: calc(var(--hy, 74%) + 2px); height: 22vh; width: 80px; z-index: 1;
+  pointer-events: none; opacity: 0; transform-origin: 50% 0;
+  background: radial-gradient(ellipse 50% 100% at 50% 0%, rgba(255, 220, 150, .75), rgba(255, 170, 80, .22) 45%, transparent 75%);
+  -webkit-mask-image: repeating-linear-gradient(180deg, #000 0 2px, rgba(0, 0, 0, .25) 2px 5px);
+  mask-image: repeating-linear-gradient(180deg, #000 0 2px, rgba(0, 0, 0, .25) 2px 5px);
+  filter: blur(1.5px);
+}
+.inv-foot {
+  position: absolute; left: 0; right: 0; bottom: calc(var(--safe-b) + 4.6vh); z-index: 2; margin: 0;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-family: var(--f-caps); font-size: 10.5px; letter-spacing: .32em; text-transform: lowercase; color: var(--lavender); opacity: 0;
+}
+.inv-phones { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+
+@media (orientation: landscape) {
+  .inv-copy { top: calc(var(--safe-t) + 7vh); }
+  .inv-greet { font-size: clamp(52px, 11vh, 112px); max-width: none; }
+}
+
+/* ---------- gate (countdown) ---------- */
+.gate-copy {
+  position: absolute; left: 0; right: 0; top: calc(var(--safe-t) + 11vh); z-index: 3;
+  display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 6vw;
+}
+.gate-kicker {
+  margin: 0; font-family: var(--f-serif); font-style: italic; font-weight: 300;
+  font-size: clamp(22px, min(6.4vw, 3.9vh), 34px); line-height: 1.2; color: #efe3ff; letter-spacing: .01em;
+  text-shadow: 0 0 22px rgba(185, 163, 227, .35);
+}
+.gate-title {
+  margin: clamp(10px, 1.8vh, 18px) 0 0; font-family: var(--f-caps); font-weight: 400;
+  font-size: clamp(10.5px, 2.9vw, 13px); letter-spacing: .44em; margin-right: -.44em; text-transform: uppercase; color: var(--lavender);
+}
+.gate-title.is-open {
+  margin-right: 0; font-family: var(--f-display); letter-spacing: .03em; text-transform: none; line-height: 1.12;
+  font-size: clamp(28px, min(7.8vw, 5.8vh), 56px);
+  background: var(--gold-text); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: goldshift 6s ease-in-out infinite alternate;
+  padding: 0 .08em; text-wrap: balance;
+}
+.gate-count {
+  display: flex; align-items: flex-start; justify-content: center; margin: clamp(14px, 2.6vh, 26px) 0 0;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.gc-unit { display: flex; flex-direction: column; align-items: center; min-width: 1.3em; font-size: clamp(44px, min(13vw, 8vh), 84px); }
+.gc-num {
+  display: flex; font-family: var(--f-serif); font-weight: 300; line-height: .95; font-size: 1em;
+  color: #fff1d0; text-shadow: 0 0 26px rgba(244, 196, 99, .42), 0 0 2px rgba(255, 227, 163, .35);
+}
+.gc-num i { display: inline-block; width: .52em; text-align: center; font-style: normal; }
+.gc-label {
+  margin-top: .55em; font-family: var(--f-caps); font-size: clamp(8.5px, 2.2vw, 10.5px); letter-spacing: .26em; margin-right: -.26em;
+  text-transform: uppercase; color: var(--lavender); opacity: .8;
+}
+.gc-sep {
+  align-self: flex-start; width: 1px; height: .62em; margin: .14em clamp(10px, 3.4vw, 30px) 0; font-size: clamp(44px, min(13vw, 8vh), 84px);
+  background: linear-gradient(180deg, transparent, rgba(244, 196, 99, .6), transparent);
+}
+.gate-sub {
+  margin: clamp(14px, 2.4vh, 24px) 0 0; font-family: var(--f-serif); font-style: italic; font-weight: 300;
+  font-size: clamp(16px, min(4.4vw, 2.7vh), 21px); color: #d9c8f5; line-height: 1.4; max-width: 28em; text-wrap: balance;
+}
+.gate-lantern {
+  position: absolute; left: 50%; top: var(--hy, 74%); z-index: 2; translate: -50% calc(-100% - 6vh);
+  height: clamp(100px, 17vh, 184px); aspect-ratio: 100 / 140; cursor: pointer;
+}
+.gate-lantern-in { width: 100%; height: 100%; }
+.gate-arc { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; overflow: visible; pointer-events: none; }
+.gate-arc .sl-hit { pointer-events: all; cursor: pointer; }
+.gate-arc .sl-bob { animation: sl-bob 4.6s ease-in-out infinite alternate; }
+@keyframes sl-bob { from { transform: translateY(0); } to { transform: translateY(-2.5px); } }
+.gate-spark {
+  position: absolute; left: 0; top: 0; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; z-index: 4; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle, #fff 0%, #fff1c2 28%, rgba(255, 200, 110, .55) 50%, rgba(255, 179, 71, 0) 72%);
+  box-shadow: 0 0 18px 6px rgba(255, 200, 110, .45);
+}
+.gate-cta {
+  position: absolute; left: 50%; top: calc(var(--hy, 74%) + (100% - var(--hy, 74%)) * .52); translate: -50% -50%; z-index: 5;
+}
+.gate-btn {
+  display: inline-flex; align-items: center; gap: 12px; padding: 14px 26px 14px 28px; border-radius: 999px; cursor: pointer;
+  font-family: var(--f-caps); font-size: clamp(11.5px, 3.2vw, 13.5px); letter-spacing: .3em; text-transform: uppercase; color: #fff3d6;
+  white-space: nowrap;
+  background: radial-gradient(ellipse 120% 160% at 50% 120%, rgba(255, 179, 71, .38), rgba(59, 26, 87, .5) 60%, rgba(22, 11, 38, .55));
+  border: 1px solid rgba(255, 214, 140, .7);
+  box-shadow: 0 0 30px rgba(255, 179, 71, .3), inset 0 0 18px rgba(255, 214, 140, .15);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  text-shadow: 0 0 12px rgba(255, 200, 110, .6);
+}
+.gate-btn .gb-orb {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: radial-gradient(circle, #fffbe8, var(--gold) 55%, rgba(244, 196, 99, 0) 75%);
+  box-shadow: 0 0 12px 4px rgba(255, 200, 100, .6);
+}
+.gate-btn:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 4px; border-radius: 999px; }
+@media (hover: hover) { .gate-btn:hover { border-color: #ffe3a3; box-shadow: 0 0 44px rgba(255, 179, 71, .5), inset 0 0 22px rgba(255, 214, 140, .25); } }
+
+@media (orientation: landscape) {
+  .gate-copy { top: calc(var(--safe-t) + 6vh); }
+}
+
+/* ---------- reduced motion / low power ---------- */
+.reduced-motion .ns-shimmer, .reduced-motion .ns-window, .reduced-motion .gate-arc .sl-bob, .reduced-motion .lt .lt-ember, .reduced-motion .lt .lt-warmth { animation: none; }
+.reduced-motion .inv-light.ready:not(.lit) .inv-ripple { animation: none; opacity: .35; scale: 1.6; }
+.reduced-motion .inv-light.ready:not(.lit) .inv-ripple.r2 { display: none; }
+.low-power .ns-band { filter: none; }
+.low-power .inv-refl { filter: none; }
