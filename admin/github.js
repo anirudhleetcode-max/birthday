@@ -1,0 +1,252 @@
+/**
+ * github.js — tiny GitHub REST client for the admin portal (browser + Node-testable).
+ *
+ * Reads data/site.json through the Contents API (fresh, no CDN) and publishes everything
+ * as ONE commit through the Git Data API:
+ *   GET ref → GET commit → GET site.json@commit → GET tree (recursive)
+ *   → POST blobs → POST tree (base_tree; new files, site.json, sha:null deletions)
+ *   → POST commit → PATCH ref   (409/422 on the way → re-fetch, re-merge, retry once)
+ *
+ * `fetch` is injectable so request building can be unit-checked with a mock.
+ */
+
+const API = 'https://api.github.com';
+
+export class GitHubError extends Error {
+  constructor(message, status = 0, data = null, code = '') {
+    super(message);
+    this.name = 'GitHubError';
+    this.status = status;
+    this.data = data;
+    this.code = code;
+  }
+}
+
+/** Encode each segment of a repo path (keeps the slashes). */
+export function encodePath(path) {
+  return String(path).split('/').map(encodeURIComponent).join('/');
+}
+
+/** base64 (possibly with newlines) → UTF-8 string, properly (TextDecoder). */
+export function decodeBase64Utf8(b64) {
+  const bin = atob(String(b64).replace(/\s+/g, ''));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+
+/** Blob → base64 string (no data: prefix). */
+export async function blobToBase64(blob) {
+  if (typeof FileReader !== 'undefined') {
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => {
+        const s = String(fr.result);
+        resolve(s.slice(s.indexOf(',') + 1));
+      };
+      fr.onerror = () => reject(fr.error || new Error('Could not read the file.'));
+      fr.readAsDataURL(blob);
+    });
+  }
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let bin = '';
+  const CH = 0x8000;
+  for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+  return btoa(bin);
+}
+
+export class GitHub {
+  /**
+   * @param {{owner:string, repo:string, branch?:string, token?:string, fetch?:Function}} cfg
+   */
+  constructor({ owner, repo, branch = 'main', token = '', fetch: fetchImpl } = {}) {
+    this.owner = String(owner || '').trim();
+    this.repo = String(repo || '').trim();
+    this.branch = String(branch || 'main').trim() || 'main';
+    this.token = String(token || '').trim();
+    this.fetch = fetchImpl || ((...a) => globalThis.fetch(...a));
+  }
+
+  get repoPath() {
+    return `/repos/${encodeURIComponent(this.owner)}/${encodeURIComponent(this.repo)}`;
+  }
+
+  /** Friendly, non-technical message for an HTTP status. */
+  friendly(status, data, headers) {
+    const msg = (data && data.message) || '';
+    const where = `${this.owner}/${this.repo}`;
+    switch (status) {
+      case 0: return 'Couldn’t reach GitHub. Check your internet connection and try again.';
+      case 401: return 'GitHub didn’t accept the token. It may be mistyped, expired or revoked — paste a fresh one (Settings → GitHub).';
+      case 403:
+        if (/rate limit/i.test(msg) || (headers && headers.get && headers.get('x-ratelimit-remaining') === '0')) {
+          return 'GitHub says there have been too many requests. Please wait a few minutes and try again.';
+        }
+        return `This token isn’t allowed to change ${where}. When creating it, choose “Only select repositories” → ${this.repo}, and set Repository permissions → Contents → “Read and write”.`;
+      case 404: return `Couldn’t find ${where} (branch “${this.branch}”). Check the owner / repository / branch in Settings → GitHub, and that the token was given access to this repository.`;
+      case 409: return /empty/i.test(msg)
+        ? 'The repository is empty. Push the website files to it first, then publish from here.'
+        : 'Someone else changed the site at the same moment. Please try publishing again.';
+      case 413: return 'That file is too big for GitHub. Try a smaller or shorter file.';
+      case 422: return /fast.?forward/i.test(msg)
+        ? 'Someone else changed the site at the same moment. Please try publishing again.'
+        : `GitHub rejected the change${msg ? ` (“${msg}”)` : ''}. Please try again.`;
+      default:
+        if (status >= 500) return 'GitHub is having trouble right now. Please try again in a minute.';
+        return `GitHub error ${status}${msg ? `: ${msg}` : ''}.`;
+    }
+  }
+
+  /**
+   * Low-level request. `path` is relative to /repos/{owner}/{repo} unless it starts with "/" + "user" etc.
+   * @returns parsed JSON, a Blob (raw), or null (204)
+   */
+  async request(method, path, body, { raw = false, absolute = false } = {}) {
+    const url = API + (absolute ? path : this.repoPath + path);
+    const headers = {
+      Accept: raw ? 'application/vnd.github.raw+json' : 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    };
+    if (this.token) headers.Authorization = `Bearer ${this.token}`;
+    const init = { method, headers, cache: 'no-store' };
+    if (body !== undefined) {
+      headers['Content-Type'] = 'application/json';
+      init.body = JSON.stringify(body);
+    }
+    let res;
+    try {
+      res = await this.fetch(url, init);
+    } catch (err) {
+      throw new GitHubError(this.friendly(0), 0, null, 'network');
+    }
+    if (!res.ok) {
+      let data = null;
+      try { data = await res.json(); } catch { /* not json */ }
+      throw new GitHubError(this.friendly(res.status, data, res.headers), res.status, data);
+    }
+    if (raw) return res.blob();
+    if (res.status === 204) return null;
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
+  }
+
+  /** Verify the token can see the repo and the branch exists. */
+  async check() {
+    if (!this.owner || !this.repo) throw new GitHubError('Please fill in the GitHub owner and repository names.', 0, null, 'config');
+    const repo = await this.request('GET', '');
+    await this.request('GET', `/branches/${encodePath(this.branch)}`).catch((err) => {
+      if (err.status === 404) throw new GitHubError(`The repository was found, but it has no branch called “${this.branch}”. Check the branch in Settings → GitHub.`, 404, err.data, 'branch');
+      throw err;
+    });
+    const perms = repo && repo.permissions;
+    return {
+      fullName: repo.full_name,
+      private: !!repo.private,
+      canPush: perms ? !!(perms.push || perms.admin || perms.maintain) : null,
+      defaultBranch: repo.default_branch,
+    };
+  }
+
+  /** GET a text file via the Contents API, decoded as UTF-8. */
+  async getText(path, ref = this.branch) {
+    const data = await this.request('GET', `/contents/${encodePath(path)}?ref=${encodeURIComponent(ref)}`);
+    if (Array.isArray(data)) throw new GitHubError(`${path} is a folder, not a file.`, 0, null, 'notfile');
+    if (data.encoding === 'base64' && typeof data.content === 'string' && (data.content.length || !data.size)) {
+      return { text: decodeBase64Utf8(data.content), sha: data.sha };
+    }
+    // > 1 MB files come back without content → ask for the raw bytes
+    const blob = await this.request('GET', `/contents/${encodePath(path)}?ref=${encodeURIComponent(ref)}`, undefined, { raw: true });
+    return { text: await blob.text(), sha: data.sha };
+  }
+
+  /** Current data/site.json (parsed) + its blob sha. */
+  async getSite(ref = this.branch) {
+    const { text, sha } = await this.getText('data/site.json', ref);
+    let site;
+    try {
+      site = JSON.parse(text);
+    } catch {
+      throw new GitHubError('data/site.json on GitHub isn’t valid JSON. Fix it on GitHub (or restore an older version) and try again.', 0, null, 'json');
+    }
+    return { site, sha };
+  }
+
+  /** Raw bytes of any file as a Blob. */
+  async getBlob(path, ref = this.branch) {
+    return this.request('GET', `/contents/${encodePath(path)}?ref=${encodeURIComponent(ref)}`, undefined, { raw: true });
+  }
+
+  /** Public raw URL (works without a token for public repos). */
+  rawUrl(path) {
+    return `https://raw.githubusercontent.com/${encodeURIComponent(this.owner)}/${encodeURIComponent(this.repo)}/${encodePath(this.branch)}/${encodePath(path)}`;
+  }
+
+  /**
+   * Publish in ONE commit.
+   * @param {{
+   *   message: string,
+   *   prepare: (remoteSite: object, existing: Set<string>) => ({site: object, files: Map<string, Blob>, deletes: string[]} | Promise<…>),
+   *   onProgress?: (fraction: number, label: string) => void,
+   * }} opts
+   * @returns {Promise<{commitSha: string, site: object, uploaded: string[], deleted: string[], retried: boolean}>}
+   */
+  async publish({ message, prepare, onProgress = () => {} }) {
+    const uploadedShas = new Map(); // Blob → sha (re-used on retry)
+    let retried = false;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        onProgress(0.02, attempt ? 'Fetching the newest version…' : 'Checking the live site…');
+        const ref = await this.request('GET', `/git/ref/heads/${encodePath(this.branch)}`);
+        const headSha = ref.object.sha;
+        const commit = await this.request('GET', `/git/commits/${headSha}`);
+        const baseTree = commit.tree.sha;
+        const { site: remoteSite } = await this.getSite(headSha);
+        const treeData = await this.request('GET', `/git/trees/${baseTree}?recursive=1`);
+        const existing = new Set((treeData.tree || []).filter((e) => e.type === 'blob').map((e) => e.path));
+
+        const plan = await prepare(remoteSite, existing);
+        const files = plan.files instanceof Map ? plan.files : new Map(Object.entries(plan.files || {}));
+        const entries = [];
+        const total = files.size;
+        let i = 0;
+        for (const [path, blob] of files) {
+          const label = /^media\//.test(path) ? 'file' : 'photo';
+          onProgress(0.08 + 0.78 * (i / Math.max(1, total)), `Uploading ${label} ${i + 1} of ${total}…`);
+          let sha = uploadedShas.get(blob);
+          if (!sha) {
+            const content = await blobToBase64(blob);
+            const res = await this.request('POST', '/git/blobs', { content, encoding: 'base64' });
+            sha = res.sha;
+            uploadedShas.set(blob, sha);
+          }
+          entries.push({ path, mode: '100644', type: 'blob', sha });
+          i++;
+        }
+        onProgress(0.88, 'Saving your words & settings…');
+        entries.push({ path: 'data/site.json', mode: '100644', type: 'blob', content: JSON.stringify(plan.site, null, 2) + '\n' });
+        const deleted = [];
+        for (const p of plan.deletes || []) {
+          if (existing.has(p) && !files.has(p) && p !== 'data/site.json') {
+            entries.push({ path: p, mode: '100644', type: 'blob', sha: null });
+            deleted.push(p);
+          }
+        }
+        const tree = await this.request('POST', '/git/trees', { base_tree: baseTree, tree: entries });
+        onProgress(0.93, 'Creating the update…');
+        const newCommit = await this.request('POST', '/git/commits', { message, tree: tree.sha, parents: [headSha] });
+        onProgress(0.97, 'Publishing…');
+        await this.request('PATCH', `/git/refs/heads/${encodePath(this.branch)}`, { sha: newCommit.sha, force: false });
+        onProgress(1, 'Published!');
+        return { commitSha: newCommit.sha, site: plan.site, uploaded: [...files.keys()], deleted, retried };
+      } catch (err) {
+        if (attempt === 0 && err instanceof GitHubError && (err.status === 409 || err.status === 422) && !/empty/i.test((err.data && err.data.message) || '')) {
+          retried = true;
+          onProgress(0.05, 'The site changed meanwhile — merging and retrying…');
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw new GitHubError('Publishing failed after a retry. Please try again.', 0, null, 'retry');
+  }
+}

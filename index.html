@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0b0614">
+  <meta name="robots" content="noindex, nofollow">
+  <title>For Deepu</title>
+  <meta name="description" content="A little film, made with love.">
+  <meta property="og:title" content="For you, Deepu ✨">
+  <meta property="og:description" content="Headphones on. Lights low. I made you something.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='14' fill='%23f4c463'/%3E%3Cg stroke='%23f4c463' stroke-width='4' stroke-linecap='round'%3E%3Cpath d='M32 4v8M32 52v8M4 32h8M52 32h8M12 12l6 6M46 46l6 6M12 52l6-6M46 18l6-6'/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/fonts/fonts.css">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/scenes.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./assets/vendor/three/three.module.min.js",
+        "three/addons/": "./assets/vendor/three/addons/"
+      }
+    }
+  </script>
+  <script src="assets/vendor/gsap/gsap.min.js"></script>
+  <script src="assets/vendor/gsap/CustomEase.min.js"></script>
+  <script src="assets/vendor/gsap/DrawSVGPlugin.min.js"></script>
+  <script src="assets/vendor/gsap/MotionPathPlugin.min.js"></script>
+  <script src="assets/vendor/gsap/SplitText.min.js"></script>
+  <script src="assets/vendor/gsap/Physics2DPlugin.min.js"></script>
+</head>
+<body>
+  <!-- Film stage: every chapter is mounted into #stage -->
+  <main id="stage" aria-live="polite"></main>
+
+  <!-- Ambient layers (always on top of scenes, below UI) -->
+  <canvas id="dust" aria-hidden="true"></canvas>
+  <canvas id="fx" aria-hidden="true"></canvas>
+  <div id="grade" aria-hidden="true"></div>
+  <div id="grain" aria-hidden="true"></div>
+  <div id="letterbox" aria-hidden="true"><i class="lb-top"></i><i class="lb-bot"></i></div>
+  <div id="transition" aria-hidden="true"></div>
+
+  <!-- Cinematic UI -->
+  <div id="ui">
+    <div id="subtitles" aria-live="polite"></div>
+    <div id="chapter-card" aria-hidden="true"></div>
+    <button id="continue" type="button" hidden><span class="continue-label">Continue</span><span class="continue-orb" aria-hidden="true"></span></button>
+    <nav id="progress" aria-label="Chapters"></nav>
+    <button id="mute" type="button" aria-label="Mute music" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9v6h4l5 4V5L8 9H4z"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/><path class="x" d="M16 9l6 6M22 9l-6 6"/></svg>
+    </button>
+  </div>
+
+  <div id="boot" aria-hidden="true">
+    <div class="boot-sun"></div>
+    <p class="boot-text">gathering sunlight…</p>
+  </div>
+
+  <noscript><p class="noscript">This little film needs JavaScript turned on. ✨</p></noscript>
+  <script type="module" src="assets/js/main.js"></script>
+</body>
+</html>

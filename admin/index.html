@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0b0614">
+  <meta name="color-scheme" content="dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>The Lantern Room — admin</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23160b26'/%3E%3Cpath d='M24 14h16M27 14v4M37 14v4' stroke='%23f4c463' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M19 25c0-4 5-7 13-7s13 3 13 7v17c0 4-5 7-13 7s-13-3-13-7z' fill='%23ffb347'/%3E%3Cpath d='M32 26c-3 3.5-4 6-2 8.5 1.4 1.6 4.4 1.3 5-1 .6-2.4-1-4.6-3-7.5z' fill='%23fff4e0'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../assets/fonts/fonts.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="sky" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#photos" aria-label="The Lantern Room — admin">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v2M14 3v2"/><path d="M7 7.5C7 6 8.5 5 12 5s5 1 5 2.5v8c0 1.5-1.5 2.5-5 2.5s-5-1-5-2.5z"/><path d="M10 18v2h4v-2"/><path d="M12 9.5c-1 1.2-1.4 2.2-.6 3.2.5.6 1.7.5 1.9-.4.2-.9-.4-1.8-1.3-2.8z" fill="currentColor"/></svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-title">The Lantern Room</span>
+          <span class="brand-sub">— admin</span>
+        </span>
+      </a>
+      <button id="status-chip" class="chip" type="button" data-conn="none" aria-live="polite">
+        <span class="chip-dot" aria-hidden="true"></span><span class="chip-text">Loading…</span><span class="chip-short" aria-hidden="true">…</span>
+      </button>
+      <div class="top-actions">
+        <button class="btn ghost" type="button" data-action="preview">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>Preview
+        </button>
+        <button class="btn gold" type="button" data-action="publish">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 20 4l-4 16-4-7-8-1z"/><path d="m12 13 8-9"/></svg></span>Publish<span class="badge-count" hidden>0</span>
+        </button>
+      </div>
+    </div>
+    <nav id="tabs" class="tabs" role="tablist" aria-label="Sections"></nav>
+  </header>
+
+  <main id="view" class="view" role="tabpanel" aria-live="polite"></main>
+
+  <footer class="page-foot">Made with love for Deepu · nothing here is public until you publish</footer>
+
+  <div class="actionbar" role="toolbar" aria-label="Preview and publish">
+    <button class="btn ghost" type="button" data-action="preview">
+      <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>Preview
+    </button>
+    <button class="btn gold" type="button" data-action="publish">
+      <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 20 4l-4 16-4-7-8-1z"/><path d="m12 13 8-9"/></svg></span>Publish<span class="badge-count" hidden>0</span>
+    </button>
+  </div>
+
+  <div id="busy" class="busy" hidden role="status" aria-live="assertive">
+    <div class="busy-card"><span class="spinner"></span><p id="busy-label">Working…</p></div>
+  </div>
+  <div id="modal-root"></div>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <noscript><p class="noscript">The Lantern Room needs JavaScript.</p></noscript>
+  <script type="module" src="admin.js"></script>
+</body>
+</html>

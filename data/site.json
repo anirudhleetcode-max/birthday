@@ -1,0 +1,621 @@
+{
+  "version": 1,
+  "her": {
+    "name": "Deepu",
+    "nicknames": [
+      "Deepu",
+      "Pinky",
+      "Kuchu Puchu"
+    ],
+    "birthDate": "2007-01-03"
+  },
+  "from": {
+    "name": "Your best friend",
+    "signoff": "Yours, in every lifetime"
+  },
+  "settings": {
+    "lock": {
+      "enabled": true,
+      "unlockAt": "2027-01-03T00:00:00+05:30"
+    },
+    "grading": {
+      "strength": 0.85
+    },
+    "whatsapp": "",
+    "github": {
+      "owner": "anirudhleetcode-max",
+      "repo": "birthday",
+      "branch": "main"
+    }
+  },
+  "media": {
+    "music": null,
+    "musicTitle": "",
+    "video": null,
+    "videoCaption": "A little something I recorded for you",
+    "voice": null
+  },
+  "text": {
+    "invite": {
+      "greeting": "Hey Pinky.",
+      "lines": [
+        "I made you something.",
+        "Find a quiet corner. Lights low. Headphones on.",
+        "And don't skip anything — I'll know."
+      ],
+      "button": "Light the lantern"
+    },
+    "prologue": {
+      "lines": [
+        "Once upon a time…",
+        "on the third of January, two thousand and seven,",
+        "a single drop of sunlight slipped out of the sky.",
+        "It fell, and fell, and fell —",
+        "and where it landed, the world got a little warmer."
+      ],
+      "titleSub": "the girl who lights up every sky"
+    },
+    "tower": {
+      "title": "The Girl in the Tower",
+      "kicker": "Chapter One",
+      "lines": [
+        "Rapunzel painted every wall of her tower with the things she loved.",
+        "If I ever got a tower,",
+        "every single wall would be you."
+      ]
+    },
+    "hair": {
+      "title": "Every Strand, a Memory",
+      "kicker": "Chapter Two",
+      "lines": [
+        "Her hair was seventy feet long.",
+        "Ours would need to be longer.",
+        "We have too many memories for seventy feet."
+      ]
+    },
+    "names": {
+      "title": "A Girl of Many Names",
+      "kicker": "Chapter Three",
+      "items": [
+        {
+          "name": "Deepu",
+          "line": "To the world, she's Deepu.",
+          "sub": "Lamp. Light. Literally named after the thing she does to every room."
+        },
+        {
+          "name": "Pinky",
+          "line": "When she's being cute, she's Pinky.",
+          "sub": "Which, honestly, is most of the time."
+        },
+        {
+          "name": "Kuchu Puchu",
+          "line": "And when she's impossibly adorable…",
+          "sub": "There is no other word. There never will be."
+        }
+      ]
+    },
+    "dance": {
+      "title": "The Kingdom Dance",
+      "kicker": "Chapter Four",
+      "lines": [
+        "Every kingdom has a festival everyone waits for all year.",
+        "In mine, it's you."
+      ]
+    },
+    "lanterns": {
+      "title": "The Night the Sky Lit Up",
+      "kicker": "Chapter Five",
+      "lines": [
+        "Every year, on the day she was born,",
+        "a whole kingdom lit lanterns and let them go,",
+        "hoping the light would find its way to her.",
+        "Tonight, the sky is doing it for you."
+      ],
+      "tapHint": "Tap anywhere to send a lantern of your own",
+      "after": "Every single one of them knows your name."
+    },
+    "cake": {
+      "title": "Make a Wish",
+      "kicker": "Chapter Six",
+      "lines": [
+        "Twenty candles.",
+        "One wish.",
+        "Close your eyes, Kuchu Puchu…"
+      ],
+      "blowHint": "Now blow — really blow into your phone 🌬️",
+      "tapFallback": "or tap the candles",
+      "afterBlow": "Whatever you wished for — I hope the universe is already wrapping it.",
+      "cutHint": "Now swipe across the cake to cut it",
+      "afterCut": "First slice is yours. Obviously. It's always yours."
+    },
+    "letter": {
+      "title": "A Letter, Sealed with Sunlight",
+      "kicker": "Chapter Seven",
+      "salutation": "My dearest Deepu,",
+      "body": [
+        "I've tried to write this so many times, and every version felt too small for you. So I'm just going to say it the way I feel it.",
+        "You are the best thing that ever walked into my life without knocking. Somewhere between the stupid jokes and the 2 a.m. talks and the days I didn't even have to explain myself, you stopped being someone I knew and became someone I can't imagine my life without.",
+        "You're twenty now. I've watched you grow into someone so kind, so ridiculously funny, so brave in all the quiet ways nobody claps for. I see them. I always have.",
+        "On the days the world feels too loud, I hope you remember this: there is someone who will always pick up, always show up, always be on your side — even when you're wrong. (Especially when you're wrong.)",
+        "Thank you for being my Deepu, my Pinky, my Kuchu Puchu. Thank you for being the light I didn't know I was waiting for.",
+        "Happy birthday, sunshine. The world got luckier the day you were born. So did I."
+      ],
+      "signoff": "Yours, in every lifetime,"
+    },
+    "finale": {
+      "lines": [
+        "Twenty years ago today,",
+        "the sky lost a little sunlight…",
+        "and I got a best friend."
+      ],
+      "big": "Happy Birthday",
+      "name": "Deepu",
+      "sub": "Welcome to twenty, my Kuchu Puchu.",
+      "hugLine": "Now stop crying and come here.",
+      "hugButton": "Send a hug",
+      "hugMessage": "I watched it. I'm crying. Come here right now 🫂",
+      "hugDone": "Hug received. Coming over with the biggest one.",
+      "daysLine": "days of you on this planet",
+      "daysSub": "and the world got a little brighter on every single one of them."
+    },
+    "credits": {
+      "lines": [
+        [
+          "Starring",
+          "Deepu, as herself"
+        ],
+        [
+          "Also starring",
+          "Pinky  ·  Kuchu Puchu"
+        ],
+        [
+          "Best supporting role",
+          "Me. Always. Forever."
+        ],
+        [
+          "Written & directed by",
+          "Someone who loves you a ridiculous amount"
+        ],
+        [
+          "Filmed on location",
+          "Everywhere you've ever smiled"
+        ],
+        [
+          "Original soundtrack",
+          "Your laugh (it's still the best song)"
+        ],
+        [
+          "Catering",
+          "One very large birthday cake"
+        ],
+        [
+          "Lighting",
+          "Ten thousand lanterns & one Deepu"
+        ],
+        [
+          "Special thanks",
+          "January 3rd, 2007 — for everything"
+        ],
+        [
+          "Emergency equipment",
+          "One frying pan (unused… mostly)"
+        ],
+        [
+          "Security",
+          "A very serious horse"
+        ],
+        [
+          "Rating",
+          "Best. Day. Ever."
+        ],
+        [
+          "",
+          "No chameleons were harmed in the making of this film."
+        ]
+      ],
+      "end": "The end of chapter nineteen.",
+      "endSub": "Chapter twenty begins now.",
+      "extrasTitle": "More pages, still being written",
+      "extrasSub": "Memories added along the way"
+    }
+  },
+  "slots": [
+    {
+      "id": "hero",
+      "chapter": "prologue",
+      "label": "The little sun — opening portrait",
+      "ratio": "4:5",
+      "hint": "Her prettiest solo portrait. This is the first photo she sees.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "tower-1",
+      "chapter": "tower",
+      "label": "Tower wall painting 1",
+      "ratio": "3:4",
+      "hint": "A candid where she's laughing",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "tower-2",
+      "chapter": "tower",
+      "label": "Tower wall painting 2",
+      "ratio": "1:1",
+      "hint": "A childhood-ish or old memory",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "tower-3",
+      "chapter": "tower",
+      "label": "Tower wall painting 3",
+      "ratio": "4:5",
+      "hint": "Her doing something she loves",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "tower-4",
+      "chapter": "tower",
+      "label": "Tower wall painting 4",
+      "ratio": "4:3",
+      "hint": "A wide photo — a trip, a place, a moment",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "tower-5",
+      "chapter": "tower",
+      "label": "Tower wall painting 5",
+      "ratio": "3:4",
+      "hint": "Her being silly / making a face",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "tower-6",
+      "chapter": "tower",
+      "label": "Tower wall painting 6",
+      "ratio": "4:5",
+      "hint": "Her looking out somewhere, dreamy",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "hair-1",
+      "chapter": "hair",
+      "label": "Golden-hair polaroid 1",
+      "ratio": "3:4",
+      "hint": "Instax-style memory. Edit the handwritten caption in Words → Captions.",
+      "src": null,
+      "original": null,
+      "caption": "the beginning of everything",
+      "updatedAt": null
+    },
+    {
+      "id": "hair-2",
+      "chapter": "hair",
+      "label": "Golden-hair polaroid 2",
+      "ratio": "3:4",
+      "hint": "Instax-style memory. Edit the handwritten caption in Words → Captions.",
+      "src": null,
+      "original": null,
+      "caption": "that laugh. THAT laugh.",
+      "updatedAt": null
+    },
+    {
+      "id": "hair-3",
+      "chapter": "hair",
+      "label": "Golden-hair polaroid 3",
+      "ratio": "3:4",
+      "hint": "Instax-style memory. Edit the handwritten caption in Words → Captions.",
+      "src": null,
+      "original": null,
+      "caption": "certified menace",
+      "updatedAt": null
+    },
+    {
+      "id": "hair-4",
+      "chapter": "hair",
+      "label": "Golden-hair polaroid 4",
+      "ratio": "3:4",
+      "hint": "Instax-style memory. Edit the handwritten caption in Words → Captions.",
+      "src": null,
+      "original": null,
+      "caption": "my favourite person, unedited",
+      "updatedAt": null
+    },
+    {
+      "id": "hair-5",
+      "chapter": "hair",
+      "label": "Golden-hair polaroid 5",
+      "ratio": "3:4",
+      "hint": "Instax-style memory. Edit the handwritten caption in Words → Captions.",
+      "src": null,
+      "original": null,
+      "caption": "we were so dramatic here",
+      "updatedAt": null
+    },
+    {
+      "id": "hair-6",
+      "chapter": "hair",
+      "label": "Golden-hair polaroid 6",
+      "ratio": "3:4",
+      "hint": "Instax-style memory. Edit the handwritten caption in Words → Captions.",
+      "src": null,
+      "original": null,
+      "caption": "proof you're a whole sunshine",
+      "updatedAt": null
+    },
+    {
+      "id": "hair-7",
+      "chapter": "hair",
+      "label": "Golden-hair polaroid 7",
+      "ratio": "3:4",
+      "hint": "Instax-style memory. Edit the handwritten caption in Words → Captions.",
+      "src": null,
+      "original": null,
+      "caption": "10/10 would pick you again",
+      "updatedAt": null
+    },
+    {
+      "id": "hair-8",
+      "chapter": "hair",
+      "label": "Golden-hair polaroid 8",
+      "ratio": "3:4",
+      "hint": "Instax-style memory. Edit the handwritten caption in Words → Captions.",
+      "src": null,
+      "original": null,
+      "caption": "core memory unlocked",
+      "updatedAt": null
+    },
+    {
+      "id": "name-deepu",
+      "chapter": "names",
+      "label": "“Deepu” portrait",
+      "ratio": "4:5",
+      "hint": "Her classic, everyday self.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "name-pinky",
+      "chapter": "names",
+      "label": "“Pinky” portrait",
+      "ratio": "4:5",
+      "hint": "Her cutest photo — ideally with something pink.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "name-kuchu",
+      "chapter": "names",
+      "label": "“Kuchu Puchu” portrait",
+      "ratio": "4:5",
+      "hint": "The most adorable / goofy one.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "dance-1",
+      "chapter": "dance",
+      "label": "Kingdom dance card 1",
+      "ratio": "3:4",
+      "hint": "Happy, festive, fun moments.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "dance-2",
+      "chapter": "dance",
+      "label": "Kingdom dance card 2",
+      "ratio": "3:4",
+      "hint": "Happy, festive, fun moments.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "dance-3",
+      "chapter": "dance",
+      "label": "Kingdom dance card 3",
+      "ratio": "3:4",
+      "hint": "Happy, festive, fun moments.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "dance-4",
+      "chapter": "dance",
+      "label": "Kingdom dance card 4",
+      "ratio": "3:4",
+      "hint": "Happy, festive, fun moments.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "dance-5",
+      "chapter": "dance",
+      "label": "Kingdom dance card 5",
+      "ratio": "3:4",
+      "hint": "Happy, festive, fun moments.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "dance-6",
+      "chapter": "dance",
+      "label": "Kingdom dance card 6",
+      "ratio": "3:4",
+      "hint": "Happy, festive, fun moments.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "dance-7",
+      "chapter": "dance",
+      "label": "Kingdom dance card 7",
+      "ratio": "3:4",
+      "hint": "Happy, festive, fun moments.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "dance-8",
+      "chapter": "dance",
+      "label": "Kingdom dance card 8",
+      "ratio": "3:4",
+      "hint": "Happy, festive, fun moments.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "lantern-1",
+      "chapter": "lanterns",
+      "label": "Floating lantern photo 1",
+      "ratio": "1:1",
+      "hint": "Soft, glowy, emotional moments.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "lantern-2",
+      "chapter": "lanterns",
+      "label": "Floating lantern photo 2",
+      "ratio": "1:1",
+      "hint": "Soft, glowy, emotional moments.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "lantern-3",
+      "chapter": "lanterns",
+      "label": "Floating lantern photo 3",
+      "ratio": "1:1",
+      "hint": "Soft, glowy, emotional moments.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "lantern-4",
+      "chapter": "lanterns",
+      "label": "Floating lantern photo 4",
+      "ratio": "1:1",
+      "hint": "Soft, glowy, emotional moments.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "lantern-5",
+      "chapter": "lanterns",
+      "label": "Floating lantern photo 5",
+      "ratio": "1:1",
+      "hint": "Soft, glowy, emotional moments.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "lantern-6",
+      "chapter": "lanterns",
+      "label": "Floating lantern photo 6",
+      "ratio": "1:1",
+      "hint": "Soft, glowy, emotional moments.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "letter-1",
+      "chapter": "letter",
+      "label": "Polaroid pinned on the letter",
+      "ratio": "1:1",
+      "hint": "A photo of you two, if possible.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "letter-2",
+      "chapter": "letter",
+      "label": "Second photo on the letter",
+      "ratio": "3:4",
+      "hint": "Any photo that means a lot.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "finale",
+      "chapter": "finale",
+      "label": "The grand reveal portrait",
+      "ratio": "4:5",
+      "hint": "Her single best photo. Saved for the big birthday reveal.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    },
+    {
+      "id": "us",
+      "chapter": "finale",
+      "label": "You two together — the very last photo",
+      "ratio": "4:5",
+      "hint": "A photo of BOTH of you. It appears with ‘come here, hug me’.",
+      "src": null,
+      "original": null,
+      "caption": "",
+      "updatedAt": null
+    }
+  ],
+  "extras": []
+}
