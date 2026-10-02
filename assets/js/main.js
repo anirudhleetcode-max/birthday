@@ -252,15 +252,17 @@ async function goTo(index, { instant = false } = {}) {
 
   const handoff = app.handoff;
   app.handoff = null;
-  if (instant || def.via === 'none') {
+  // the owner can switch the decorative golden ribbon off (admin → Theme)
+  const via = def.via === 'ribbon' && app.store.site.settings.theme?.ribbon === false ? 'glow' : def.via;
+  if (instant || via === 'none') {
     await swap();
   } else {
-    if (def.via === 'curtain') app.curtainClosed = true;
-    await transition(def.via || 'fade', async () => {
+    if (via === 'curtain') app.curtainClosed = true;
+    await transition(via || 'fade', async () => {
       await swap();
       app.curtainClosed = false;
     }, { get letterbox() { return app.lbTarget; }, handoff, to: def.id, device, audio: app.audio });
-    if (def.via === 'curtain') root.style.setProperty('--lb', app.lbTarget);
+    if (via === 'curtain') root.style.setProperty('--lb', app.lbTarget);
   }
   app.busy = false;
 }
