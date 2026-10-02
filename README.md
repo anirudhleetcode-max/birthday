@@ -1,132 +1,145 @@
-# For Deepu 🌞🏮
+# For Deepu 🏮
 
-A cinematic, *Tangled*-inspired birthday film-in-a-website for **Deepu** (aka Pinky, aka Kuchu Puchu), born **3 January 2007**, turning **20** on **3 January 2027**.
+A cinematic, interactive birthday **film** for **Deepu** (aka Pinky, aka Kuchi Puchi), born **3 January 2007**, turning **20** on **3 January 2027**. That's exactly **7,305 days**.
 
-It plays like a short film: chapters, music, transitions, and moments she interacts with herself (blowing out candles with her breath, cutting the cake, releasing lanterns).
+It plays like a short animated film set in a lantern-lit fairy-tale world, inspired by the atmosphere of *Tangled*, which she loves. Her real photographs are the heart of every scene. Everything you see and hear (lanterns, the tower, the golden ribbon, the little chameleon, the music) is **original**. No Disney footage, artwork, characters, music or dialogue is used.
+
+## The story
 
 | | Chapter | What happens |
 |---|---|---|
-| ⏳ | **Countdown** | Before midnight on her birthday she only sees a lantern waiting and a countdown. At midnight it lights up. |
-| 🏮 | **Invitation** | "Hey Pinky." She lights the lantern, the music starts and the film begins. |
-| ✨ | **Prologue** | *Once upon a time…* a drop of sunlight falls, a golden flower blooms, and it becomes her. |
-| 🎨 | **Ch.1 The Girl in the Tower** | You stand inside a painted tower room; her photos are brush-painted onto the walls. Drag to look around. |
-| 💛 | **Ch.2 Every Strand, a Memory** | A glowing golden braid with flowers; polaroids hang from it and develop like instant film. |
-| 🦎 | **Ch.3 A Girl of Many Names** | Deepu → Pinky → Kuchu Puchu, with a little chameleon who turns pink and blushes. |
-| 🎪 | **Ch.4 The Kingdom Dance** | Festival at dusk: bunting, petals, a chalk sun, her photos dancing in a 3D circle. |
-| 🌌 | **Ch.5 The Night the Sky Lit Up** | Real 3D: a lake, a kingdom on the water, thousands of lanterns rising, photo-lanterns drifting past. She can tap to release her own. |
-| 🎂 | **Ch.6 Make a Wish** | A 3D cake with 20 candles. She **blows into her phone** to blow them out, then **swipes to cut** it. Confetti, colour bursts, Happy Birthday music box. |
-| 💌 | **Ch.7 The Letter** | A wax-sealed envelope; the letter writes itself out in handwriting. (Optional: your voice note.) |
+| ⏳ | **Countdown** | Before midnight (IST) on her birthday: twenty unlit lanterns and a countdown. At midnight they light up one by one. |
+| 🏮 | **Invitation** | "Hey Pinky." She lights the lantern, which starts the music, and the film begins. |
+| ✨ | **Once Upon a Deepu** | A drop of sunlight falls through the night, a golden flower blooms, dawn breaks, and her photo appears. |
+| 🎨 | **A Tower Full of You** | A sunlit tower room where her photos are brush-painted onto the walls. A golden ribbon waits outside the window. |
+| 💛 | **The Golden Thread** | Polaroids on a glowing golden thread, inspired by her long hair. They develop like instant film. |
+| 🦎 | **A Legend of Many Names** | A fake nature documentary, then an absurdly epic trailer-style reveal: Deepu… also known as… Pinky… Kuchi Puchi. |
+| 🎪 | **Somewhere Between Chaos and Magic** | A twilight festival with her photos dancing in a 3D circle. |
+| 🌌 | **The Night of Lanterns** | A lake at night: one lantern, then thousands. Photo-lanterns she can tap to bring closer, and a sky she can send her own lanterns into. |
+| 💌 | **A Letter You Were Supposed to Read** | A wax-sealed letter on a candle-lit desk that writes itself out in handwriting. |
+| 🎂 | **Twenty Candles** | "Okay… one last thing." A 3D cake. She **blows into her phone** to put the candles out (or taps), then **swipes to cut** it. |
 | 🎥 | *(optional)* **Video message** | Only appears if you upload one. |
-| 💖 | **Finale** | Every photo flies in and forms a heart, it beats, we fly through it into light: **Happy Birthday, Deepu**, with fireworks. Then a photo of you two and a **Send a hug** button. |
-| 🎬 | **Credits** | Movie-style end credits over a slideshow, then: *The end of chapter nineteen. Chapter twenty begins now.* |
+| 💖 | **Every Little Piece of You** | All her photos float in the dark, a golden ribbon connects them into a heart, then one final photo. |
+| 🎉 | **The Last Lantern** | 20 years → 240 months → 7,305 days → thousands of lanterns → **Happy 20th Birthday, Deepu**. |
+| 🤗 | **One Last Thing** | "Send me a hug." Press and hold. |
+| 🎬 | **Credits** | Movie-style credits, the album, and a post-credits scene for whoever waits. |
 
-All music is **composed and synthesized live in the browser** (an original lullaby-waltz plus a music-box *Happy Birthday*), so there are no copyright problems. You can also upload your own song in the admin. No Disney artwork, audio or logos are used; everything is original and only *inspired by* the film.
+There are also a few **hidden secrets** to find (the credits tell her how many she found).
 
 ---
 
-## 1. Put it online (one time, about 3 minutes)
+## 1. Run it on your computer
 
-The site is plain HTML/JS. There's no build step, so **GitHub Pages** can host it for free:
+```bash
+npm run serve              # or: npx http-server . -p 8090 -c-1
+# then open http://localhost:8090/?preview   (the film, skipping the countdown)
+#      and  http://localhost:8090/admin/     (the admin portal)
+```
 
-1. Merge this work into the `main` branch (or ask Claude to do it).
-2. On GitHub: **Settings → Pages → Build and deployment → Source: "Deploy from a branch" → Branch: `main` / `(root)` → Save.**
-3. After about a minute the site is live at **https://anirudhleetcode-max.github.io/birthday/**
-4. The admin portal is at **https://anirudhleetcode-max.github.io/birthday/admin/**
+Handy addresses:
+- `?preview` watches the film before the unlock date.
+- `?preview&scene=lanterns` jumps to a chapter (`prologue tower hair names dance lanterns letter cake constellation birthday hug credits`).
+- `?preview&draft` shows your **unsaved admin changes** on the same device.
+- `&reduced` and `&low` test the reduced-motion and low-power versions.
 
-> The repo must stay **public** for free GitHub Pages. The countdown lock (below) keeps the content hidden until her birthday.
+## 2. Put it online (once)
 
-## 2. The admin portal ("The Lantern Room")
+1. Make sure this work is on the `main` branch.
+2. On GitHub: **Settings → Pages → Source: Deploy from a branch → `main` / `(root)` → Save**.
+3. About a minute later: **https://anirudhleetcode-max.github.io/birthday/**. The admin is at **/admin/**.
 
-Open `/admin/` on your phone or laptop.
+The repository must stay **public** for free GitHub Pages. Until the unlock moment, visitors only see the countdown.
 
-**First time: connect it to GitHub** (that's how it saves your changes):
-1. github.com → your photo (top-right) → **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
-2. Name it anything, set **Repository access → Only select repositories → `birthday`**.
-3. **Repository permissions → Contents → Read and write.** Generate, copy the token, paste it into the admin. It's stored only in your browser.
+## 3. The admin portal: "The Lantern Room" (`/admin/`)
 
-**Then you can:**
-- **Fill all 36 photo spots.** Use *Fill all empty slots*, pick up to 36 photos at once, and they are auto-cropped to each spot's shape. Review each one and tap *Adjust* to re-frame it.
-- **Replace any photo, anytime** (Oct, Nov, Dec…). 📏 **The rule:** every spot has a fixed shape (for example 3:4). A replacement **must be the same shape** as the photo before it. If your new photo is a different shape, the admin opens a cropper **locked to that exact shape**, so the result always matches.
-- **Add new memories ("Extra memories"), as many as you like.** Choose a shape when adding (3:4, 4:5, 1:1, 4:3, 16:9) and that shape is then locked for that memory too. Extras appear in the finale heart, the end-credits slideshow, and a "More memories" album at the end.
-- **Colour grading.** Every uploaded photo is automatically graded into one warm, golden "lantern-night" palette so all of them look like the same film. Adjust the strength in Settings, and re-grade everything from the stored originals with one button.
-- **Edit every word**: greetings, chapter lines, captions under the polaroids, the letter, the credits, your name.
-- **Music & video**: upload your own song (it replaces the built-in score), a video message, or a voice note for the letter.
-- **Settings**: unlock date/time, turning the countdown lock on or off, your WhatsApp number (the *Send a hug* button opens WhatsApp to you with a message), and grading strength.
-- **Preview** your changes before publishing. **Publish** saves everything to GitHub in one go, and the live site updates in about 1–2 minutes.
+Connect once with a GitHub token. The admin shows step-by-step instructions, and [docs/SECURITY.md](docs/SECURITY.md) explains what the token can do and how to revoke it. The token stays in your browser and is never stored in the site.
 
-## 3. The 36 photo spots
+| Section | What you can do |
+|---|---|
+| **Photo library** | Thumbnails of every photo by chapter. **Edit · Replace · Move · Delete · Preview**, **Add photo**, reorder (drag or arrows), turn a photo on or off, mark it ★ featured or as the *hero-hair* photo, assign the special roles (first photo, grand reveal, the two of you). |
+| **Chapters** | Turn chapters on or off and see how many photos each has. |
+| **Messages** | Every word in the film: greetings, chapter lines, captions, the letter, the credits. |
+| **Audio / Video** | Your own song, a voice note for the letter, a video message. |
+| **Theme** | Film grain, particle amount, golden ribbon on/off. |
+| **Settings** | Names, birth date, your name, the countdown unlock time (IST), WhatsApp number for the hug, colour-grading strength. |
+| **Preview** | Watch the real film with your draft. Nothing goes live until you publish. |
+| **Publish / Export** | Publish saves everything to GitHub in one go (live in 1–2 minutes). Export downloads a zip instead. |
 
-Every spot's shape is fixed (that's the replacement rule). Prepare photos roughly in these shapes, or just upload and crop.
+**Save draft** keeps your work on that device. **Reset** throws the draft away. Before publishing, the admin warns about missing photos and blocks real errors. It also warns you before you leave with unsaved changes.
 
-| # | Spot | Chapter | Shape (locked) | Best photo for it |
-|---|---|---|---|---|
-| 1 | `hero` | Prologue | **4:5** | Her prettiest solo portrait. This is the first photo she sees. |
-| 2 | `tower-1` | Ch.1 The Tower | **3:4** | A candid where she's laughing |
-| 3 | `tower-2` | Ch.1 The Tower | **1:1** | A childhood-ish or old memory |
-| 4 | `tower-3` | Ch.1 The Tower | **4:5** | Her doing something she loves |
-| 5 | `tower-4` | Ch.1 The Tower | **4:3** | A wide photo — a trip, a place, a moment |
-| 6 | `tower-5` | Ch.1 The Tower | **3:4** | Her being silly / making a face |
-| 7 | `tower-6` | Ch.1 The Tower | **4:5** | Her looking out somewhere, dreamy |
-| 8 | `hair-1` | Ch.2 Golden Hair | **3:4** | Instax-style memory. Edit the handwritten caption in Words → Captions. |
-| 9 | `hair-2` | Ch.2 Golden Hair | **3:4** | Instax-style memory. Edit the handwritten caption in Words → Captions. |
-| 10 | `hair-3` | Ch.2 Golden Hair | **3:4** | Instax-style memory. Edit the handwritten caption in Words → Captions. |
-| 11 | `hair-4` | Ch.2 Golden Hair | **3:4** | Instax-style memory. Edit the handwritten caption in Words → Captions. |
-| 12 | `hair-5` | Ch.2 Golden Hair | **3:4** | Instax-style memory. Edit the handwritten caption in Words → Captions. |
-| 13 | `hair-6` | Ch.2 Golden Hair | **3:4** | Instax-style memory. Edit the handwritten caption in Words → Captions. |
-| 14 | `hair-7` | Ch.2 Golden Hair | **3:4** | Instax-style memory. Edit the handwritten caption in Words → Captions. |
-| 15 | `hair-8` | Ch.2 Golden Hair | **3:4** | Instax-style memory. Edit the handwritten caption in Words → Captions. |
-| 16 | `name-deepu` | Ch.3 Her Names | **4:5** | Her classic, everyday self. |
-| 17 | `name-pinky` | Ch.3 Her Names | **4:5** | Her cutest photo — ideally with something pink. |
-| 18 | `name-kuchu` | Ch.3 Her Names | **4:5** | The most adorable / goofy one. |
-| 19 | `dance-1` | Ch.4 Kingdom Dance | **3:4** | Happy, festive, fun moments. |
-| 20 | `dance-2` | Ch.4 Kingdom Dance | **3:4** | Happy, festive, fun moments. |
-| 21 | `dance-3` | Ch.4 Kingdom Dance | **3:4** | Happy, festive, fun moments. |
-| 22 | `dance-4` | Ch.4 Kingdom Dance | **3:4** | Happy, festive, fun moments. |
-| 23 | `dance-5` | Ch.4 Kingdom Dance | **3:4** | Happy, festive, fun moments. |
-| 24 | `dance-6` | Ch.4 Kingdom Dance | **3:4** | Happy, festive, fun moments. |
-| 25 | `dance-7` | Ch.4 Kingdom Dance | **3:4** | Happy, festive, fun moments. |
-| 26 | `dance-8` | Ch.4 Kingdom Dance | **3:4** | Happy, festive, fun moments. |
-| 27 | `lantern-1` | Ch.5 Lanterns | **1:1** | Soft, glowy, emotional moments. |
-| 28 | `lantern-2` | Ch.5 Lanterns | **1:1** | Soft, glowy, emotional moments. |
-| 29 | `lantern-3` | Ch.5 Lanterns | **1:1** | Soft, glowy, emotional moments. |
-| 30 | `lantern-4` | Ch.5 Lanterns | **1:1** | Soft, glowy, emotional moments. |
-| 31 | `lantern-5` | Ch.5 Lanterns | **1:1** | Soft, glowy, emotional moments. |
-| 32 | `lantern-6` | Ch.5 Lanterns | **1:1** | Soft, glowy, emotional moments. |
-| 33 | `letter-1` | Ch.7 The Letter | **1:1** | A photo of you two, if possible. |
-| 34 | `letter-2` | Ch.7 The Letter | **3:4** | Any photo that means a lot. |
-| 35 | `finale` | Finale | **4:5** | Her single best photo. Saved for the big birthday reveal. |
-| 36 | `us` | Finale | **4:5** | A photo of BOTH of you. It appears with ‘come here, hug me’. |
+### Where the 36 photos go
+**Upload them through the admin.** Don't copy files into folders by hand. Open **Photo library** and use **Fill empty spots** (or **Replace** on each placeholder). The admin:
+- keeps your **original file untouched** in `photos/originals/`,
+- makes a cropped, gently colour-graded display copy in `photos/` and a thumbnail in `photos/thumbs/`,
+- records everything in `data/photos.json`.
 
-## 4. The countdown lock
+The initial spots and their shapes:
 
-`settings.lock` in `data/site.json` (editable in the admin's Settings) defaults to **unlock at 2027-01-03 00:00 IST**. Before that, visitors only see the countdown. When the clock hits midnight, the lantern lights and an *Open your gift* button appears, with no reload needed.
+| Chapter | Spots | Shape | Best photos |
+|---|---|---|---|
+| Prologue (first photo she sees) | 1 | 4:5 | Her prettiest solo portrait |
+| Tower walls | 6 | 3:4 · 1:1 · 4:5 · 4:3 | Candid, warm, everyday moments |
+| Golden thread (polaroids) | 8 | 3:4 | Memories in order, with captions |
+| Her names | 3 | 4:5 | One each for Deepu, Pinky, Kuchi Puchi |
+| Festival | 8 | 3:4 | Happy, fun, festive |
+| Photo lanterns | 6 | 1:1 | Soft, glowy, emotional |
+| The letter | 2 | 1:1 · 3:4 | The two of you |
+| Finale | 2 | 4:5 | Her single best photo + one of **both of you** |
 
-**To watch it yourself before then**, add `?preview` to the address:
-`https://anirudhleetcode-max.github.io/birthday/?preview`
+If one photo shows her **long hair** beautifully, open it and tick **Hero-hair photo**. It then gets its own cinematic moment on the golden thread.
 
-Handy for testing: `?preview&scene=lanterns` jumps straight to a chapter (`prologue`, `tower`, `hair`, `names`, `dance`, `lanterns`, `cake`, `letter`, `finale`, `credits`). `?draft` shows your unpublished admin changes (on the same device).
+### Replacing a photo later (the same-shape rule)
+1. Photo library → the photo → **Replace** → choose the new image.
+2. If it's the same shape, it's accepted immediately.
+3. If not, you'll see something like **"Expected ratio: 4:5 · Uploaded ratio: 16:9"**. Then choose:
+   - **Crop** to the right shape (it starts centred on her face if you've set a focal point),
+   - **Contain**: the whole photo fitted in, with a soft blurred extension of itself as background, or
+   - **Choose another photo**.
+   
+   Photos are never stretched or silently cropped.
+4. **Preview**, then **Publish**.
 
-## 5. Tips for the big moment
-- Send her the link **just before midnight** on 2 Jan (IST). She'll see the countdown tick to zero.
-- Tell her: **headphones on, lights low, sound up**. The phone stays awake during the film, and on Android it goes full-screen.
-- When the cake comes, she can **really blow into the phone** (she'll be asked for microphone permission; there's always a tap fallback).
-- It's built for phones first, and also looks great on a laptop.
+### Adding new photos (October, November, December, January…)
+Photo library → **Add photo** → choose the chapter (or **Extra memories**) → pick a shape → crop → add a caption and date → **Publish**. There is no limit. Chapters adapt to however many photos they have, and every enabled photo also appears in the finale heart, the credits and the album.
+
+## 4. The January 3, 2027 release (checklist)
+
+1. In the admin, open **Settings**. Check the unlock time is **3 Jan 2027, 00:00 (IST)** and the countdown lock is **on**.
+2. Fill every photo spot. The validation panel should show no "empty spot" warnings.
+3. Read through **Messages** and personalise the letter and captions with your own memories.
+4. Preview the entire film once on your phone (`?preview&draft`), with headphones in.
+5. **Publish**. Wait two minutes, then open the live link in a private window: you should see the countdown.
+6. Send her the link a little before midnight on **2 January**, so she watches the countdown reach zero.
+7. Tell her: *headphones on, lights low, sound up*. The phone stays awake during the film, and on Android it goes full-screen.
+
+## 5. Quality checks
+
+```bash
+npm run check     # content + files + 7,305-day check + secret scan
+npm run lint      # ESLint (uses a global eslint)
+npm test          # unit tests (content model, admin logic)
+npm run e2e       # film smoke test on every chapter + admin flows (needs `npm run serve` running)
+npm run e2e:full  # plays the whole film start to finish (slow in headless Chromium)
+```
 
 ## Project structure
 
 ```
-index.html              the film
-admin/                  the admin portal (The Lantern Room)
-data/site.json          all words, settings and the 36 photo slots (edited by the admin)
-photos/                 graded photos (+ originals/ for re-grading, extras/)
-media/                  optional music / video / voice note
-assets/css/             styles (main.css, scenes.css)
-assets/js/main.js       the projector: runs chapters, transitions, shared context
-assets/js/core/         audio engine, effects, subtitles, transitions, artwork, data
-assets/js/scenes/       one file per chapter
-assets/js/shared/       colour grading + drafts (shared by site and admin)
-assets/vendor/          three.js (MIT), GSAP (standard no-charge license)
-assets/fonts/           self-hosted Google Fonts (SIL Open Font License)
+index.html                 the film
+admin/                     the admin portal (The Lantern Room)
+data/settings.json         names, dates, countdown, theme, media, chapter visibility
+data/messages.json         every word on screen
+data/photos.json           the photo library (unlimited) + per-photo details
+photos/ originals/ thumbs/ display photos, untouched originals, thumbnails
+media/                     optional music / video / voice note
+assets/js/main.js          the projector: chapter order, transitions, shared context
+assets/js/core/            engines: ribbon, lanternfield, audio, effects, subtitles, transitions, chameleon, secrets
+assets/js/scenes/          one file per chapter
+assets/js/shared/          content model, colour grading, drafts (shared with the admin)
+assets/css/                styles (main.css + one file per chapter)
+docs/ARCHITECTURE.md       how it all fits together (contract + art bible)
+docs/SECURITY.md           the admin token, privacy, what's public
+tests/                     unit, e2e and visual QA tools
 ```
 
-Run it locally with any static server, e.g. `npx http-server . -c-1` then open `http://localhost:8080/?preview`.
+Libraries (vendored, no CDN): three.js (MIT), GSAP (standard no-charge licence). Fonts are self-hosted Google Fonts (SIL Open Font License).

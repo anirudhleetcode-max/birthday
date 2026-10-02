@@ -27,10 +27,12 @@ export class PathSampler {
     this.at(s + d, out);
     return out.sub(this.at(s - d, this.tmp)).normalize();
   }
-  // arc distance of the sample closest to p
-  closest(p) {
+  // arc distance of the sample closest to p (optionally within [sMin, sMax])
+  closest(p, sMin = 0, sMax = Infinity) {
     let best = 0, bd = Infinity;
-    for (let i = 0; i < this.n; i++) {
+    const i0 = Math.max(0, Math.floor((sMin / this.length) * (this.n - 1)));
+    const i1 = Math.min(this.n - 1, Math.ceil((Math.min(sMax, this.length) / this.length) * (this.n - 1)));
+    for (let i = i0; i <= i1; i++) {
       const d = this.pts[i].distanceToSquared(p);
       if (d < bd) { bd = d; best = i; }
     }

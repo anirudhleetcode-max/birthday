@@ -39,7 +39,15 @@
     import { createMockCtx } from './mock-ctx.js';
     import scene from '../assets/js/scenes/cake.js';
 
-    const site = await fetch('../data/site.json').then((r) => r.json()).catch(() => ({ her: { name: 'Deepu' }, text: {} }));
+    // content: data/settings.json + data/messages.json (falls back to the scene's own defaults).
+    // The scene's built-in copy is used unless ?realtext=1 (messages.json may still hold older cake copy).
+    const qs = new URLSearchParams(location.search);
+    const [settings, messages] = await Promise.all([
+      fetch('../data/settings.json').then((r) => r.json()).catch(() => ({})),
+      fetch('../data/messages.json').then((r) => r.json()).catch(() => ({})),
+    ]);
+    const site = { ...settings, her: settings.her || { name: 'Deepu' }, text: { ...messages } };
+    if (!qs.has('realtext')) delete site.text.cake;
     const stage = document.getElementById('stage');
     let mock = null, el = null;
 

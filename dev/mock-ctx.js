@@ -121,8 +121,8 @@ export function createMockCtx({ site, root }) {
   const audio = {
     sfx(name) { log('audio.sfx', name); },
     setMood(m) { log('audio.setMood', m); },
-    duck(a, s) { log('audio.duck', a, s); },
     happyBirthday() { log('audio.happyBirthday'); return wait(8).catch(() => {}); },
+    duck(level, hold) { log('audio.duck', level, hold); },
     context: null,
   };
 
@@ -131,14 +131,19 @@ export function createMockCtx({ site, root }) {
     mobile: q.has('mobile') || coarse || innerWidth < 760,
     lowPower: q.has('low'),
     reducedMotion: q.has('reduced') || matchMedia('(prefers-reduced-motion: reduce)').matches,
-    dpr: devicePixelRatio,
+    dpr: Math.min(devicePixelRatio, 2),
+    get tier() { return this.lowPower ? 'low' : this.mobile ? 'mid' : 'high'; },
+    get portrait() { return innerHeight > innerWidth; },
   };
 
   const ctx = {
     site, text: site.text,
     photo: (id) => ({ id, url: '', ratio: 1, ratioStr: '1/1', caption: '', isPlaceholder: true }),
     gsap: window.gsap, audio, fx, ui,
-    next() { log('ctx.next() — chapter finished'); window.__nextCalled = true; },
+    next(info) { log('ctx.next() — chapter finished', info ? JSON.stringify(info) : ''); window.__nextCalled = true; window.__nextInfo = info || null; },
+    handoff(info) { log('ctx.handoff', JSON.stringify(info)); },
+    grade(name) { log('ctx.grade', name); },
+    fill: (str) => String(str).replace(/\{name\}/g, (site.her && site.her.name) || 'Deepu'),
     wait, signal: ctrl.signal, device,
   };
   return {
