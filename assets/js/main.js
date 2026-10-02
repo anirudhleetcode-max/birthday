@@ -27,6 +27,7 @@ const device = {
   get portrait() { return window.innerHeight > window.innerWidth; },
 };
 document.documentElement.classList.toggle('is-mobile', mobile);
+document.documentElement.classList.toggle('low-power', device.lowPower);
 
 /* ---------------- chapters ---------------- */
 const CHAPTERS = [

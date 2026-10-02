@@ -48,7 +48,7 @@ export default {
         lantern.querySelector('.lantern-svg').classList.add('is-lit');
         el.querySelector('.gate-kicker').textContent = 'It’s time.';
         el.querySelector('.gate-title').textContent = 'Happy birthday, sunshine';
-        el.querySelector('.gate-count').style.opacity = '0.35';
+        gsap.to(el.querySelector('.gate-count'), { opacity: 0.35, duration: 1 });
         el.querySelector('.gate-sub').textContent = 'Headphones on. Lights low.';
         btn.hidden = false;
         gsap.fromTo(btn, { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 1.2, ease: 'back.out(1.7)' });

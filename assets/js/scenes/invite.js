@@ -34,12 +34,17 @@ export default {
       .fromTo(foot, { opacity: 0 }, { opacity: 0.6, duration: 1 }, '-=0.6');
     gsap.to(lantern, { rotation: 3, y: -6, duration: 3.2, yoyo: true, repeat: -1, ease: 'sine.inOut', transformOrigin: '50% 0%' });
 
-    await new Promise((resolve) => btn.addEventListener('click', resolve, { once: true }));
+    // Sound must be unlocked synchronously inside the tap (iOS is strict about this).
+    let soundReady;
+    await new Promise((resolve) => btn.addEventListener('click', () => {
+      soundReady = ctx.startSound();
+      ctx.immersive();
+      resolve();
+    }, { once: true }));
     if (ctx.signal.aborted) return;
     tl.progress(1);
     btn.disabled = true;
-    ctx.immersive();
-    await ctx.startSound();
+    await soundReady;
     ctx.audio.sfx('magic');
     ctx.audio.setMood('hush');
 

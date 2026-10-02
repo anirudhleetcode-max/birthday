@@ -279,3 +279,4 @@ img { -webkit-user-drag: none; user-select: none; }
 }
 
 [hidden] { display: none !important; }
+.low-power #grain { display: none; }
