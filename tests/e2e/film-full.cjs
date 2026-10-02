@@ -31,6 +31,8 @@ fs.mkdirSync(OUT, { recursive: true });
     route.fulfill({ response: res, json });
   });
   await page.goto(`http://localhost:${PORT}/index.html`);
+  // SwiftShader frames can take seconds; without this GSAP lag-smoothing freezes tweens in screenshots
+  await page.waitForFunction(() => !!window.gsap).then(() => page.evaluate(() => window.gsap.ticker.lagSmoothing(0))).catch(() => {});
 
   const seen = [];
   let scene = '';

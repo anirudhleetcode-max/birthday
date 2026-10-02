@@ -20,6 +20,8 @@ const IGNORE = [/favicon/i, /net::ERR_ABORTED.*\.mp3/i];
     page.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`));
     page.on('requestfailed', (r) => { if (!IGNORE.some((x) => x.test(r.url()))) errs.push(`requestfailed: ${r.url()}`); });
     await page.goto(url);
+    // SwiftShader frames can take seconds; without this GSAP lag-smoothing freezes tweens in screenshots
+    await page.waitForFunction(() => !!window.gsap).then(() => page.evaluate(() => window.gsap.ticker.lagSmoothing(0))).catch(() => {});
     await page.waitForTimeout(WAIT);
     const state = await page.evaluate((sel) => ({
       overflow: document.documentElement.scrollWidth > innerWidth + 1,

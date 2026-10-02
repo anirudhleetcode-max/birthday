@@ -9,9 +9,9 @@
     "lint": "eslint assets/js admin tests scripts",
     "test": "node --test \"tests/unit/*.test.mjs\" \"tests/admin/*.test.mjs\"",
     "check": "node scripts/check-assets.mjs",
-    "e2e": "node tests/e2e/film-smoke.cjs && node tests/e2e/admin-flows.cjs",
-    "e2e:full": "node tests/e2e/film-full.cjs",
-    "shots": "node tests/tools/shoot.cjs",
+    "e2e": "NODE_PATH=$(npm root -g) node tests/e2e/film-smoke.cjs && NODE_PATH=$(npm root -g) node tests/e2e/admin-flows.cjs",
+    "e2e:full": "NODE_PATH=$(npm root -g) node tests/e2e/film-full.cjs",
+    "shots": "NODE_PATH=$(npm root -g) node tests/tools/shoot.cjs",
     "verify": "npm run check && npm run lint && npm test && npm run e2e"
   },
   "engines": { "node": ">=20" }

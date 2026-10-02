@@ -33,6 +33,8 @@ fs.mkdirSync(out, { recursive: true });
   page.on('requestfailed', (r) => log.push(`[requestfailed] ${r.url()} ${r.failure()?.errorText}`));
   const url = `http://localhost:${port}/index.html?preview${scene ? `&scene=${scene}` : ''}${extra}`;
   await page.goto(url);
+  // SwiftShader frames can take seconds; without this GSAP lag-smoothing freezes tweens in screenshots
+  await page.waitForFunction(() => !!window.gsap).then(() => page.evaluate(() => window.gsap.ticker.lagSmoothing(0))).catch(() => {});
   const t0 = Date.now();
   const done = new Set();
   for (const t of times) {

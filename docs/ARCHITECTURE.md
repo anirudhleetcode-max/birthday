@@ -100,6 +100,8 @@ crop {x,y,w,h} normalised in original | null, cropMode cover|contain, focal {x,y
 caption, date, alt, enabled, featured, heroHair, grade {strength|null, warmth, exposure}, animation, effect, duration, addedAt, updatedAt
 ```
 Display files are derived (crop + colour grade) and regenerable from `original`; originals are never modified.
+Files: display `photos/<id>-<stamp>.webp|jpg` (≤1800 px, exact ratio, graded), thumbnail `photos/thumbs/<id>-<stamp>.jpg` (≤640 px), original `photos/originals/<id>-<stamp>.<ext>` (byte-for-byte upload). Publishing deletes replaced files in the same commit. Unknown fields added by hand to a photo record or to the top level of settings.json/photos.json are preserved.
+Optional per-photo hints (null = the chapter decides): `animation` ∈ kenburns-in | kenburns-out | pan-left | pan-right | drift | none; `effect` ∈ glow | sparkle | petals | lanterns | none; `duration` ∈ 3 | 4 | 5 | 6 | 8 | 10 (seconds on screen where a chapter shows photos one at a time, e.g. credits, album slideshow). `cropMode: 'contain'` display files already include their own blurred surround, so cover-fitting them is safe. `settings.theme.ribbon === false` turns off the decorative golden-ribbon flourishes and the `ribbon` transition (chapter-essential threads stay).
 
 `data/messages.json` → every word on screen, grouped by chapter id (see §4). `data/settings.json` → `her {name, nicknames[], birthDate}`, `from {name, signoff}`, `settings {lock {enabled, unlockAt}, grading {strength}, whatsapp, github {owner, repo, branch}, theme {grain, particles, ribbon}}`, `media {music, musicTitle, video, videoCaption, voice}`, `chapters [{id, enabled}]`.
 
@@ -128,6 +130,7 @@ ribbonPaths.wave(w, h, opts) | heart(cx, cy, size, n) | circle(cx, cy, r, n, tur
 Usage budget (quality over quantity): 1 major introduction (tower window → *ribbon* transition into the Golden Thread), 2–3 subtle chapter appearances (golden thread connecting polaroids, lantern links, 7,305 timeline), 1 cake appearance (3D strand lighting the 20 candles — cake's own), 1 major finale appearance (ribbon connects photos and curves into the heart; draws "20").
 
 ### core/lanternfield.js — 3D lanterns (Three.js), shared by `lanterns`, `constellation`, `birthday`
+*(Implemented API is a superset of the sketch below — read the header comment of core/lanternfield.js: `formShape` returns `Promise<indices>`; also `releaseShape`, `rebase`, `extinguish`, `pin`, `positionOf`, `screenOf`, `visible`, `nearest`, `setIntensity`, `setExposure`, `setHaze`; options `water`, `haze`, `wind`, `size`, `exposure`, `intensity`; photo-lantern `setClarity`, `hiRes`, `isReady`, `size`; ribbon `setPoints`, `setOpacity`, `setWidth`, `head`. The field is driven by your own clock via `field.update(time, dt)`; `wave({start})` is relative to `field.time` (negative = already risen).)*
 GPU-animated instanced lanterns with depth layers (foreground / midground / background / far), varied size/brightness, haze, water reflections, plus photo-lanterns (glass-like glow around a real photo) and a 3D ribbon.
 ```js
 import { createLanternField, createPhotoLantern, createRibbon3D } from '../core/lanternfield.js';

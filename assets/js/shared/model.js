@@ -96,6 +96,7 @@ export function chapterInfo(id) {
 export function newPhoto(partial = {}) {
   const ch = chapterInfo(partial.chapter || 'album');
   return {
+    ...partial, // keep any extra fields someone added by hand
     id: partial.id || newId(ch.id === 'album' ? 'x' : ch.id),
     chapter: ch.id,
     order: Number.isFinite(partial.order) ? partial.order : 999,
@@ -162,25 +163,29 @@ export function usedFiles(site) {
 /* ------------------------------------------------------------------ files */
 export function combine({ settings = {}, messages = {}, photos = {} } = {}) {
   const { version: _v1, ...text } = messages || {};
+  const { version: _v2, her, from, settings: st, media, chapters, ...settingsExtra } = settings || {};
+  const { version: _v3, chapters: photoChapters, photos: list, ...photosExtra } = photos || {};
   return normalize({
     version: MODEL_VERSION,
-    her: settings.her,
-    from: settings.from,
-    settings: settings.settings,
-    media: settings.media,
-    chapters: settings.chapters,
+    her,
+    from,
+    settings: st,
+    media,
+    chapters,
     text,
-    photoChapters: photos.chapters,
-    photos: photos.photos,
+    photoChapters,
+    photos: list,
+    settingsExtra,
+    photosExtra,
   });
 }
 
 export function split(site) {
   const s = normalize(clone(site));
   return {
-    settings: { version: MODEL_VERSION, her: s.her, from: s.from, settings: s.settings, media: s.media, chapters: s.chapters },
+    settings: { ...(s.settingsExtra || {}), version: MODEL_VERSION, her: s.her, from: s.from, settings: s.settings, media: s.media, chapters: s.chapters },
     messages: { version: MODEL_VERSION, ...s.text },
-    photos: { version: MODEL_VERSION, chapters: s.photoChapters, photos: s.photos },
+    photos: { ...(s.photosExtra || {}), version: MODEL_VERSION, chapters: s.photoChapters, photos: s.photos },
   };
 }
 
@@ -217,6 +222,8 @@ export function normalize(site) {
   s.chapters = FILM_CHAPTERS.map((c) => ({ id: c.id, enabled: c.toggle === false ? true : enabled.has(c.id) ? enabled.get(c.id) : true }));
   s.text = s.text || {};
   s.photoChapters = s.photoChapters || {};
+  s.settingsExtra = s.settingsExtra || {};
+  s.photosExtra = s.photosExtra || {};
   const seen = new Set();
   s.photos = (s.photos || []).map((p) => {
     const q = newPhoto(p);
