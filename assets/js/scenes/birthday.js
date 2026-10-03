@@ -24,7 +24,7 @@ import { createOrbit } from './birthday/orbit.js';
 
 const DEG = Math.PI / 180;
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
-const GOLDS = ['#f4c463', '#ffe3a3', '#fff4e0', '#ffb347', '#f2a7c3'];
+const GOLDS = ['#f4c463', '#ffe3a3', '#ffb347', '#e8a94c', '#f7d58a'];
 
 let live = null;
 
@@ -176,7 +176,7 @@ function build(ctx, el) {
   const stars = createStarfield(scene, U, low ? 800 : tier === 'high' ? 2200 : 1500);
   const days = createDays(scene, U, { days: Math.min(40000, life.days), months: life.months, years: life.years, device });
   const sprites = createStarSprites(scene, U, 96);
-  const CAP = { high: 1800, mid: 900, low: 450 }[tier] || 900;
+  const CAP = { high: 2000, mid: 1300, low: 500 }[tier] || 1300;
   const SPARE = 110; // the first three, the heart's spares, the "20", her taps
   const field = createLanternField({
     scene, camera, renderer, device, max: CAP + SPARE,
@@ -187,8 +187,9 @@ function build(ctx, el) {
   /* ---------------------------------------------------------------- photos */
   const pool = photoPool(ctx);
   const PL_MAX = Math.min(pool.length, { high: 7, mid: 5, low: 3 }[tier] || 5);
-  const ORBIT_MAX = { high: 40, mid: 28, low: 16 }[tier] || 28;
+  const ORBIT_MAX = { high: 32, mid: 26, low: 16 }[tier] || 26;
   const orbitPhotos = pool.slice(0, ORBIT_MAX);
+  for (const p of orbitPhotos) ctx.preload(p.thumbUrl || p.url); // warm the cache for the last beat
 
   /* ---------------------------------------------------------------- loop */
   let time = 0;
@@ -222,7 +223,7 @@ function build(ctx, el) {
 
   /* ---------------------------------------------------------------- ribbon */
   // (a chapter-essential thread: settings.theme.ribbon only switches off the decorative ones)
-  const rib = createRibbon(ribLayer, { strands: 5, width: 2, glow: 0.95, device });
+  const rib = createRibbon(ribLayer, { strands: 5, width: 1.7, glow: 0.8, spread: 0.8, blend: 'screen', device });
   let rib20 = null;
   let seedFollow = false;
   let tl = null;
@@ -231,7 +232,7 @@ function build(ctx, el) {
     tl = timelinePath(W, H);
     el.style.setProperty('--line-y', `${Math.round(tl.y0)}px`);
     const tmp = V();
-    days.layout((u, off) => screenToWorld(tl.xOf(u), tl.yOf(u) + off, 100, tmp), Math.max(3.2, Math.min(W, H) * 0.011));
+    days.layout((u, off) => screenToWorld(tl.xOf(u), tl.yOf(u) + off, 100, tmp), Math.max(4.5, Math.min(W, H) * 0.0145));
   }
 
   on(window, 'resize', () => {
@@ -319,21 +320,25 @@ function build(ctx, el) {
     const T1 = reduced ? 4.2 : 6.4; // the line itself (time passes at a steady rate)
     const T1e = reduced ? T1 * 0.6 : T1; // the ribbon shortens its own motion when reduced
     const f0 = tl.startFrac;
-    const T0 = Math.max(0.9, (Math.PI / 2) * f0 * T1 / (1 - f0)); // lead-in ends at the line's speed
     sfx('shimmer');
     seedFollow = true;
     tw(seedEl, { opacity: 0, scale: 0.4, duration: reduced ? 0.8 : 1.3, ease: 'sine.in' });
-    await rib.draw({ from: 0, to: f0, duration: T0, ease: 'sine.in' });
+    // the point swings down into the first day…
+    await rib.draw({ from: 0, to: f0, duration: reduced ? 2 : 2.8, ease: 'sine.inOut' });
     seedFollow = false;
-    // the line: a year lights up each time the head passes one
+    // …and the line: a year lights up each time the head passes one, while the lead-in withdraws
     days.uniforms.uAppear.value.x = time;
     days.uniforms.uSweep.value.x = T1e;
     const line = rib.draw({ from: f0, to: 1, duration: T1, ease: 'none' });
+    rib.tween('start', f0 * 0.99, T1e * 0.55, 'sine.inOut');
     await wait(T1e * 0.42);
     showCount(T.years, life.years, 'years.');
     sfx('chime');
     await line;
-    rib.retract({ to: f0 * 0.985, duration: 2.4, ease: 'sine.inOut' }); // the lead-in withdraws; only her line remains
+    // the ribbon settles into a quiet axis, so the points of light on it can be seen
+    rib.fade(0.55, 2.4);
+    rib.tween('spread', 0.5, 2.4);
+    rib.tween('glow', 0.62, 2.4);
     await wait(reduced ? 1.6 : 2.2);
 
     // months
@@ -365,9 +370,9 @@ function build(ctx, el) {
     ignite(0.52, 1.1);
     ignite(0.83, 1.8);
     ignite(0.36, 2.6);
-    rib.tween('glow', 1.5, 1.6);
+    rib.tween('glow', 1.1, 1.6);
     await wait(reduced ? 3.6 : 4.6);
-    rib.tween('glow', 0.95, 1.6);
+    rib.tween('glow', 0.62, 1.6);
     await b.out();
   }
 
@@ -396,10 +401,10 @@ function build(ctx, el) {
     const d = rnd(dMin, dMax);
     return { ...aim(birth, { d, a: az(1.12 * f), y: rnd(-4, 2) }), speed: rnd(1.4, 2.5) * (1 + d / 1100), scale: rnd(1.9, 2.6) * (d > 900 ? 1.15 : 1) };
   };
-  const fromSky = (dMin, dMax, lo = -0.85, hi = 0.95) => (k, birth) => {
+  const fromSky = (dMin, dMax, lo = -0.85, hi = 0.95, final = false) => (k, birth) => {
     const d = rnd(dMin, dMax);
     const r = rigAt(birth, tmpRig);
-    const e = Math.max(1.5 * DEG, r.pitch + rnd(lo, hi) * halfV);
+    const e = Math.max(1.5 * DEG, (final ? cam.p1 : r.pitch) + rnd(lo, hi) * halfV);
     return { ...aim(birth, { d, a: az(1.1), e }), speed: rnd(1.6, 3.0) * (1 + d / 900), scale: rnd(2.0, 2.9) * (d > 900 ? 1.18 : 1), brightness: rnd(0.72, 1.05) };
   };
   const fromNear = (k, birth) => {
@@ -452,11 +457,11 @@ function build(ctx, el) {
 
     // hundreds — and the camera begins to rise with them
     cam.t0 = time + 0.5;
-    cam.dur = reduced ? 1 : 30;
+    cam.dur = reduced ? 1 : 24;
     const hund = Math.round(B * 0.22);
-    field.wave({ count: Math.round(hund * 0.6), start: 0, spread: 11, curve: 0.6, from: fromSea(70, 1500) });
+    field.wave({ count: Math.round(hund * 0.6), start: 0, spread: 11, curve: 0.6, from: fromSea(100, 1500) });
     field.wave({ count: Math.round(hund * 0.4), start: 1.5, spread: 11, curve: 0.6, from: fromSky(300, 1600, -0.9, 0.3) });
-    field.wave({ count: Math.round(B * 0.035), start: 2, spread: 60, from: fromNear });
+    field.wave({ count: Math.round(B * (reduced ? 0.01 : 0.022)), start: 1, spread: reduced ? 30 : 20, from: fromNear }); // (passed by the rising camera)
     playPhotoLanterns().catch(() => {});
     await wait(3);
     if (l1) l1.out();
@@ -465,13 +470,15 @@ function build(ctx, el) {
     // thousands
     audio.setMood('soar');
     const thou = Math.round(B * 0.58);
-    field.wave({ count: Math.round(thou * 0.65), start: 0, spread: 18, curve: 0.7, from: fromSky(200, 1900) });
-    field.wave({ count: Math.round(thou * 0.35), start: 0, spread: 18, curve: 0.8, from: fromSea(60, 1700) });
+    // (they light up all over the sky the camera is rising into, nearer ones brighter)
+    field.wave({ count: Math.round(thou * 0.45), start: 0, spread: 16, curve: 0.7, from: fromSky(140, 1300, -0.95, 0.9, true) });
+    field.wave({ count: Math.round(thou * 0.25), start: 2, spread: 16, curve: 0.8, from: fromSky(500, 2000, -0.6, 1.0, true) });
+    field.wave({ count: Math.round(thou * 0.3), start: 0, spread: 16, curve: 0.8, from: fromSea(160, 1500) });
     // and the sky keeps breathing for the rest of the chapter
     const tr = Math.round(B * 0.12);
-    field.wave({ count: tr, start: 16, spread: 110, from: fromSky(250, 1800, -0.95, 0.6) });
-    tw(U.uWarm, { value: 1, duration: 22, ease: 'sine.inOut' });
-    await wait(Math.max(4, cam.t0 + cam.dur - time - 3));
+    field.wave({ count: tr, start: 16, spread: 110, from: fromSky(200, 1600, -1.1, 0.4, true) });
+    tw(U.uWarm, { value: reduced ? 0.5 : 1, duration: 22, ease: 'sine.inOut' }); // (with a still camera the horizon stays in view)
+    await wait(Math.max(4, cam.t0 + cam.dur - time + 0.3)); // the camera has come to rest
 
     // the lanterns slowly gather into a faint heart
     await formHeart();
@@ -479,9 +486,9 @@ function build(ctx, el) {
 
   let heartIdx = null;
   async function formHeart() {
-    const n = { high: 72, mid: 58, low: 42 }[tier] || 58;
+    const n = { high: 84, mid: 68, low: 46 }[tier] || 68;
     const hp = heartOutline(n);
-    const Dh = 720;
+    const Dh = 520;
     const cy = titleCenterY();
     const pxW = W < H ? W * 0.8 : Math.min(W * 0.42, (H * 0.62) / hp.aspect);
     const unit = (pxW * 2 * Dh * tanV) / H; // px → world at that depth
@@ -489,7 +496,7 @@ function build(ctx, el) {
     const right = V().setFromMatrixColumn(camera.matrixWorld, 0);
     const up = V().setFromMatrixColumn(camera.matrixWorld, 1);
     const pts = hp.map((p) => c.clone().addScaledVector(right, p.x * unit).addScaledVector(up, p.y * unit));
-    const pr = field.formShape(pts, { duration: reduced ? 5 : 8, stagger: 0.4 });
+    const pr = field.formShape(pts, { duration: reduced ? 5 : 7.5, stagger: 0.4 });
     heartIdx = pr.indices;
     await wait(reduced ? 3.6 : 5.2);
     sfx('swell');
@@ -508,11 +515,14 @@ function build(ctx, el) {
       if (disposed) return;
       const photo = pool[k];
       const pl = createPhotoLantern(photo, { size: 4.4, device });
-      const ok = await Promise.race([pl.ready.then(() => !pl.failed), wait(3.5).then(() => pl.isReady())]);
+      let ok = false;
+      try {
+        ok = await Promise.race([pl.ready.then(() => !pl.failed), wait(3.5).then(() => pl.isReady())]);
+      } catch (e) { pl.dispose(); throw e; }
       if (disposed) { pl.dispose(); return; }
       if (!ok) { pl.dispose(); continue; }
       scene.add(pl);
-      const target = portrait ? W * 0.36 : Math.min(W * 0.17, H * 0.3);
+      const target = portrait ? W * 0.32 : Math.min(W * 0.16, H * 0.28);
       const depth = (pl.size.outerW * (H / 2)) / (tanV * target);
       const side = k % 2 === 0 ? 1 : -1;
       const xs = side * (portrait ? W * 0.17 : W * 0.25) + rnd(-0.03, 0.03) * W;
@@ -571,7 +581,6 @@ function build(ctx, el) {
   async function partTwenty() {
     phase = 3;
     tw(cam, { sway: 0, duration: 2.5, ease: 'sine.inOut' });
-    if (heartIdx) field.releaseShape({ indices: heartIdx, speed: [0.7, 1.5] });
     const fieldI = { v: 1 };
     tw(fieldI, { v: 0.78, duration: 4, ease: 'sine.inOut', onUpdate: () => field.setIntensity(fieldI.v) });
     await wait(reduced ? 0.8 : 1.6);
@@ -580,7 +589,7 @@ function build(ctx, el) {
     const bw = Math.min(W * 0.74, H * 0.34 * 1.75);
     const bh = bw / 1.75;
     const pts = ribbonPaths.twenty({ x: W / 2 - bw / 2, y: cy - bh / 2, w: bw, h: bh });
-    rib20 = createRibbon(ribLayer, { strands: 6, width: 2.6, glow: 1.15, device });
+    rib20 = createRibbon(ribLayer, { strands: 6, width: 2.6, glow: 1.15, blend: 'screen', device });
     rib20.setPath(pts);
     rib20.set({ head: 0 });
     sfx('magic');
@@ -613,19 +622,27 @@ function build(ctx, el) {
     rib20.tween('glow', 0.35, 2.2);
     rib20.tween('split', 0, 2.2);
     rib20.fade(0.6, 2.2);
-    setTimeout(() => sfx('sparkle'), 400);
+    setTimeout(() => !disposed && sfx('sparkle'), 400);
     await wait(reduced ? 2.2 : 3);
 
-    // the constellation becomes lanterns: one ignites at every star and settles into its place
+    // the constellation becomes lanterns: the heart's lanterns flow into the stars (the rest of
+    // the heart drifts free); if there are too few, new ones ignite right below the stars
     sfx('lanternRise');
-    const formed = field.formShape(worldPts, { indices: [], duration: reduced ? 2.8 : 3.6, stagger: 0.45, spawn: true });
+    const alive = (heartIdx || []).filter((i) => field.isAlive(i));
+    const pick = [];
+    if (alive.length) for (let k = 0; k < Math.min(K, alive.length); k++) pick.push(alive[Math.floor((k * alive.length) / Math.min(K, alive.length))]);
+    const rest = alive.filter((i) => !pick.includes(i));
+    field.releaseShape({ indices: rest, speed: [0.9, 1.9] });
+    field.releaseShape({ indices: pick, speed: [0.3, 0.6] }); // (free again from where they are — no jump)
+    heartIdx = null;
+    const formed = field.formShape(worldPts, { indices: pick, duration: reduced ? 3.2 : 4.2, stagger: 0.35, spawn: true });
     for (const s of starList) tw(s, { a: 0, size: 12, duration: 2.6, delay: 0.9 + Math.random() * 0.8, ease: 'sine.in' });
     rib20.fade(0, 3);
     const idx20 = await formed;
     for (const s of starList) sprites.remove(s);
     rib20.destroy();
     rib20 = null;
-    await wait(reduced ? 1 : 1.6);
+    await wait(reduced ? 1.4 : 2.4);
 
     // …and the lanterns rise away to reveal her title
     field.releaseShape({ indices: idx20, speed: [2.6, 4.4] });
@@ -655,7 +672,6 @@ function build(ctx, el) {
     nameEl.firstChild.textContent = name;
     ornEl.innerHTML = flourishSVG({ className: 'bd-orn-svg' });
     titleEl.setAttribute('aria-hidden', 'false');
-    titleEl.setAttribute('aria-label', `${big}, ${name}`);
   }
 
   /** Fit the title to the screen: every word on one line, the whole block inside its share of the height. */
@@ -678,7 +694,7 @@ function build(ctx, el) {
       const r = inner.getBoundingClientRect();
       const fs = parseFloat(getComputedStyle(nameEl).fontSize);
       const sw = r.width / (W * 0.9);
-      const sh = r.height / (H * 0.26);
+      const sh = r.height / (H * 0.4); // (the box includes room for the swashes)
       const s = Math.max(sw, sh);
       if (s <= 1) break;
       nameEl.style.fontSize = `${Math.floor(fs / s * 0.98)}px`;
@@ -701,15 +717,12 @@ function build(ctx, el) {
   function updateZones() {
     if (!orbit) return;
     const zs = [];
-    const b = rectOf(bigEl.querySelector('.bd-word') ? bigEl : null, 6, 0.08);
-    const n = rectOf(nameEl.firstChild, -2, 0.08);
+    const b = rectOf(bigEl, 6, 0);
+    const n = rectOf(nameEl.firstChild, -4, 0); // its padding is only room for the swashes
     if (b) zs.push(b);
-    if (n) {
-      // the script's swashes overhang its box — trim the empty sides of the line box
-      zs.push(n);
-    }
-    if (wordsEl.childElementCount) zs.push(rectOf(wordsEl, 8, 0.05));
-    if (closingEl.textContent) zs.push(rectOf(closingEl, 8, 0.05));
+    if (n) zs.push(n);
+    if (wordsEl.childElementCount) zs.push(rectOf(wordsEl.lastElementChild, 10, 0));
+    if (closingEl.textContent) zs.push(rectOf(closingEl, 10, 0));
     orbit.zones(zs);
   }
 
@@ -728,7 +741,6 @@ function build(ctx, el) {
     audio.setMood('soar');
     sfx('choir');
     tw(hushEl, { opacity: 1, duration: 2.4, ease: 'sine.inOut' });
-    if (!reduced) fx.flash({ color: '#ffd9a0', duration: 1.6, peak: 0.16 });
     twFrom(chars, reduced ? { opacity: 0 } : { opacity: 0, y: 16, filter: 'blur(10px)', scale: 1.12 }, {
       opacity: 1, y: 0, filter: 'blur(0px)', scale: 1, duration: reduced ? 1.4 : 1.8, ease: 'power3.out',
       stagger: (i) => Math.abs(i - mid) * (reduced ? 0.02 : 0.055),
@@ -755,7 +767,7 @@ function build(ctx, el) {
       const [x, y, color] = spots[i % spots.length];
       fx.firework({ x: W * x, y: H * y, color });
       if (i === 1 && !reduced) {
-        const c = low ? 18 : 30;
+        const c = low ? 14 : 24;
         fx.confetti({ x: -10, y: H + 10, angle: -62, spread: 26, count: c, power: 1.05, colors: GOLDS });
         fx.confetti({ x: W + 10, y: H + 10, angle: -118, spread: 26, count: c, power: 1.05, colors: GOLDS });
       }
@@ -783,8 +795,8 @@ function build(ctx, el) {
     const holds = words.map((w) => Math.max(2.6, 1.2 + w.split(/\s+/).length * 0.34));
     const total = holds.reduce((a, b) => a + b + 1.6, 0) + 2;
     audio.duck(0.62, total);
-    if (orbit) tw(orbit.state, { alpha: 0.55, speed: 0.6, duration: 3, ease: 'sine.inOut' });
-    tw(titleEl, { opacity: 0.72, duration: 3, ease: 'sine.inOut' });
+    if (orbit) tw(orbit.state, { alpha: 0.72, speed: 0.6, duration: 3, ease: 'sine.inOut' });
+    tw(titleEl, { opacity: 0.8, duration: 3, ease: 'sine.inOut' });
     tw(hushEl, { opacity: 0.8, duration: 3 });
     await wait(1.2);
     for (let i = 0; i < words.length; i++) {
@@ -805,7 +817,7 @@ function build(ctx, el) {
     closingEl.textContent = closing;
     updateZones();
     tw(titleEl, { opacity: 0.9, duration: 2.5, ease: 'sine.inOut' });
-    if (orbit) tw(orbit.state, { alpha: 0.7, duration: 2.5 });
+    if (orbit) tw(orbit.state, { alpha: 0.85, duration: 2.5 });
     gsap.set(closingEl, { '--wipe': '-20%', opacity: 1 });
     sfx('pageTurn');
     await new Promise((r) => tw(closingEl, { '--wipe': '125%', duration: reduced ? 1.6 : Math.min(4.2, 1.2 + closing.length * 0.045), ease: 'none', onComplete: r }));
@@ -828,24 +840,9 @@ function build(ctx, el) {
   /* ---------------------------------------------------------------- play / dispose */
   async function play() {
     ctx.letterbox(false);
-    const JUMP = new URLSearchParams(location.search).get('bdjump'); // DEBUG-TEMP
-    if (!JUMP) {
-      await partDays();
-      await partSky();
-      await partTwenty();
-    } else { // DEBUG-TEMP
-      layoutTimeline();
-      seedEl.style.opacity = '0';
-      if (JUMP === 'sky') { await partSky(); await partTwenty(); } else {
-        phase = 2;
-        U.uReveal.value = 1; U.uStars.value = 1; U.uWarm.value = 1;
-        cam.t0 = -100;
-        days.lift(-30, skyTarget, { sweep: 5.5, travel: [12, 20], rise: [0.3, 1.2] });
-        field.wave({ count: Math.round(B * 0.8), start: -40, spread: 40, from: fromSky(200, 1900) });
-        audio.setMood('soar');
-        if (JUMP === 'heart') { await formHeart(); await partTwenty(); } else if (JUMP === 'twenty') await partTwenty(); else { await wait(0.5); await reveal(); }
-      }
-    }
+    await partDays();
+    await partSky();
+    await partTwenty();
     await partOrbit();
     await partWords();
     await ui.waitContinue('One last thing');

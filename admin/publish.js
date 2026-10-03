@@ -8,12 +8,12 @@
  */
 import { FILES, split, combine, usedFiles, validate, PHOTO_CHAPTERS } from '../assets/js/shared/model.js';
 import {
-  state, changes, flushSave, resetDraft, client, connectAndFetch, adoptBase, lsSet, TOKEN_KEY, liveUrl, rerender, refreshChrome, globalStrength,
+  state, changes, flushSave, resetDraft, client, connectAndFetch, adoptBase, storeToken, clearToken, tokenPlace, liveUrl, rerender, refreshChrome, globalStrength,
 } from './state.js';
 import { clone, deepEqual, mergeSites, isManagedPath, plural, formatBytes, stamp } from './util.js';
 import { jsonText } from './github.js';
 import { zipBlob } from './zip.js';
-import { h, icon, toast, openSheet, confirmDialog, progressSheet } from './ui.js';
+import { h, icon, toast, openSheet, confirmDialog, progressSheet, switchField, single } from './ui.js';
 
 /* ---------------------------------------------------------------- validation */
 /** model.validate + a few friendly extras. */
@@ -49,7 +49,7 @@ export function changeList(ch) {
 }
 
 /* ---------------------------------------------------------------- publish */
-export async function publishFlow() {
+export const publishFlow = single(async () => {
   await flushSave();
   const ch = changes();
   if (!ch.count && !state.files.size) { toast('Nothing new to publish — everything is already live. ✨'); return; }
@@ -88,7 +88,7 @@ export async function publishFlow() {
   });
   if ((await s.result) !== 'go') return;
   await doPublish(msg.value.trim() || fresh.message);
-}
+});
 
 /** Build the commit plan against what is on GitHub right now. Exported for tests. */
 export function planPublish({ base, site, files, remote, existing }) {
@@ -170,7 +170,7 @@ async function doPublish(message) {
 }
 
 /* ---------------------------------------------------------------- export */
-export async function exportZip() {
+export const exportZip = single(async () => {
   await flushSave();
   const parts = split(state.site);
   const refs = usedFiles(state.site);
@@ -185,10 +185,10 @@ export async function exportZip() {
   const newFiles = entries.length - 3;
   toast(`Downloaded ${name}: the three content files${newFiles ? ` + ${plural(newFiles, 'new file')}` : ''}. Unzip it over the site folder to host it yourself.`, { type: 'success', duration: 9000 });
   return { name, size: blob.size, entries: entries.map((e) => e.name) };
-}
+});
 
 /* ---------------------------------------------------------------- reset */
-export async function resetFlow() {
+export const resetFlow = single(async () => {
   const ch = changes();
   if (!ch.count && !state.files.size) { toast('There are no unpublished changes to reset.'); return; }
   const ok = await confirmDialog({
@@ -202,7 +202,7 @@ export async function resetFlow() {
   rerender();
   refreshChrome();
   toast('Draft discarded — you’re back to the published version.');
-}
+});
 
 /* ---------------------------------------------------------------- connect */
 export function showConnectSheet({ firstRun = false, then = null } = {}) {
@@ -219,8 +219,14 @@ export function showConnectSheet({ firstRun = false, then = null } = {}) {
       h('li', 'Repository access → ', h('b', 'Only select repositories'), ' → choose ', h('b', state.repo.repo), '.'),
       h('li', 'Repository permissions → ', h('b', 'Contents'), ' → ', h('b', 'Read and write'), '. (Leave everything else as is.)'),
       h('li', 'Tap ', h('b', 'Generate token'), ', copy it (it starts with ', h('code', 'github_pat_'), ') and paste it below.')));
+  const remember = switchField({
+    label: 'Remember on this device', checked: tokenPlace() !== 'tab',
+    hint: 'Off: the token is forgotten when you close this tab — best on a shared or borrowed device.',
+  });
+  remember.control.setAttribute('data-testid', 'remember-token');
   const connectBtn = h('button.btn.gold', { type: 'button', 'data-testid': 'connect' }, icon('key'), h('span', 'Connect'));
   const s = openSheet({
+    key: 'connect',
     kicker: firstRun ? 'Welcome to the Lantern Room' : 'GitHub',
     title: firstRun ? 'Connect once, publish anytime' : 'Connect to GitHub',
     size: 'md',
@@ -229,14 +235,17 @@ export function showConnectSheet({ firstRun = false, then = null } = {}) {
       steps,
       h('div.field', h('div.field-top', h('label.field-label', { for: 'gh-token' }, 'Paste your token'), showBtn), tokenInput),
       err,
-      h('p.muted.small', 'It’s saved only in this browser. Publishing goes to ', h('b', `${repoName} · ${state.repo.branch}`), ' (change this in Settings → GitHub).'),
+      remember,
+      h('p.muted.small', 'The token stays in this browser only — it is never put into the site, your drafts or an export, and it is only ever sent to GitHub. Publishing goes to ', h('b', `${repoName} · ${state.repo.branch}`), ' (change this in Settings → GitHub).'),
     ],
     actions: [
       h('button.btn.ghost', { type: 'button', onclick: () => s.close(null) }, firstRun ? 'Just look around' : 'Cancel'),
       connectBtn,
     ],
   });
+  if (s.el.querySelector('#gh-token') !== tokenInput) return; // already open (double tap) — keep that one
   const go = async () => {
+    if (connectBtn.disabled) return; // Enter pressed twice → one check, one “then”
     const t = tokenInput.value.trim();
     if (!t) { err.textContent = 'Paste the token first.'; err.hidden = false; tokenInput.focus(); return; }
     connectBtn.disabled = true;
@@ -246,7 +255,7 @@ export function showConnectSheet({ firstRun = false, then = null } = {}) {
     state.conn.token = t;
     try {
       const remote = await connectAndFetch();
-      lsSet(TOKEN_KEY, t);
+      storeToken(t, { remember: remember.control.checked });
       s.close('ok');
       adoptBase(remote);
       state.source = 'github';
@@ -282,7 +291,7 @@ export async function reconnect() {
 }
 
 export function forgetToken() {
-  lsSet(TOKEN_KEY, null);
+  clearToken();
   state.conn = { status: 'none', message: '', token: '', info: null };
   refreshChrome();
   rerender();

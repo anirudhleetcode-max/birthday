@@ -68,7 +68,11 @@ export function buildBackdrop() {
         float h = pow(max(0.0, dot(normalize(vDir * vec3(1.0, 1.6, 1.0)), vec3(0.0, 0.05, -1.0))), 6.0);
         col += vec3(0.02, 0.012, 0.04) * h * 0.6;
         // …which turns into warm golden light once the candles are out
-        col += vec3(0.075, 0.036, 0.008) * pow(h, 1.1) * smoothstep(0.55, -0.05, y) * uWarm;
+        // a soft golden glow hanging right behind the cake (narrow enough to stay
+        // a glow, not a wall, in a tall phone frame)
+        float ang = acos(clamp(dot(vDir, normalize(vec3(0.0, 0.07, -1.0))), -1.0, 1.0));
+        float hw = exp(-ang * ang / 0.03) + 0.25 * exp(-ang * ang / 0.16);
+        col += vec3(0.045, 0.019, 0.008) * hw * smoothstep(0.5, -0.05, y) * uWarm;
         col *= 0.12 + 0.88 * uRoom;
         gl_FragColor = vec4(col, 1.0);
         #include <tonemapping_fragment>
@@ -166,7 +170,7 @@ export function buildBokeh({ lowPower = false } = {}) {
           float disc = 1.0 - smoothstep(0.7, 1.0, d);
           float rim = smoothstep(0.6, 0.9, d) * disc * 0.22;
           a = disc * 0.42 + rim + exp(-d * d * 3.0) * 0.2;
-          if (vKind > 0.5) a = exp(-d * d * 5.0) * 0.8 + exp(-d * d * 40.0) * 0.9; // fairy bulbs: soft glow + hot core
+          if (vKind > 0.5) a = exp(-d * d * 6.0) * 0.45 + exp(-d * d * 40.0) * 0.9; // fairy bulbs: soft glow + hot core
         }
         vec3 col = vCol.rgb * a * vCol.a * vTw * uBright;
         gl_FragColor = vec4(col, 1.0);
@@ -241,9 +245,12 @@ export function buildTable({ lowPower = false, quality = 2, anisotropy = 4, shad
   const wood = woodTexture(lowPower ? 512 : 1024);
   wood.anisotropy = anisotropy;
   const mat = quality >= 2
-    ? new THREE.MeshPhysicalMaterial({ map: wood, color: 0xa8847a, roughness: 0.6, metalness: 0, clearcoat: 0.25, clearcoatRoughness: 0.3 })
-    : new THREE.MeshStandardMaterial({ map: wood, color: 0xa8847a, roughness: 0.58, metalness: 0 });
+    ? new THREE.MeshPhysicalMaterial({ map: wood, color: 0x9a6a64, roughness: 0.6, metalness: 0, clearcoat: 0.25, clearcoatRoughness: 0.3 })
+    : new THREE.MeshStandardMaterial({ map: wood, color: 0x9a6a64, roughness: 0.58, metalness: 0 });
   mat.userData.env = 0.4; // keep the dark wood dark; its sheen comes from the lights
+  // Neutral tone mapping strips the blue out of dark warm tones (walnut → olive);
+  // the table is dark enough to go out untouched
+  mat.toneMapped = false;
   const top = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.5, 0.12, 160, 1), mat);
   top.position.y = -0.06;
   top.receiveShadow = shadows;
@@ -260,7 +267,7 @@ export function buildTable({ lowPower = false, quality = 2, anisotropy = 4, shad
     return m;
   };
   const standShadow = mkShadow(1.15, 0, 0, 0.9);
-  const glowTex = radialTexture({ size: 256, inner: 'rgba(255,170,90,0.9)', mid: 'rgba(255,140,70,0.25)', outer: 'rgba(255,120,60,0)', midStop: 0.3 });
+  const glowTex = radialTexture({ size: 256, inner: 'rgba(255,150,90,0.9)', mid: 'rgba(240,120,70,0.25)', outer: 'rgba(220,100,60,0)', midStop: 0.3 });
   const pool = new THREE.Mesh(new THREE.PlaneGeometry(6.5, 6.5), new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.0 }));
   pool.rotation.x = -Math.PI / 2; pool.position.y = 0.003;
   pool.renderOrder = 2;
@@ -278,7 +285,7 @@ export function buildAtmosphere({ glowTex }) {
   geo.translate(0, H / 2, 0);
   const mat = new THREE.ShaderMaterial({
     uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(0.55, 0.6, 1.0) }, uIntensity: { value: 0 } },
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false,
     vertexShader: /* glsl */`
       varying vec3 vN; varying vec3 vW; varying float vH;
       void main(){
@@ -296,7 +303,7 @@ export function buildAtmosphere({ glowTex }) {
         float body = pow(facing, 2.2);                       // soft edges, denser through the middle
         float vert = smoothstep(0.0, 0.3, vH) * (1.0 - smoothstep(0.55, 1.0, vH));
         float a = atan(vW.z, vW.x);
-        float streak = 0.72 + 0.28 * sin(a * 7.0 + vH * 3.0 + uTime * 0.12) * sin(a * 3.0 - uTime * 0.07 + 1.3);
+        float streak = 0.86 + 0.14 * sin(a * 5.0 + vH * 3.0 + uTime * 0.12) * sin(a * 3.0 - uTime * 0.07 + 1.3);
         gl_FragColor = vec4(uColor * body * vert * streak * uIntensity, 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>

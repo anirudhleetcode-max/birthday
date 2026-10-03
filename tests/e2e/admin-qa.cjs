@@ -87,6 +87,24 @@ function withOrientation(jpeg, orientation) {
   return Buffer.concat([jpeg.subarray(0, 2), Buffer.from([0xff, 0xe1]), len, payload, jpeg.subarray(2)]);
 }
 
+/** What a phone writes into a photo: EXIF with the camera + GPS, XMP, a comment, and a hidden extra image after the end. */
+function withPrivateMetadata(jpeg, orientation = 6) {
+  const seg = (marker, payload) => { const len = Buffer.alloc(2); len.writeUInt16BE(payload.length + 2); return Buffer.concat([Buffer.from([0xff, marker]), len, payload]); };
+  const make = Buffer.from('SecretPhone GPS 12.9716N 77.5946E\0', 'latin1');
+  const ifd = Buffer.alloc(2 + 24 + 4);
+  ifd.writeUInt16LE(2, 0);
+  ifd.writeUInt16LE(0x010f, 2); ifd.writeUInt16LE(2, 4); ifd.writeUInt32LE(make.length, 6); ifd.writeUInt32LE(8 + ifd.length, 10);
+  ifd.writeUInt16LE(0x0112, 14); ifd.writeUInt16LE(3, 16); ifd.writeUInt32LE(1, 18); ifd.writeUInt16LE(orientation, 22);
+  const exif = Buffer.concat([Buffer.from('Exif\0\0II', 'latin1'), Buffer.from([0x2a, 0, 8, 0, 0, 0]), ifd, make]);
+  return Buffer.concat([jpeg.subarray(0, 2), seg(0xe1, exif), seg(0xe1, Buffer.from('http://ns.adobe.com/xap/1.0/\0<x:xmpmeta>xmp-secret</x:xmpmeta>', 'latin1')),
+    seg(0xfe, Buffer.from('comment-secret')), jpeg.subarray(2), Buffer.from('MPF-hidden-image-secret')]);
+}
+/** A tiny MP4 whose moov holds the recording location (©xyz), like a phone video. */
+function mp4WithLocation() {
+  const box = (type, ...parts) => { const body = Buffer.concat(parts.map((p) => (typeof p === 'string' ? Buffer.from(p, 'latin1') : p))); const len = Buffer.alloc(4); len.writeUInt32BE(body.length + 8); return Buffer.concat([len, Buffer.from(type, 'latin1'), body]); };
+  return Buffer.concat([box('ftyp', 'isom', Buffer.from([0, 0, 2, 0]), 'isomiso2mp41'), box('moov', box('mvhd', Buffer.alloc(20)), box('udta', box('\xa9xyz', Buffer.from([0, 18, 0x15, 0xc7]), '+12.9716+077.5946/'))), box('mdat', Buffer.alloc(4096, 7))]);
+}
+
 /* ================================================================ realistic GitHub mock */
 const sha1 = (b) => crypto.createHash('sha1').update(b).digest('hex');
 class MockGit {
@@ -377,6 +395,23 @@ FLOWS.library = async () => {
   ok(await count() === st.photos.length && await page.getAttribute('[data-filter="all"]', 'aria-selected') === 'true', 'regression: unknown remembered filter → All (not “Disabled”)');
   ok(await S(page, () => document.documentElement.scrollWidth <= innerWidth + 1), 'no horizontal scroll');
   ok(!errors.length, 'no console errors (library)', errors.join(' | '));
+  // regression: a double tap opens ONE dialog (Add photo, Edit, Publish, the drawer)
+  const sheets = () => page.locator('.sheet-backdrop:not(.out)').count();
+  const closeAll = async () => { for (let n = 0; n < 3 && await sheets(); n++) { await page.keyboard.press('Escape'); await page.waitForTimeout(300); } };
+  const dbl = async (sel) => { await page.locator(sel).first().scrollIntoViewIfNeeded(); const b = await page.locator(sel).first().boundingBox(); await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2); await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2); await page.waitForTimeout(500); };
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const counts2 = {};
+  await dbl('[data-testid="add-photo"]'); counts2.add = await sheets(); await closeAll();
+  await dbl('.pcard [data-act="edit"]'); counts2.edit = await sheets(); await closeAll();
+  await dbl('.pcard [data-act="move"]'); counts2.move = await sheets(); await closeAll();
+  await dbl('#bnav-more'); counts2.drawer = await sheets(); await closeAll();
+  await goSection(page, 'messages');
+  await page.getByLabel('Greeting', { exact: true }).fill('Double tap test');
+  await dbl('[data-testid="publish"]');
+  await page.waitForSelector('[data-testid="publish-now"]', { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(600);
+  counts2.publish = await sheets(); await closeAll();
+  ok(Object.values(counts2).every((n) => n === 1), 'regression: double-tapping a button opens its dialog once', JSON.stringify(counts2));
   await context.close();
 };
 
@@ -467,7 +502,7 @@ FLOWS.replace = async () => {
   // EXIF orientation 6: stored 800×600 (landscape), upright 600×800 = 3:4 → a 3:4 spot accepts it as a perfect fit
   ph = await allPhotos(page);
   const exifTarget = empty('3:4');
-  await chooseFile(page, () => page.click(`.pcard[data-id="${exifTarget}"] [data-act="replace"]`), fileOf('IMG_exif6.jpg', IMG.exif6, 'image/jpeg'));
+  await chooseFile(page, () => page.click(`.pcard[data-id="${exifTarget}"] [data-act="replace"]`), fileOf('IMG_exif6.jpg', IMG.exifPrivate, 'image/jpeg'));
   await page.waitForFunction((id) => !!window.__lanternRoom.state.site.photos.find((x) => x.id === id).src, exifTarget, { timeout: 20000 }).catch(() => {});
   const warned = await page.locator('[data-testid="ratio-warning"]').count();
   if (warned) { ok(false, 'EXIF-6 portrait (upright 3:4) fits a 3:4 spot without a warning', await page.textContent('[data-testid="ratio-warning"]')); await page.click('.sheet-x'); await noSheet(page); }
@@ -477,7 +512,12 @@ FLOWS.replace = async () => {
     ok(exact(d, '3:4') && d.h > d.w, `EXIF-6 photo accepted upright as 3:4 (${d.w}×${d.h})`);
     ok(isRed(d.tl) && isBlue(d.br), `EXIF-6 display is upright (red top-left ${d.tl}, blue bottom-right ${d.br})`);
     const o = await blobInfo(page, p.original);
-    ok(o && o.size === IMG.exif6.length, 'original kept byte-for-byte (EXIF intact)');
+    ok(o && o.w === 600 && o.h === 800 && isRed(o.tl) && isBlue(o.br), `the stored original still shows upright (${o && `${o.w}×${o.h}`})`);
+    const bytes = Buffer.from(await S(page, async (pp) => [...new Uint8Array(await window.__lanternRoom.state.files.get(pp).arrayBuffer())], p.original));
+    const leaks = ['SecretPhone', 'GPS', '12.9716', 'xmp-secret', 'comment-secret', 'MPF-hidden'].filter((x) => bytes.includes(Buffer.from(x)));
+    ok(!leaks.length && bytes.length < IMG.exifPrivate.length, `regression: the published original carries no GPS / camera / XMP / comment / hidden image (${IMG.exifPrivate.length} → ${bytes.length} bytes)`, leaks.join(', '));
+    const pixels = (b) => { const i = b.indexOf(Buffer.from([0xff, 0xda])); return b.subarray(i, b.lastIndexOf(Buffer.from([0xff, 0xd9])) + 2); };
+    ok(pixels(bytes).equals(pixels(IMG.exifPrivate.subarray(0, IMG.exifPrivate.length - 'MPF-hidden-image-secret'.length))), 'the picture data itself is untouched (lossless clean-up)');
   }
   await waitIdle(page);
   // EXIF orientation 6 into a 4:5 spot → the warning must name the UPRIGHT shape (3:4, not 4:3)
@@ -539,6 +579,16 @@ FLOWS.replace = async () => {
   const big = (await allPhotos(page)).find((p) => p.chapter === 'album' && p.ratio === '1:1');
   const bo = await blobInfo(page, big.original);
   ok(/\.jpg$/.test(big.original) && bo.type === 'image/jpeg' && Math.max(bo.w, bo.h) <= 3600 && bo.size < 12 * 1024 * 1024, `>12 MB PNG → original stored as JPEG (${bo.w}×${bo.h}, ${(bo.size / 1048576).toFixed(1)} MB)`);
+  // replace the PUBLISHED hero with a matching 4:5 photo (no warning), then Undo → the published files again, nothing staged
+  const heroId = (await allPhotos(page)).find((p) => p.role === 'hero').id;
+  const staged0 = await S(page, () => window.__lanternRoom.state.files.size);
+  await chooseFile(page, () => page.click(`.pcard[data-id="${heroId}"] [data-act="replace"]`), fileOf('hero-new.png', IMG.p45b));
+  await page.waitForFunction((id) => window.__lanternRoom.state.site.photos.find((x) => x.id === id).src !== 'photos/hero-old.jpg', heroId, { timeout: 20000 });
+  await waitIdle(page);
+  ok(await page.locator('[data-testid="ratio-warning"]').count() === 0 && /a perfect fit/.test(await lastToast(page)), 'matching 4:5 → replaced straight away (“a perfect fit”, no warning)');
+  await page.click('.toast.has-action .toast-action:has-text("Undo")');
+  const back = await photo(page, heroId);
+  ok(back.src === 'photos/hero-old.jpg' && back.original === 'photos/originals/hero-old.jpg' && await S(page, () => window.__lanternRoom.state.files.size) === staged0, 'Undo of a replace restores the published photo and drops the new files');
   ok(!errors.length, 'no console errors (replace)', errors.join(' | '));
   await context.close();
 };
@@ -562,6 +612,16 @@ FLOWS.edit = async () => {
   const all1 = await allPhotos(page);
   ok(m.chapter === 'letter' && m.ratio === ph.find((p) => p.id === mover).ratio && m.order === all1.filter((p) => p.chapter === 'letter').length, `moved to the end of Letter (order ${m.order}), ratio kept`);
   ok(ordersOk(all1), 'orders contiguous in both chapters after a move');
+  // Undo puts it back exactly where it was
+  const towerBefore = ph.filter((p) => p.chapter === 'tower').sort((a, b) => a.order - b.order).map((p) => p.id);
+  await page.click('.toast.has-action .toast-action:has-text("Undo")');
+  const towerAfter = (await allPhotos(page)).filter((p) => p.chapter === 'tower').sort((a, b) => a.order - b.order).map((p) => p.id);
+  ok(JSON.stringify(towerAfter) === JSON.stringify(towerBefore) && ordersOk(await allPhotos(page)), 'Undo of a move restores the exact position in its old chapter');
+  await page.click(`.pcard[data-id="${mover}"] [data-act="move"]`);
+  await page.waitForSelector('[data-testid="move-confirm"]');
+  await page.selectOption('.sheet select', 'letter');
+  await page.click('[data-testid="move-confirm"]');
+  await noSheet(page);
   // move back through the editor's chapter select
   await openEd(mover);
   await page.selectOption('.editor-fields select >> nth=0', 'tower');
@@ -637,28 +697,51 @@ FLOWS.edit = async () => {
 };
 
 FLOWS.reorderTouch = async () => {
-  section('REORDER on the phone: touch drag on the grip + buttons');
+  section('REORDER on the phone: touch drag on the grip (with auto-scroll) + buttons');
   const { context, page, errors } = await setup({ phone: true });
   await boot(page);
   await tap(page, '[data-filter="dance"]');
   const ids0 = await idsIn(page, 'dance');
   const cdp = await context.newCDPSession(page);
-  const g = await page.locator(`.pcard[data-id="${ids0[0]}"] .grip`).boundingBox();
-  const t = await page.locator(`.pcard[data-id="${ids0[2]}"]`).boundingBox();
   const pt = (x, y) => [{ x, y, id: 1, radiusX: 4, radiusY: 4, force: 1 }];
-  const x0 = g.x + g.width / 2; const y0 = g.y + g.height / 2;
-  const x1 = t.x + t.width / 2; const y1 = t.y + t.height * 0.8;
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: pt(x0, y0) });
-  for (let i = 1; i <= 14; i++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: pt(x0 + (x1 - x0) * (i / 14), y0 + (y1 - y0) * (i / 14)) });
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  const touch = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : pt(x, y) });
+  // 1) a short drag: the first card's grip onto the lower half of the second card (both on screen)
+  // the first card's top at 150 px: both cards on screen, clear of the auto-scroll edges
+  await page.evaluate((id) => { const r = document.querySelector(`.pcard[data-id="${id}"]`).getBoundingClientRect(); window.scrollBy(0, r.top - 150); }, ids0[0]);
+  let g = await page.locator(`.pcard[data-id="${ids0[0]}"] .grip`).boundingBox();
+  let t = await page.locator(`.pcard[data-id="${ids0[1]}"]`).boundingBox();
+  let x0 = g.x + g.width / 2; let y0 = g.y + g.height / 2;
+  await touch('touchStart', x0, y0);
+  for (let i = 1; i <= 10; i++) await touch('touchMove', x0, y0 + (t.y + t.height * 0.85 - y0) * (i / 10));
+  await touch('touchEnd');
   await page.waitForTimeout(250);
   const ids1 = await idsIn(page, 'dance');
-  ok(ids1.indexOf(ids0[0]) >= 2, `touch drag moved the photo (${ids0.slice(0, 3)} → ${ids1.slice(0, 3)})`);
-  const orders = (await allPhotos(page)).filter((p) => p.chapter === 'dance').sort((a, b) => a.order - b.order).map((p) => p.id);
+  ok(ids1[1] === ids0[0] && ids1[0] === ids0[1], `short touch drag swaps the first two (${ids0.slice(0, 3)} → ${ids1.slice(0, 3)})`);
+  let orders = (await allPhotos(page)).filter((p) => p.chapter === 'dance').sort((a, b) => a.order - b.order).map((p) => p.id);
   ok(JSON.stringify(orders) === JSON.stringify(ids1), 'order fields follow the screen');
-  await tap(page, `.pcard[data-id="${ids1[1]}"] [data-act="up"]`);
+  // 2) regression: dragging to the bottom edge auto-scrolls; the release (finger over the bottom bar,
+  //    the card moved in the DOM → pointer capture lost) still commits the new order
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.locator(`.pcard[data-id="${ids1[0]}"] .grip`).scrollIntoViewIfNeeded();
+  g = await page.locator(`.pcard[data-id="${ids1[0]}"] .grip`).boundingBox();
+  x0 = g.x + g.width / 2; y0 = g.y + g.height / 2;
+  const yEdge = 844 - 70; // over the bottom bar
+  await touch('touchStart', x0, y0);
+  for (let i = 1; i <= 8; i++) await touch('touchMove', x0, y0 + (yEdge - y0) * (i / 8));
+  const scroll0 = await page.evaluate(() => window.scrollY);
+  for (let i = 0; i < 30; i++) { await page.waitForTimeout(60); await touch('touchMove', x0, yEdge + (i % 2)); }
+  const scroll1 = await page.evaluate(() => window.scrollY);
+  await touch('touchEnd');
+  await page.waitForTimeout(300);
   const ids2 = await idsIn(page, 'dance');
-  ok(ids2[0] === ids1[1], 'tap “move earlier” works');
+  ok(scroll1 > scroll0 + 100, `holding at the bottom edge scrolls the page (${scroll0} → ${scroll1})`);
+  ok(ids2.indexOf(ids1[0]) >= 2, `long drag moved the photo several places (${ids1.slice(0, 4)} → ${ids2.slice(0, 4)})`);
+  orders = (await allPhotos(page)).filter((p) => p.chapter === 'dance').sort((a, b) => a.order - b.order).map((p) => p.id);
+  ok(JSON.stringify(orders) === JSON.stringify(ids2), 'order fields follow the screen after the long drag');
+  ok(await page.locator('.pcard.dragging, .pgrid.is-sorting').count() === 0, 'no card is left stuck in “dragging”');
+  await tap(page, `.pcard[data-id="${ids2[1]}"] [data-act="up"]`);
+  const ids3 = await idsIn(page, 'dance');
+  ok(ids3[0] === ids2[1], 'tap “move earlier” works');
   ok(!errors.length, 'no console errors (reorder touch)', errors.join(' | '));
   await context.close();
 };
@@ -698,6 +781,24 @@ FLOWS.words = async () => {
   ok((await site(page)).text.invite.greeting === 'Hello {nick2}', 'greeting edited');
   await tap(page, `${invite} .field:has(label:text-is("Greeting")) .reset`);
   ok((await site(page)).text.invite.greeting === s0.text.invite.greeting, 'Undo restores the published wording');
+  // credits: role → name pairs
+  const cr = '.group[data-group="credits"]';
+  const roles0 = (await site(page)).text.credits.roles;
+  const n0 = roles0.length;
+  await page.locator(`${cr} input[aria-label="Name 1"]`).scrollIntoViewIfNeeded();
+  await page.fill(`${cr} input[aria-label="Name 1"]`, '{name}, as the main character');
+  let roles = (await site(page)).text.credits.roles;
+  ok(roles[0][0] === roles0[0][0] && roles[0][1] === '{name}, as the main character', 'credits: editing a name keeps its role');
+  await tap(page, `${cr} .add-btn:has-text("Add a credit")`);
+  ok(await S(page, () => document.activeElement && document.activeElement.getAttribute('aria-label')) === `Role ${n0 + 1}`, 'credits: a new row focuses its Role box');
+  await page.fill(`${cr} input[aria-label="Role ${n0 + 1}"]`, 'Best laugh');
+  await page.fill(`${cr} input[aria-label="Name ${n0 + 1}"]`, '{nick1}');
+  await tap(page, `${cr} button[aria-label="Move row ${n0 + 1} up"]`);
+  roles = (await site(page)).text.credits.roles;
+  ok(roles.length === n0 + 1 && roles[n0 - 1][0] === 'Best laugh' && roles[n0 - 1][1] === '{nick1}', 'credits: add a row + move it up');
+  await tap(page, `${cr} button[aria-label="Remove row 1"]`);
+  roles = (await site(page)).text.credits.roles;
+  ok(roles.length === n0 && roles[0][0] === roles0[1][0] && roles.every((r) => Array.isArray(r) && r.length === 2 && r.every((x) => typeof x === 'string')), 'credits: remove a row; every credit is still a [role, name] pair');
   // chapters
   await goSection(page, 'chapters');
   ok(await page.locator('[data-testid="chapter-gate"]').count() === 0 && await page.locator('.chap-row[data-chapter="credits"] .badge.locked').count() === 1, 'Countdown/Invitation/Credits are “Always on”');
@@ -707,9 +808,11 @@ FLOWS.words = async () => {
   // theme
   await goSection(page, 'theme');
   await page.locator('input[type=range]').first().evaluate((el) => { el.value = '0.25'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+  await page.locator('input[type=range]').nth(1).focus();
+  for (let i = 0; i < 6; i++) await page.keyboard.press('ArrowRight'); // 100 % → 130 % with the keyboard
   await tap(page, '.switch-row:has-text("Golden ribbon")');
   const th = (await site(page)).settings.theme;
-  ok(th.grain === 0.25 && th.ribbon === false, `theme saved (grain ${th.grain}, ribbon ${th.ribbon})`);
+  ok(th.grain === 0.25 && th.particles === 1.3 && th.ribbon === false, `theme saved (grain ${th.grain}, particles ${th.particles}, ribbon ${th.ribbon})`);
   // media limits
   await goSection(page, 'audio');
   const voiceBig = path.join(TMP, 'voice-30mb.m4a');
@@ -726,6 +829,10 @@ FLOWS.words = async () => {
   await chooseFile(page, () => tap(page, '[data-testid="media-video-pick"]'), videoHuge);
   const refused = await page.waitForSelector('.toast-error:has-text("too big to publish")', { timeout: 10000 }).then(() => true).catch(() => false);
   ok(refused && !(await site(page)).media.video, 'a 96 MB video is refused');
+  await chooseFile(page, () => tap(page, '[data-testid="media-video-pick"]'), fileOf('IMG_0420.mp4', mp4WithLocation(), 'video/mp4'));
+  await page.waitForFunction(() => !!window.__lanternRoom.state.site.media.video);
+  const vbytes = Buffer.from(await S(page, async () => { const st = window.__lanternRoom.state; return [...new Uint8Array(await st.files.get(st.site.media.video).arrayBuffer())]; }));
+  ok(vbytes.length === mp4WithLocation().length && !vbytes.includes(Buffer.from('12.9716')) && vbytes.includes(Buffer.from('+00.0000+000.0000/')), 'regression: a phone video’s recording location is blanked before upload (same size)');
   const cap = page.getByLabel('Caption under the video');
   await cap.fill('Watch till the end');
   ok((await site(page)).media.videoCaption === 'Watch till the end' && await S(page, () => document.activeElement && document.activeElement.tagName) === 'INPUT', 'video caption saves while typing (focus kept)');
@@ -908,6 +1015,18 @@ print(json.dumps({"bad": bad, "names": names, "json": data, "sizes": {n: z.getin
   await page.click('[data-testid="publish"]');
   await page.waitForSelector('.toast:has-text("Nothing new to publish")');
   ok(true, 'publishing with no changes says so');
+  // a words-only change → the commit touches data/messages.json only
+  await goSection(page, 'messages');
+  await page.getByLabel('Greeting', { exact: true }).fill('Words only');
+  git.calls.length = 0;
+  await page.click('[data-testid="publish"]');
+  await page.click('[data-testid="publish-now"]');
+  await page.waitForSelector('.sheet-title:has-text("Published!")', { timeout: 30000 });
+  const wtree = git.calls.filter((c) => c.method === 'POST' && c.path === '/git/trees').pop().body.tree;
+  ok(JSON.stringify(wtree.map((e) => e.path)) === '["data/messages.json"]' && !git.calls.some((c) => c.path === '/git/blobs'), 'a words-only publish writes data/messages.json only (no blobs, no other files)', JSON.stringify(wtree.map((e) => e.path)));
+  ok(git.json('data/messages.json').invite.greeting === 'Words only' && model.validate(model.combine({ settings: git.json('data/settings.json'), messages: git.json('data/messages.json'), photos: git.json('data/photos.json') })).ok, 'combine() of the published files validates');
+  await page.click('.sheet button:has-text("Lovely")');
+  await noSheet(page);
   // a real conflict that can't be retried twice → friendly error, draft kept
   await goSection(page, 'messages');
   await page.getByLabel('Greeting', { exact: true }).fill('Second publish');
@@ -935,6 +1054,167 @@ FLOWS.missingJson = async () => {
   await page.waitForSelector('.sheet-title:has-text("Published!")', { timeout: 30000 });
   ok(!!git.file('data/photos.json'), 'regression: a missing data/photos.json is written on publish (the film needs all three)');
   ok(!errors.length, 'no console errors (missing json)', errors.join(' | '));
+  await context.close();
+};
+
+FLOWS.security = async () => {
+  section('SECURITY: token storage (remember on/off), token only to api.github.com, never in drafts/exports/URLs; CSP; XSS; framing');
+  const TOKEN = 'github_pat_QA0123456789abcdefSECRET';
+  // hostile owner text straight from the repo: it must only ever be shown as text
+  const XSS = '<img src=x onerror="window.__xss=(window.__xss||0)+1"><script>window.__xss=1</script>"\'><svg onload="window.__xss=1">';
+  const files = repoFiles(IMG);
+  const photos = JSON.parse(files['data/photos.json']);
+  const evil = photos.photos.find((p) => p.chapter === 'tower');
+  Object.assign(evil, { label: `L ${XSS}`, caption: `C ${XSS}`, date: `D ${XSS}`, alt: `A ${XSS}`, hint: `H ${XSS}`, featured: true });
+  photos.photos.push(model.newPhoto({ id: 'evil<b>id</b>', chapter: 'album', label: `Album ${XSS}` }));
+  files['data/photos.json'] = text(photos);
+  const settings = JSON.parse(files['data/settings.json']);
+  Object.assign(settings.her, { name: `Deepu ${XSS}` });
+  settings.from.name = `Me ${XSS}`;
+  settings.media.musicTitle = `Song ${XSS}`;
+  settings.settings.github = { owner: 'o', repo: 'r', branch: 'main' };
+  files['data/settings.json'] = text(settings);
+  const msgs = JSON.parse(files['data/messages.json']);
+  msgs.invite.greeting = `Hey ${XSS}`;
+  msgs.credits.roles.push([`Role ${XSS}`, `Name ${XSS}`]);
+  msgs[`extra${XSS}`] = { [`key${XSS}`]: `Val ${XSS}` };
+  files['data/messages.json'] = text(msgs);
+  const git = new MockGit(files);
+  git.token = TOKEN;
+  const { context, page, errors } = await setup({ token: null, welcomed: true, git });
+  await context.addInitScript(() => {
+    window.__csp = [];
+    document.addEventListener('securitypolicyviolation', (e) => window.__csp.push(`${e.violatedDirective} → ${e.blockedURI}`));
+  });
+  const requests = [];
+  context.on('request', (r) => requests.push({ url: r.url(), auth: r.headers().authorization || '', post: r.postData() || '' }));
+  const consoleText = [];
+  page.on('console', (m) => consoleText.push(m.text()));
+  await boot(page);
+
+  // CSP + referrer are in force
+  const policy = await S(page, () => (document.querySelector('meta[http-equiv="Content-Security-Policy"]') || {}).content || '');
+  ok(/script-src 'self'/.test(policy) && !/unsafe-eval|unsafe-inline/.test(policy) && /connect-src 'self' https:\/\/api\.github\.com https:\/\/raw\.githubusercontent\.com/.test(policy), 'a strict CSP <meta> is present (self scripts, no unsafe-*)');
+  ok(await S(page, () => { const s = document.createElement('script'); s.textContent = 'window.__inline = 1'; document.body.append(s); return !window.__inline; }), 'an injected inline <script> does not run');
+  ok(await S(page, () => new Promise((resolve) => { const s = document.createElement('script'); s.src = 'data:text/javascript,window.__dataScript=1'; s.onerror = () => resolve(!window.__dataScript); s.onload = () => resolve(false); document.body.append(s); })), 'a data: script does not run');
+  await page.waitForTimeout(100);
+  errors.length = 0; // the two refusals above were provoked on purpose
+  await S(page, () => { window.__csp.length = 0; });
+  ok(await S(page, () => (document.querySelector('meta[name="referrer"]') || {}).content) === 'no-referrer', 'referrer policy: no-referrer');
+
+  // connect with "remember on this device" OFF → sessionStorage only
+  await page.click('#status');
+  await page.waitForSelector('#gh-token');
+  ok(await page.isChecked('[data-testid="remember-token"]'), '“Remember on this device” is on by default');
+  await page.fill('#gh-token', TOKEN);
+  await page.locator('[data-testid="remember-token"]').setChecked(false, { force: true });
+  await page.click('[data-testid="connect"]');
+  await noSheet(page);
+  await page.waitForFunction(() => /Connected|All live/.test(document.getElementById('status').textContent));
+  let store = await S(page, () => ({ ls: localStorage.getItem('deepu-admin-token'), ss: sessionStorage.getItem('deepu-admin-token') }));
+  ok(store.ls === null && store.ss === TOKEN, 'remember OFF → token only in sessionStorage', JSON.stringify(store));
+  await page.reload();
+  await boot(page);
+  await page.waitForFunction(() => /Connected|All live/.test(document.getElementById('status').textContent));
+  ok(true, 'remember OFF: still connected after a reload of the same tab');
+  await goSection(page, 'settings');
+  ok(/this tab only/.test(await page.textContent('[data-testid="token-place"]')), 'Settings says the token is kept for this tab only');
+  const tab2 = await context.newPage();
+  await tab2.goto(`${BASE}/admin/#library`);
+  await tab2.waitForSelector('#view[data-section="library"]');
+  await tab2.waitForTimeout(300);
+  ok(await tab2.evaluate(() => window.__lanternRoom.state.conn.token === '' && !localStorage.getItem('deepu-admin-token')), 'remember OFF: a new tab is not connected (nothing on the device)');
+  await tab2.close();
+
+  // reconnect with remember ON → localStorage only
+  await page.click('button:has-text("Change token")');
+  await page.waitForSelector('#gh-token');
+  ok(!(await page.isChecked('[data-testid="remember-token"]')), 'the toggle remembers the current choice (off)');
+  await page.fill('#gh-token', TOKEN);
+  await page.locator('[data-testid="remember-token"]').setChecked(true, { force: true });
+  await page.click('[data-testid="connect"]');
+  await noSheet(page);
+  store = await S(page, () => ({ ls: localStorage.getItem('deepu-admin-token'), ss: sessionStorage.getItem('deepu-admin-token') }));
+  ok(store.ls === TOKEN && store.ss === null, 'remember ON → token only in localStorage', JSON.stringify(store));
+
+  // hostile text everywhere is shown as text, never parsed as HTML
+  const visit = ['library', 'chapters', 'messages', 'audio', 'video', 'theme', 'preview', 'settings', 'help'];
+  for (const sec of visit) {
+    await goSection(page, sec);
+    if (sec === 'messages') await page.click('button:has-text("Open all")');
+    await page.waitForTimeout(150);
+  }
+  await goSection(page, 'library');
+  await page.click(`.pcard[data-id="${evil.id}"] [data-act="edit"]`);
+  await page.waitForSelector('[data-testid="edit-caption"]');
+  await page.fill('[data-testid="edit-caption"]', `New ${XSS}`);
+  await page.click('[data-testid="edit-save"]');
+  await noSheet(page);
+  await page.click('[data-testid="publish"]');
+  await page.waitForSelector('[data-testid="publish-now"]');
+  await page.waitForTimeout(200);
+  const xss = await S(page, () => ({ ran: window.__xss || 0, imgs: document.querySelectorAll('img[src="x"], svg[onload], script:not([src])').length, shown: document.body.textContent.includes('onerror="window.__xss') }));
+  ok(xss.ran === 0 && xss.imgs === 0 && xss.shown, 'hostile captions/labels/names/messages/credits render as plain text (no script ran)', JSON.stringify(xss));
+  await page.click('.sheet button:has-text("Not yet")');
+  await noSheet(page);
+
+  // a draft with a new photo, saved; then export — the token must be in neither
+  await goSection(page, 'library');
+  const fill = (await allPhotos(page)).find((p) => p.chapter === 'names' && !p.src).id;
+  await chooseFile(page, () => page.click(`.pcard[data-id="${fill}"] [data-act="replace"]`), fileOf('n.png', IMG.p45));
+  await page.waitForFunction((id) => !!window.__lanternRoom.state.site.photos.find((x) => x.id === id).src, fill, { timeout: 20000 });
+  await waitIdle(page);
+  await page.click('[data-action="save"]');
+  await page.waitForSelector('.toast:has-text("Draft saved")');
+  const idb = await S(page, () => new Promise((resolve, reject) => {
+    const r = indexedDB.open('deepu-admin');
+    r.onerror = () => reject(r.error);
+    r.onsuccess = () => {
+      const st = r.result.transaction('drafts').objectStore('drafts');
+      const kq = st.getAllKeys();
+      kq.onsuccess = () => {
+        const vq = st.getAll();
+        vq.onsuccess = () => {
+          const out = {};
+          kq.result.forEach((k, i) => { out[k] = k === 'files' ? Object.keys(vq.result[i] || {}) : vq.result[i]; });
+          resolve(JSON.stringify(out));
+        };
+      };
+    };
+  }));
+  ok(idb.length > 1000 && !idb.includes(TOKEN) && !/github_pat_|Bearer/.test(idb), `the draft in IndexedDB holds no token (${(idb.length / 1024).toFixed(0)} KB checked)`);
+  const others = await S(page, (k) => Object.keys(localStorage).filter((x) => x !== k).map((x) => localStorage.getItem(x)).join('\n') + Object.keys(sessionStorage).map((x) => sessionStorage.getItem(x)).join('\n'), 'deepu-admin-token');
+  ok(!others.includes(TOKEN), 'no other storage key holds the token');
+  const [download] = await Promise.all([page.waitForEvent('download'), (async () => { await page.click('[data-testid="more"]'); await page.click('[data-testid="menu-export"]'); })()]);
+  const zipBytes = fs.readFileSync(await download.path());
+  ok(zipBytes.length > 1000 && !zipBytes.includes(Buffer.from(TOKEN)) && !zipBytes.includes(Buffer.from('github_pat_')), `the export holds no token (${(zipBytes.length / 1024).toFixed(0)} KB checked)`);
+  // publish, so every kind of request has happened
+  await page.click('[data-testid="publish"]');
+  await page.click('[data-testid="publish-now"]');
+  await page.waitForSelector('.sheet-title:has-text("Published!")', { timeout: 30000 });
+  await page.click('.sheet button:has-text("Lovely")');
+  await noSheet(page);
+  const authed = requests.filter((r) => r.auth);
+  ok(authed.length > 10 && authed.every((r) => r.url.startsWith('https://api.github.com/') && r.auth === `Bearer ${TOKEN}`), `the token is only sent to https://api.github.com, in the Authorization header (${authed.length} requests)`);
+  ok(!requests.some((r) => r.url.includes(TOKEN) || r.post.includes(TOKEN)), `the token never appears in a URL or request body (${requests.length} requests)`);
+  ok(!requests.some((r) => r.url.startsWith('https://raw.githubusercontent.com') && r.auth), 'raw.githubusercontent.com never gets the token');
+  ok(!consoleText.some((t) => t.includes(TOKEN)), 'the token is never logged');
+  const csp = await S(page, () => window.__csp);
+  ok(!csp.length, 'the admin works under the CSP: no violations in the whole flow', csp.join(' | '));
+  // forget
+  await goSection(page, 'settings');
+  await page.click('[data-testid="forget-token"]');
+  store = await S(page, () => ({ ls: localStorage.getItem('deepu-admin-token'), ss: sessionStorage.getItem('deepu-admin-token'), mem: window.__lanternRoom.state.conn.token }));
+  ok(store.ls === null && store.ss === null && store.mem === '', 'Forget token clears it everywhere', JSON.stringify(store));
+  ok(!errors.length, 'no console errors (security)', errors.join(' | '));
+
+  // clickjacking: inside someone else's frame the admin refuses to start
+  const framer = await context.newPage();
+  await framer.setContent(`<iframe src="${BASE}/admin/#library" width="800" height="600"></iframe>`);
+  const frame = await (await framer.waitForSelector('iframe')).contentFrame();
+  await frame.waitForSelector('text=only works when it is opened directly', { timeout: 15000 });
+  ok(await frame.evaluate(() => !document.querySelector('.pcard') && !document.getElementById('view')), 'framed by another page → refuses to start (no UI to click)');
+  await framer.close();
   await context.close();
 };
 
@@ -966,6 +1246,7 @@ FLOWS.missingJson = async () => {
       return [...new Uint8Array(await b.arrayBuffer())];
     }, [w, h, rotate]));
     IMG.exif6 = withOrientation(await toJpeg(600, 800, true), 6);
+    IMG.exifPrivate = withPrivateMetadata(await toJpeg(600, 800, true), 6);
     IMG.jpeg45 = await toJpeg(800, 1000, false);
     IMG.huge = await toJpeg(6000, 4000, false);
     // > 12 MB PNG (noise) and big media files

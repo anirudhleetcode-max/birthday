@@ -6,6 +6,7 @@
 import { state, change, stageFile, takenPath, srcFor, localBlob } from '../state.js';
 import { uniquePath, stamp, formatBytes, MIME_EXT } from '../util.js';
 import { h, icon, toast, confirmDialog, pickFiles, textField } from '../ui.js';
+import { scrubVideoLocation } from '../metadata.js';
 import { openPreview } from '../photos.js';
 import { sectionHead, note } from './common.js';
 
@@ -108,7 +109,9 @@ export async function pickMedia(kind, file = null) {
     return;
   }
   const path = uniquePath(`media/${kind}-${stamp()}.${ext}`, takenPath);
-  stageFile(path, f);
+  // phone videos / voice memos (MP4, MOV, M4A) can carry the place they were recorded → blanked
+  const { blob } = ['mp4', 'mov', 'm4v', 'm4a'].includes(ext) ? await scrubVideoLocation(f) : { blob: f };
+  stageFile(path, blob);
   change((site) => { site.media[kind] = path; }, { files: true });
   toast(`${cfg.title} added to your draft.`, { type: 'success' });
 }

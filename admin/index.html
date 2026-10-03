@@ -2,6 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <!-- Security (see docs/SECURITY.md): only this site's own code runs; the GitHub token can only
+       travel to api.github.com; photos/media may come from this site, blob:/data: (drafts) and
+       raw.githubusercontent.com (fallback for files not on the site yet). -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob: data: https://raw.githubusercontent.com; media-src 'self' blob: data: https://raw.githubusercontent.com; font-src 'self'; connect-src 'self' https://api.github.com https://raw.githubusercontent.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'">
+  <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#0b0614">

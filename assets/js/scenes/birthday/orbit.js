@@ -7,10 +7,12 @@
 import { TAU, clamp, lerp, sstep } from './util.js';
 
 const RINGS = {
+  // on a phone the title is nearly as wide as the screen: the rings are wider than the
+  // frame, so photos pass above and below it and swing out past the edges at the sides
   portrait: [
-    { rx: 0.3, ry: 0.205, size: 0.84, speed: 1 },
-    { rx: 0.45, ry: 0.305, size: 1, speed: 0.74 },
-    { rx: 0.6, ry: 0.4, size: 1.1, speed: 0.56 },
+    { rx: 0.52, ry: 0.235, size: 0.86, speed: 1 },
+    { rx: 0.64, ry: 0.305, size: 1, speed: 0.74 },
+    { rx: 0.76, ry: 0.375, size: 1.1, speed: 0.56 },
   ],
   landscape: [
     { rx: 0.25, ry: 0.255, size: 0.84, speed: 1 },
@@ -56,7 +58,7 @@ export function createOrbit(container, photos, { device = {} } = {}) {
     st.rings = portrait ? RINGS.portrait : RINGS.landscape;
     // a photo about a fifth of the short side (smaller when there are many)
     const crowd = items.length > 24 ? 0.86 : items.length > 14 ? 0.93 : 1;
-    st.base = clamp(Math.min(W, H) * (portrait ? 0.215 : 0.16) * crowd, 58, 158);
+    st.base = clamp(Math.min(W, H) * (portrait ? 0.215 : 0.135) * crowd, 58, 150);
     for (const it of items) {
       const s = st.base * st.rings[it.ring].size;
       it.w = Math.round(s * Math.sqrt(it.ratio));
@@ -94,7 +96,7 @@ export function createOrbit(container, photos, { device = {} } = {}) {
       const x = st.cx + Math.cos(th) * R.rx * st.W * sp;
       const y = st.cy + depth * R.ry * st.H * sp;
       const s = lerp(0.58, 1.08, near) * lerp(0.55, 1, it.appear);
-      const a = lerp(0.42, 1, near) * maskAt(x, y, (it.w * s) / 2, (it.h * s) / 2) * st.alpha * it.appear;
+      const a = lerp(0.6, 1, near) * maskAt(x, y, (it.w * s) / 2, (it.h * s) / 2) * st.alpha * it.appear;
       it.fig.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) scale(${s.toFixed(3)})`;
       it.fig.style.opacity = a.toFixed(3);
       const z = String(100 + Math.round(depth * 60));

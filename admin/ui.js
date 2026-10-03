@@ -181,7 +181,10 @@ export const sheetOpen = () => openSheets.length > 0;
  * Open a modal sheet. Returns { el, body, close(result), result: Promise, setActions(nodes) }.
  * @param {{title?:string, kicker?:string, content?:Node|Node[], actions?:Node[], size?:'sm'|'md'|'lg'|'full', drawer?:boolean, dismissible?:boolean, className?:string, keepToasts?:boolean}} o
  */
-export function openSheet({ title, kicker, content, actions, size = 'md', drawer = false, dismissible = true, className = '', keepToasts = false, wide, full } = {}) {
+export function openSheet({ title, kicker, content, actions, size = 'md', drawer = false, dismissible = true, className = '', keepToasts = false, wide, full, key = '' } = {}) {
+  // a double tap must not stack two copies of the same dialog: the one already open is returned
+  // (`duplicate: true` tells the second caller to stop there)
+  if (key) { const same = openSheets.find((x) => x.key === key && !x.closed); if (same) return Object.assign(Object.create(same), { duplicate: true }); }
   const root = document.getElementById('modal-root');
   if (!keepToasts) clearToasts();
   if (wide) size = 'lg';
@@ -202,7 +205,9 @@ export function openSheet({ title, kicker, content, actions, size = 'md', drawer
     role: 'dialog', 'aria-modal': 'true', tabindex: '-1', class: className,
     'aria-labelledby': title ? titleId : null, 'aria-label': title ? null : (kicker || 'Dialog'),
   }, head, body, foot);
-  const backdrop = h(`div.sheet-backdrop${drawer ? '.drawer-backdrop' : ''}`, { onclick: (e) => { if (e.target === backdrop && dismissible) close(null); } }, panel);
+  // a tap on the dim backdrop closes the sheet — but not the second tap of the double tap that opened it
+  const openedAt = performance.now();
+  const backdrop = h(`div.sheet-backdrop${drawer ? '.drawer-backdrop' : ''}`, { onclick: (e) => { if (e.target === backdrop && dismissible && performance.now() - openedAt > 450) close(null); } }, panel);
   root.append(backdrop);
   document.body.classList.add('has-sheet');
   const untrap = trapFocus(panel);
@@ -233,7 +238,7 @@ export function openSheet({ title, kicker, content, actions, size = 'md', drawer
     resolveFn(value);
   }
   const api = {
-    el: panel, body, close, result,
+    key, el: panel, body, close, result,
     get closed() { return closed; },
     setActions(nodes) { foot.replaceChildren(...nodes); foot.hidden = !nodes.length; },
     setTitle(t) { const el = panel.querySelector('.sheet-title'); if (el) el.textContent = t; },
@@ -442,6 +447,19 @@ export function segmented({ label, options, value, onchange, className = '' }) {
   const wrap = h('div.field.seg-field', label ? h('span.field-label', { id: `${id}-l` }, label) : null, group);
   wrap.select = (v) => select(v, false);
   return wrap;
+}
+
+/**
+ * Wrap an async flow so it never runs twice at once (a double tap on “Publish”, “Add photo”,
+ * “Edit”… returns the run already in progress instead of opening a second dialog).
+ */
+export function single(fn) {
+  let running = null;
+  return (...args) => {
+    if (running) return running;
+    running = Promise.resolve().then(() => fn(...args)).finally(() => { running = null; });
+    return running;
+  };
 }
 
 export function debounce(fn, ms) {

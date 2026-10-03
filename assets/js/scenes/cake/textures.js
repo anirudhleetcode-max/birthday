@@ -423,10 +423,13 @@ export function plaqueTexture({ name = 'Deepu', line1 = 'Happy 20th', size = 102
   };
   g.textAlign = 'center'; g.textBaseline = 'alphabetic';
   // line 1
-  g.font = `${Math.round(S * 0.118)}px ${script}, ${serif}, cursive`;
+  // a legible italic serif (a script this small turns to lace on a phone)
+  g.font = `italic 500 ${Math.round(S * 0.112)}px ${serif}, Georgia, serif`;
+  try { g.letterSpacing = `${Math.round(S * 0.006)}px`; } catch (e) { /* older canvas */ }
   g.fillStyle = gold(cy - S * 0.24, cy - S * 0.1);
   g.shadowColor = 'rgba(90,50,10,0.25)'; g.shadowBlur = 3; g.shadowOffsetY = 2;
-  g.fillText(line1, cx, cy - S * 0.105);
+  g.fillText(line1, cx, cy - S * 0.115);
+  try { g.letterSpacing = '0px'; } catch (e) { /* older canvas */ }
   // the name — rose-plum ganache, larger
   let fs = S * 0.235;
   g.font = `${Math.round(fs)}px ${script}, ${serif}, cursive`;

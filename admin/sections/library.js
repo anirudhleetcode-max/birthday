@@ -177,6 +177,14 @@ export function photoCard(p, { index = 0, total = 1, sortable = true, showChapte
 }
 
 /* ---------------------------------------------------------------- drag & keyboard reorder */
+const EDGE = 80; // px from the top / bottom of the screen where a drag scrolls the page
+
+/**
+ * Reorder by dragging the grip (mouse, pen, touch). Move/up/cancel are listened to on the WINDOW:
+ * moving the dragged card in the DOM drops its pointer capture, and on a phone the finger is often
+ * outside the grid (or over the bottom bar) when it lifts. Near the top/bottom edge the page
+ * auto-scrolls so a photo can be dragged past cards that are off-screen.
+ */
 function enableDrag(grid, chapter) {
   let drag = null;
   grid.addEventListener('keydown', (e) => {
@@ -188,48 +196,82 @@ function enableDrag(grid, chapter) {
     e.preventDefault();
     shiftPhoto(id, d);
   });
-  grid.addEventListener('pointerdown', (e) => {
-    const grip = e.target.closest && e.target.closest('.grip');
-    if (!grip || (e.pointerType === 'mouse' && e.button !== 0)) return;
-    const card = grip.closest('.pcard');
-    e.preventDefault();
-    grip.setPointerCapture?.(e.pointerId);
-    const before = [...grid.children].map((c) => c.dataset.id);
-    drag = { card, grip, pointerId: e.pointerId, before, moved: false, x0: e.clientX, y0: e.clientY };
-    card.classList.add('dragging');
-    grid.classList.add('is-sorting');
-  });
-  grid.addEventListener('pointermove', (e) => {
-    if (!drag || e.pointerId !== drag.pointerId) return;
-    if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 4) return;
-    drag.moved = true;
-    const cards = [...grid.children].filter((c) => c !== drag.card);
+  const place = () => {
+    const { card, x, y } = drag;
+    const cards = [...grid.children].filter((c) => c !== card);
     let target = null;
     let after = false;
     let best = Infinity;
-    for (const c of cards) {
-      const r = c.getBoundingClientRect();
+    const rects = cards.map((c) => c.getBoundingClientRect());
+    const oneColumn = rects.every((r) => Math.abs(r.left - rects[0].left) < 2); // phone: a single column
+    cards.forEach((c, i) => {
+      const r = rects[i];
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
-      const d = Math.hypot(e.clientX - cx, e.clientY - cy);
-      if (d < best) { best = d; target = c; after = (Math.abs(e.clientY - cy) > r.height / 2) ? e.clientY > cy : e.clientX > cx; }
-    }
+      const d = Math.hypot(x - cx, y - cy);
+      if (d < best) { best = d; target = c; after = oneColumn || Math.abs(y - cy) > r.height / 2 ? y > cy : x > cx; }
+    });
     if (!target) return;
     const ref = after ? target.nextSibling : target;
-    if (ref !== drag.card && ref !== drag.card.nextSibling) grid.insertBefore(drag.card, ref);
-    else if (!after && target.previousSibling !== drag.card) grid.insertBefore(drag.card, target);
-  });
+    if (ref !== card && ref !== card.nextSibling) grid.insertBefore(card, ref);
+  };
+  const bottomEdge = () => {
+    const bar = document.getElementById('bottomnav');
+    const r = bar && bar.offsetParent !== null ? bar.getBoundingClientRect() : null;
+    return r && r.height ? Math.min(window.innerHeight, r.top) : window.innerHeight;
+  };
+  const tick = () => {
+    if (!drag) return;
+    if (drag.moved) {
+      const top = 64;
+      const bottom = bottomEdge();
+      const v = drag.y < top + EDGE ? -(top + EDGE - drag.y) : drag.y > bottom - EDGE ? drag.y - (bottom - EDGE) : 0;
+      if (v) {
+        const before = window.scrollY;
+        window.scrollBy(0, Math.max(-24, Math.min(24, v / 3)));
+        if (window.scrollY !== before) place();
+      }
+    }
+    drag.raf = requestAnimationFrame(tick);
+  };
+  const onMove = (e) => {
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    drag.x = e.clientX;
+    drag.y = e.clientY;
+    if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 4) return;
+    drag.moved = true;
+    e.preventDefault();
+    place();
+  };
   const end = (e) => {
     if (!drag || e.pointerId !== drag.pointerId) return;
-    const { card, before, moved } = drag;
+    const { card, before, moved, raf } = drag;
     drag = null;
+    cancelAnimationFrame(raf);
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', end);
+    window.removeEventListener('pointercancel', end);
     card.classList.remove('dragging');
     grid.classList.remove('is-sorting');
     const ids = [...grid.children].map((c) => c.dataset.id);
-    if (moved && ids.join('|') !== before.join('|')) reorderChapter(chapter, ids);
+    const changed = moved && ids.join('|') !== before.join('|');
+    if (e.type === 'pointercancel') { if (changed) rerender(); return; } // put the cards back
+    if (changed) reorderChapter(chapter, ids);
   };
-  grid.addEventListener('pointerup', end);
-  grid.addEventListener('pointercancel', end);
+  grid.addEventListener('pointerdown', (e) => {
+    const grip = e.target.closest && e.target.closest('.grip');
+    if (!grip || drag || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    const card = grip.closest('.pcard');
+    e.preventDefault();
+    const before = [...grid.children].map((c) => c.dataset.id);
+    drag = { card, pointerId: e.pointerId, before, moved: false, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, raf: 0 };
+    card.classList.add('dragging');
+    grid.classList.add('is-sorting');
+    window.addEventListener('pointermove', onMove, { passive: false });
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+    drag.raf = requestAnimationFrame(tick);
+  });
 }
 
 const SPECIAL_FILTERS = ['all', 'missing', 'featured', 'disabled'];

@@ -169,7 +169,7 @@ const DAYS_VERT = /* glsl */ `
     float depth = max(-mv.z, 0.1);
     float ls = smoothstep(0.0, 0.45, lk);
     // on the line: a fine thread of light (pixel sizes) · in the sky: a far lantern (perspective)
-    float pre = kind > 1.5 ? 5.2 + flare * 8.0 : (kind > 0.5 ? 2.5 + flare * 3.0 : 1.4 + aA.w * 1.3);
+    float pre = kind > 1.5 ? 6.6 + flare * 9.0 : (kind > 0.5 ? 2.9 + flare * 3.0 : 1.5 + aA.w * 1.4);
     float post = clamp(aB.w * uViewScale / depth, 1.3 * uPx, 9.0 * uPx);
     float ig = ign(u, uIgn.x, uIgn.y) + ign(u, uIgn.z, uIgn.w) + ign(u, uIgn2.x, uIgn2.y);
     gl_PointSize = mix(pre * uPx * (1.0 + ig * 1.2), post, ls);
@@ -368,7 +368,7 @@ const SPR_FRAG = /* glsl */ `
     float c = cos(vRot);
     float s = sin(vRot);
     q = mat2(c, s, -s, c) * q;
-    float t = texture2D(uTex, q + 0.5).r;
+    float t = texture2D(uTex, q + 0.5).a;
     vec3 gold = vec3(1.0, 0.86, 0.6);
     vec3 rose = vec3(1.0, 0.8, 0.86);
     vec3 col = mix(mix(gold, rose, vHue), vec3(1.0, 0.98, 0.94), smoothstep(0.55, 1.0, t));

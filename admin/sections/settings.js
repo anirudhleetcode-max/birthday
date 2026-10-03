@@ -2,7 +2,7 @@
  * SETTINGS — who it's for / from, the countdown lock (IST), WhatsApp, global colour grading
  * (+ re-grade all from originals), GitHub repository + token.
  */
-import { state, change, lsSet, REPO_KEY, globalStrength, getFileBlob } from '../state.js';
+import { state, change, lsSet, REPO_KEY, globalStrength, getFileBlob, tokenPlace } from '../state.js';
 import { isoToIstInput, istInputToIso, prettyIst } from '../util.js';
 import { h, icon, toast, textField, switchField, sliderField, segmented, pickFiles, debounce } from '../ui.js';
 import * as I from '../images.js';
@@ -88,7 +88,9 @@ export function renderSettings() {
       } }, icon('check'), 'Save & reconnect'),
       h('button.btn.sm.ghost', { type: 'button', onclick: () => showConnectSheet({}) }, icon('key'), c.token ? 'Change token' : 'Add token'),
       c.token ? h('button.btn.sm.quiet', { type: 'button', 'data-testid': 'forget-token', onclick: forgetToken }, icon('trash'), 'Forget token') : null),
-    h('p.field-hint', 'The token is stored only in this browser, never in the site. Tap “Forget token” on shared devices.'));
+    h('p.field-hint', { 'data-testid': 'token-place' }, !c.token ? 'The token is kept only in this browser — never in the site, your drafts or an export.'
+      : tokenPlace() === 'tab' ? 'The token is kept for this tab only and is forgotten when you close it.'
+        : 'The token is remembered in this browser only (never in the site, your drafts or an export). Tap “Forget token” on shared devices.'));
 
   return h('div.settings',
     sectionHead('Settings', 'The little levers', null),

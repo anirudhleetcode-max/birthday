@@ -9,7 +9,7 @@ import {
   merge3, mergeSites, describeChanges, deletedPaths, isManagedPath, intRatio, outputSize, uniquePath, photoPaths, stamp,
   isoToIstInput, istInputToIso, formatBytes, deepEqual,
 } from '../../admin/util.js';
-import { GitHub, jsonText, decodeBase64Utf8 } from '../../admin/github.js';
+import { GitHub, jsonText, decodeBase64Utf8, isApiUrl } from '../../admin/github.js';
 import { planPublish } from '../../admin/publish.js';
 
 const read = (f) => JSON.parse(fs.readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8'));
@@ -170,10 +170,14 @@ test('planPublish: merges a concurrent remote change and refuses missing files',
   site.text.invite.button = 'Begin';
   const theirs = clone(base);
   theirs.settings.whatsapp = '919811111111';
-  const plan = planPublish({ base, site, files: new Map(), remote: remoteOf(theirs), existing: new Set() });
+  const inRepo = new Set(Object.values(FILES));
+  const plan = planPublish({ base, site, files: new Map(), remote: remoteOf(theirs), existing: inRepo });
   assert.equal(plan.site.settings.whatsapp, '919811111111');
   assert.equal(plan.site.text.invite.button, 'Begin');
   assert.deepEqual(Object.keys(plan.json), ['data/messages.json']);
+  // a content file missing from the repo is (re)written even when nothing in it changed
+  const partial = planPublish({ base, site, files: new Map(), remote: remoteOf(theirs), existing: new Set([FILES.settings, FILES.messages]) });
+  assert.deepEqual(Object.keys(partial.json).sort(), ['data/messages.json', 'data/photos.json']);
   const lost = clone(base);
   lost.photos[0].src = 'photos/never-uploaded.webp';
   assert.throws(() => planPublish({ base, site: lost, files: new Map(), remote: remoteOf(base), existing: new Set() }), /missing on this device/);
@@ -191,7 +195,7 @@ function mockRepo(site, { conflictOnce = false } = {}) {
     const u = new URL(url);
     const path = u.pathname.replace('/repos/o/r', '');
     const method = init.method || 'GET';
-    calls.push({ method, path, body: init.body ? JSON.parse(init.body) : null });
+    calls.push({ method, path, body: init.body ? JSON.parse(init.body) : null, url: String(url), headers: { ...(init.headers || {}) }, credentials: init.credentials });
     if (method === 'GET' && path === '') return json(200, { full_name: 'o/r', permissions: { push: true }, default_branch: 'main' });
     if (method === 'GET' && path.startsWith('/branches/')) return json(200, { name: 'main' });
     if (method === 'GET' && path === '/git/ref/heads/main') return json(200, { object: { sha: head } });
@@ -249,4 +253,36 @@ test('GitHub.publish: ONE commit with changed JSON, blobs and deletions; retries
   assert.ok(!tree.some((e) => e.path === 'data/site.json'));
   assert.equal(calls.filter((c) => c.method === 'PATCH').length, 2);
   assert.ok(deepEqual(usedFiles(res.site), usedFiles(site)));
+});
+
+/* ---------------------------------------------------------------- token safety */
+test('the token may only go to https://api.github.com (exact origin)', () => {
+  assert.equal(isApiUrl('https://api.github.com/repos/o/r'), true);
+  for (const bad of ['http://api.github.com/repos', 'https://api.github.com.evil.example/x', 'https://evil.example/?https://api.github.com/',
+    'https://user:pw@api.github.com/x', 'https://raw.githubusercontent.com/o/r/main/x', 'javascript:alert(1)', '', null]) {
+    assert.equal(isApiUrl(bad), false, String(bad));
+  }
+});
+
+test('GitHub client: token only in the Authorization header, never in a URL or body; no cookies', async () => {
+  const TOKEN = 'github_pat_unit0123456789SECRET';
+  const base = loadSite();
+  const site = clone(base);
+  site.text.invite.greeting = 'changed';
+  const { fetch, calls } = mockRepo(base);
+  const gh = new GitHub({ owner: 'o', repo: 'r', token: TOKEN, fetch });
+  await gh.check();
+  await gh.publish({ message: 'x', prepare: (remote, existing) => planPublish({ base, site, files: new Map(), remote, existing }) });
+  assert.ok(calls.length > 5);
+  for (const c of calls) {
+    assert.ok(c.url.startsWith('https://api.github.com/'), c.url);
+    assert.equal(c.headers.Authorization, `Bearer ${TOKEN}`);
+    assert.equal(c.credentials, 'omit');
+    assert.ok(!c.url.includes(TOKEN) && !JSON.stringify(c.body || '').includes(TOKEN));
+  }
+  assert.ok(!gh.rawUrl('data/settings.json').includes(TOKEN));
+  // anonymous client: no Authorization header at all
+  const anon = new GitHub({ owner: 'o', repo: 'r', fetch });
+  await anon.getContent();
+  assert.ok(calls.slice(-3).every((c) => !('Authorization' in c.headers)));
 });

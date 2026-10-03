@@ -9,7 +9,7 @@
 import { upgrade } from '../assets/js/shared/model.js';
 import {
   state, setHooks, changes, hasUnsavedDraft, flushSave, readDraft, clearDraft, fetchLocalSite, connectAndFetch,
-  loadRepoCfg, lsGet, lsSet, TOKEN_KEY, SECTION_KEY, DEFAULT_REPO, gcFiles,
+  loadRepoCfg, lsGet, lsSet, loadToken, SECTION_KEY, DEFAULT_REPO, gcFiles,
 } from './state.js';
 import { clone, describeChanges, mergeSites, plural, timeAgo } from './util.js';
 import { h, icon, toast, openSheet, openMenu, sheetOpen } from './ui.js';
@@ -84,7 +84,7 @@ function openOverflow(anchor) {
 function openDrawer() {
   const ch = changes();
   const s = openSheet({
-    kicker: 'The Lantern Room', title: 'Sections', drawer: true, size: 'sm',
+    key: 'drawer', kicker: 'The Lantern Room', title: 'Sections', drawer: true, size: 'sm',
     content: [
       h('nav.drawer-nav', { 'aria-label': 'All sections' }, SECTIONS.map((sec) => h('a.drawer-item', {
         href: `#${sec.id}`, 'aria-current': sec.id === state.section ? 'page' : null, onclick: () => s.close(),
@@ -109,7 +109,7 @@ function onStatusClick() {
   if (!ch.count && state.conn.status !== 'ok') { showConnectSheet({}); return; }
   if (!ch.count) { toast('Everything is published. ✨', { type: 'success' }); return; }
   const s = openSheet({
-    kicker: 'Unpublished draft', title: `${plural(ch.count, 'change')} waiting`, size: 'md',
+    key: 'status', kicker: 'Unpublished draft', title: `${plural(ch.count, 'change')} waiting`, size: 'md',
     content: [
       h('p.sheet-text', `Saved on this device${state.savedAt ? ` ${timeAgo(state.savedAt)}` : ''}. Preview them, then publish to make them live.`),
       changeList(ch),
@@ -247,7 +247,17 @@ async function restoreDraft() {
   else { adopt(); toast('Draft kept. ✨', { type: 'success' }); }
 }
 
+/** Never run inside someone else's frame (clickjacking): a <meta> CSP can't say frame-ancestors. */
+function framed() {
+  try { return window.top !== window.self; } catch { return true; }
+}
+
 async function boot() {
+  if (framed()) {
+    document.body.replaceChildren(h('main.framed', h('p', 'For your safety, the Lantern Room only works when it is opened directly — not inside another page.'),
+      h('a.btn.gold', { href: location.href, target: '_blank', rel: 'noopener' }, 'Open it directly')));
+    return;
+  }
   buildShell();
   setHooks({ render, chrome: updateChrome });
   restoreFilter();
@@ -258,7 +268,7 @@ async function boot() {
   updateChrome();
 
   const storedRepo = loadRepoCfg();
-  state.conn.token = lsGet(TOKEN_KEY) || '';
+  state.conn.token = loadToken();
   let local = null;
   try { local = await fetchLocalSite(); } catch (err) { console.warn('[admin] ../data/*.json unavailable', err); }
   const fromSite = local && local.settings && local.settings.github;

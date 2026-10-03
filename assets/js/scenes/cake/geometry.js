@@ -385,6 +385,17 @@ export function knifeGeometry() {
   s.lineTo(0, 0);
   const blade = new THREE.ExtrudeGeometry(s, { depth: 0.004, bevelEnabled: true, bevelThickness: 0.0015, bevelSize: 0.0015, bevelSegments: 1, curveSegments: 10 });
   blade.translate(0, 0, -0.002);
+  // a brushed-steel falloff: bright along the edge, darker toward the spine
+  {
+    const pos = blade.getAttribute('position');
+    const col = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) {
+      const k = Math.min(1, Math.max(0, pos.getY(i) / 0.105));
+      const c = 0.5 + 0.5 * Math.pow(1 - k, 1.6) + (k < 0.06 ? 0.15 : 0);
+      col[i * 3] = c * 0.97; col[i * 3 + 1] = c * 0.98; col[i * 3 + 2] = c;
+    }
+    blade.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  }
   const handle = new THREE.CapsuleGeometry(0.022, 0.26, 4, 12);
   handle.rotateZ(Math.PI / 2);
   handle.scale(1, 1.15, 0.7);

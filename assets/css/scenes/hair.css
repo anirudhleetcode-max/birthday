@@ -1,34 +1,81 @@
-/* ---------- hair ---------- */
+/* ---------- hair: the golden thread through a sunset ---------- */
 .scene-hair {
-  background: linear-gradient(180deg, #120824 0%, #2a1442 30%, #5b2a63 58%, #a8566c 78%, #e59a6a 92%, #f4c08a 100%);
+  touch-action: none; cursor: grab;
+  background: linear-gradient(180deg, #24133f 0%, #4a2766 18%, #87457c 38%, #c86a77 54%, #ec9a6c 66%, #f8c27a 74%, #ffdc9c 77%, #e9a77c 80%, #6a3456 88%, #2b1433 100%);
 }
-.hr-sky { position: absolute; inset: 0 0 35% 0; opacity: .8; }
-.hr-far { position: absolute; left: 6vw; bottom: 14vh; height: 50vh; aspect-ratio: 200 / 420; opacity: .9; }
-.hr-tower { width: 100%; height: 100%; }
-.hr-tower .tw-win { filter: drop-shadow(0 0 8px #ffcf7a); animation: candle 3s ease-in-out infinite; }
-.hr-hills {
-  position: absolute; left: -10vw; bottom: -2vh; width: 420vw; height: 30vh;
-  background:
-    radial-gradient(ellipse 22% 55% at 12% 100%, #23102f 98%, transparent 100%),
-    radial-gradient(ellipse 18% 45% at 34% 100%, #1d0d29 98%, transparent 100%),
-    radial-gradient(ellipse 26% 60% at 58% 100%, #23102f 98%, transparent 100%),
-    radial-gradient(ellipse 20% 48% at 82% 100%, #1d0d29 98%, transparent 100%),
-    linear-gradient(0deg, #1a0b25 0 30%, transparent 30%);
+.scene-hair:active { cursor: grabbing; }
+.hr-world, .hr-back, .hr-front { position: absolute; inset: 0; }
+.hr-front { pointer-events: none; }
+.hr-layer { position: absolute; left: 0; top: 0; height: 100%; will-change: transform; pointer-events: none; }
+.hr-layer svg { display: block; }
+.hr-sun {
+  position: absolute; width: 30vmin; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%;
+  background: radial-gradient(circle, #fff7de 0 13%, #ffe2a0 19%, rgba(255, 196, 120, .62) 30%, rgba(255, 160, 110, .22) 48%, rgba(255, 140, 110, 0) 70%);
 }
-.hr-track { position: absolute; left: 0; top: 0; height: 100%; will-change: transform; }
-.hr-braid { position: absolute; left: 0; top: 0; overflow: visible; filter: drop-shadow(0 0 10px rgba(255, 200, 110, .55)); }
-.hr-photos { position: absolute; inset: 0; }
-.hr-card { position: absolute; display: flex; flex-direction: column; align-items: center; opacity: 0; }
-.hr-card.in { opacity: 1; }
-.hr-string { width: 1.6px; background: linear-gradient(#fff1c9, #c9a36a); box-shadow: 0 0 6px rgba(255, 210, 140, .7); }
-.hr-swing { width: 100%; transform-origin: 50% 0; }
-.hr-sway { position: relative; transform-origin: 50% -8px; rotate: var(--tilt); }
-.hr-card.in .hr-sway { animation: sway var(--dur) ease-in-out infinite alternate; }
-@keyframes sway { from { rotate: calc(var(--tilt) - 2.6deg); } to { rotate: calc(var(--tilt) + 2.6deg); } }
-.hr-clip {
-  position: absolute; left: 50%; top: -9px; width: 18px; height: 18px; margin-left: -9px; z-index: 2; border-radius: 50%;
-  background: radial-gradient(circle, #ffe3a3 0 25%, #f2a7c3 27% 62%, #d77ea3 64%);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, .4);
+.hr-streak { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 214, 170, .85), rgba(255, 170, 150, .25) 60%, rgba(255, 170, 150, 0)); }
+.hr-towerwrap { position: absolute; aspect-ratio: 200 / 420; }
+.hr-tower { width: 100%; height: 100%; display: block; }
+.hr-tower .tw-win { fill: #ffd27a; filter: drop-shadow(0 0 6px #ffcf7a); }
+.hr-near { top: auto; bottom: 0; background-repeat: repeat-x; background-position: 0 100%; }
+
+.hr-track { position: absolute; left: 0; top: 0; width: 0; height: 100%; will-change: transform; }
+.hr-threads, .hr-cards { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+.hr-seg { position: absolute; pointer-events: none; }
+
+/* polaroids */
+.hr-card { position: absolute; }
+.hr-sway { position: relative; transform-origin: 50% 0; rotate: var(--tilt); }
+.hr-card.in:not(.wrapped) .hr-sway { animation: hr-sway var(--dur) ease-in-out infinite alternate; }
+.hr-card.wrapped .hr-sway { rotate: calc(var(--tilt) * .25); }
+@keyframes hr-sway { from { rotate: calc(var(--tilt) - 2.4deg); } to { rotate: calc(var(--tilt) + 2.4deg); } }
+.hr-pol {
+  position: relative; background: #fbf6ec; padding: 6% 6% 0; border-radius: 2px;
+  box-shadow: 0 22px 40px -8px rgba(30, 8, 30, .55), 0 2px 5px rgba(30, 8, 30, .35), inset 0 0 0 1px rgba(255, 255, 255, .5);
 }
-.hr-card .polaroid { box-shadow: 0 24px 50px rgba(20, 5, 20, .55), 0 0 40px rgba(255, 200, 120, .12); }
-.hr-card .cap span { display: inline-block; }
+.hr-pol::after { /* paper sheen, warmed by the sunset */
+  content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: 2px;
+  background: linear-gradient(120deg, rgba(255, 255, 255, .28), transparent 34%, transparent 66%, rgba(255, 196, 140, .18));
+}
+.hr-ph { position: relative; overflow: hidden; background: #2d3836; border-radius: 1px; }
+.hr-ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; }
+.hr-gray { filter: grayscale(1) sepia(.35) contrast(.72) brightness(1.15); }
+.hr-chem { position: absolute; inset: 0; background: radial-gradient(ellipse at 40% 30%, #4b5a58, #2a3432 70%); }
+.hr-cap {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 4.2em;
+  padding: .35em .35em .55em; font-family: var(--f-hand); font-size: var(--fs, 20px); line-height: 1.02; color: #3c2650; text-align: center;
+}
+.hr-capt { opacity: 0; }
+.hr-date { opacity: 0; align-self: flex-end; margin-top: .25em; font-size: .62em; color: #84607a; letter-spacing: .02em; }
+.is-dev .hr-chem, .is-dev .hr-gray { opacity: 0; }
+.is-dev .hr-col, .is-dev .hr-capt, .is-dev .hr-date { opacity: 1; }
+.hr-knot {
+  position: absolute; left: 50%; top: -6px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%;
+  background: radial-gradient(circle, #fffaf0 0 22%, #ffd98a 48%, rgba(255, 196, 110, 0) 74%);
+  box-shadow: 0 0 12px 3px rgba(255, 205, 120, .55);
+}
+
+/* the hero-hair moment */
+.hr-hero { position: absolute; inset: 0; pointer-events: none; }
+.hr-veil { position: absolute; inset: 0; opacity: 0; background: radial-gradient(ellipse 80% 70% at 50% 46%, rgba(34, 12, 40, .6), rgba(12, 4, 18, .92)); }
+.hr-herorib { position: absolute; inset: 0; }
+.hr-motes { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hr-big { position: absolute; will-change: transform; }
+.hr-big .hr-pol { box-shadow: 0 40px 80px -10px rgba(0, 0, 0, .65), 0 0 0 1px rgba(255, 240, 210, .4); }
+.hr-big .hr-ph { transition: box-shadow 1.2s ease; }
+.hr-big.glow .hr-ph { box-shadow: 0 0 0 1px rgba(255, 226, 160, .8), 0 0 26px 4px rgba(255, 205, 120, .6); }
+.hr-big.glow .hr-pol { box-shadow: 0 40px 80px -10px rgba(0, 0, 0, .65), 0 0 60px rgba(255, 196, 110, .35); }
+.hr-spark {
+  position: absolute; width: 70px; height: 70px; margin: -35px 0 0 -35px; border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle, rgba(255, 252, 236, 1) 0 10%, rgba(255, 214, 140, .65) 30%, rgba(255, 190, 100, 0) 70%);
+  animation: hr-pulse 1.8s ease-in-out infinite alternate;
+}
+
+/* the ember at the end */
+.hr-ember { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
+.hr-ember i {
+  position: absolute; left: -60px; top: -60px; width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle, #fffaf0 0 6%, #ffd27a 14%, rgba(255, 159, 67, .55) 30%, rgba(255, 120, 60, .16) 50%, rgba(255, 120, 60, 0) 70%);
+  animation: hr-pulse 2.2s ease-in-out infinite alternate;
+}
+@keyframes hr-pulse { from { scale: .9; opacity: .85; } to { scale: 1.08; opacity: 1; } }
+.reduced-motion .hr-ember i, .reduced-motion .hr-spark { animation: none; }

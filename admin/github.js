@@ -24,6 +24,11 @@ export class GitHubError extends Error {
   }
 }
 
+/** True only for https://api.github.com/… (exact origin) — the one place the token may go. */
+export function isApiUrl(url) {
+  try { const u = new URL(url); return u.origin === API && u.username === '' && u.password === ''; } catch { return false; }
+}
+
 /** Encode each segment of a repo path (keeps the slashes). */
 export function encodePath(path) {
   return String(path).split('/').map(encodeURIComponent).join('/');
@@ -112,8 +117,13 @@ export class GitHub {
       Accept: raw ? 'application/vnd.github.raw+json' : 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
     };
-    if (this.token) headers.Authorization = `Bearer ${this.token}`;
-    const init = { method, headers, cache: 'no-store' };
+    // The token travels ONLY to https://api.github.com, ONLY in this header — never in a URL.
+    if (this.token) {
+      if (!isApiUrl(url)) throw new GitHubError('Refusing to send the GitHub token anywhere but api.github.com.', 0, null, 'origin');
+      headers.Authorization = `Bearer ${this.token}`;
+    }
+    // no cookies, no referrer (the admin's address isn't GitHub's business)
+    const init = { method, headers, cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer' };
     if (body !== undefined) {
       headers['Content-Type'] = 'application/json';
       init.body = JSON.stringify(body);

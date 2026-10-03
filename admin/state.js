@@ -42,6 +42,24 @@ export const state = {
 /* ---------------------------------------------------------------- storage */
 export const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
 export const lsSet = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* private mode */ } };
+const ssGet = (k) => { try { return sessionStorage.getItem(k); } catch { return null; } };
+const ssSet = (k, v) => { try { if (v == null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch { /* private mode */ } };
+
+/* ---------------------------------------------------------------- the GitHub token
+ * The token lives ONLY in this browser's Web Storage, under TOKEN_KEY:
+ *   "remember on this device" ON  (default) → localStorage   (survives closing the browser)
+ *   "remember on this device" OFF           → sessionStorage (forgotten when the tab closes)
+ * It is never written to the draft (IndexedDB), the content, an export or a URL, and it is
+ * only ever sent to https://api.github.com in the Authorization header (github.js).
+ */
+export function loadToken() { return (lsGet(TOKEN_KEY) || ssGet(TOKEN_KEY) || '').trim(); }
+/** Where the current token is kept: 'device' | 'tab' | null (none). */
+export function tokenPlace() { return lsGet(TOKEN_KEY) ? 'device' : ssGet(TOKEN_KEY) ? 'tab' : null; }
+export function storeToken(token, { remember = true } = {}) {
+  const t = String(token || '').trim();
+  if (remember) { ssSet(TOKEN_KEY, null); lsSet(TOKEN_KEY, t || null); } else { lsSet(TOKEN_KEY, null); ssSet(TOKEN_KEY, t || null); }
+}
+export function clearToken() { lsSet(TOKEN_KEY, null); ssSet(TOKEN_KEY, null); }
 
 /* ---------------------------------------------------------------- hooks */
 const hooks = { render: () => {}, chrome: () => {} };

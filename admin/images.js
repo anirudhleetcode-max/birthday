@@ -16,6 +16,7 @@
  */
 import { gradeImage, canvasToBlob } from '../assets/js/shared/grade.js';
 import { intRatio, outputSize, MIME_EXT } from './util.js';
+import { cleanImage } from './metadata.js';
 
 export const MAX_SOURCE = 3600; //            working copy long side (< 16 MP canvas limit on phones)
 export const DISPLAY_MAX = 1800;
@@ -123,13 +124,20 @@ export async function decodeImage(file, { maxSide = MAX_SOURCE } = {}) {
 }
 
 /**
- * What to store as the untouched original: the uploaded bytes themselves when they are
- * a web image format and ≤ 12 MB; otherwise a high-quality upright JPEG (≤ 3600 px).
+ * What to store as the untouched original: the uploaded picture itself when it is a web image
+ * format and ≤ 12 MB — with its private metadata (GPS position, dates, camera, hidden previews)
+ * removed losslessly (metadata.js), because originals are published; otherwise a high-quality
+ * upright JPEG (≤ 3600 px), which carries no metadata at all.
  */
 export async function keepOriginal(file, decoded) {
   const type = ((file && file.type) || '').toLowerCase();
   const ext = MIME_EXT[type];
-  if (ext && ['jpg', 'png', 'webp'].includes(ext) && file.size <= KEEP_ORIGINAL_MAX_BYTES) return { blob: file, ext };
+  if (ext && ['jpg', 'png', 'webp'].includes(ext) && file.size <= KEEP_ORIGINAL_MAX_BYTES) {
+    try {
+      const clean = cleanImage(new Uint8Array(await file.arrayBuffer()), ext);
+      if (clean) return { blob: clean.changed ? new Blob([clean.bytes], { type }) : file, ext };
+    } catch { /* unreadable as bytes → re-encode below */ }
+  }
   const blob = await canvasToBlob(decoded.canvas, 'image/jpeg', 0.93);
   return { blob, ext: 'jpg' };
 }

@@ -286,7 +286,7 @@ export async function addPhotos({ chapter = 'album' } = {}) {
   chapterSel.control.setAttribute('data-testid', 'add-chapter');
   syncNote();
   const s = openSheet({
-    kicker: 'Add photos', title: 'Where should they go?', size: 'md',
+    key: 'add-photos', kicker: 'Add photos', title: 'Where should they go?', size: 'md',
     content: [
       h('p.sheet-text', 'There’s no limit — add photos now or any time later. Each one is cropped to the shape you pick, and that shape stays locked so a future replacement always fits.'),
       chapterSel,
@@ -297,7 +297,7 @@ export async function addPhotos({ chapter = 'album' } = {}) {
       h('button.btn.gold', { type: 'button', autofocus: true, 'data-testid': 'add-choose', onclick: () => s.close('go') }, icon('images'), 'Choose photos…'),
     ],
   });
-  if ((await s.result) !== 'go') return 0;
+  if (s.duplicate || (await s.result) !== 'go') return 0;
   const files = await pickFiles({ accept: 'image/jpeg,image/png,image/webp,image/*', multiple: true });
   if (!files.length) return 0;
   let added = 0;
@@ -437,13 +437,14 @@ export async function moveDialog(id) {
   });
   sync();
   const s = openSheet({
-    kicker: 'Move photo', title: p.label || 'Move photo', size: 'sm',
+    key: 'move-photo', kicker: 'Move photo', title: p.label || 'Move photo', size: 'sm',
     content: [sel, note],
     actions: [
       h('button.btn.ghost', { type: 'button', onclick: () => s.close(null) }, 'Cancel'),
       h('button.btn.gold', { type: 'button', autofocus: true, 'data-testid': 'move-confirm', onclick: () => s.close(target) }, icon('move'), 'Move'),
     ],
   });
+  if (s.duplicate) return;
   const to = await s.result;
   if (to && to !== p.chapter) movePhoto(id, to);
 }

@@ -166,7 +166,7 @@ class CakeScene {
     // the plaque's script font (loaded by the page); don't wait forever
     try {
       await Promise.race([
-        Promise.all([document.fonts.load('120px "Great Vibes"'), document.fonts.load('italic 40px "Cormorant Garamond"')]),
+        Promise.all([document.fonts.load('120px "Great Vibes"'), document.fonts.load('italic 500 40px "Cormorant Garamond"')]),
         new Promise((r) => setTimeout(r, 2500)),
       ]);
     } catch (e) { /* ignore */ }
@@ -216,8 +216,8 @@ class CakeScene {
 
     // a slim cake knife: hovers & follows her finger during the cut
     const kg = knifeGeometry();
-    const steel = new THREE.MeshStandardMaterial({ color: 0xeceaf4, metalness: 1, roughness: 0.14 });
-    steel.userData.env = 2.4;
+    const steel = new THREE.MeshStandardMaterial({ color: 0xf0f2fa, metalness: 1, roughness: 0.2, vertexColors: true });
+    steel.userData.env = 2.0;
     this.knife = new THREE.Group();
     const blade = new THREE.Mesh(kg.blade, steel), handle = new THREE.Mesh(kg.handle, this.cake.mats.gold);
     blade.castShadow = handle.castShadow = shadows;
@@ -262,7 +262,7 @@ class CakeScene {
     // golden after-glow (behind / below the cake) once they're out.
     const topY = this.cutTop;
     this.pl = [new THREE.PointLight(0xffa24f, 0, 0, 2), new THREE.PointLight(0xffb867, 0, 0, 2)];
-    this.plCandle = [new THREE.Vector3(-0.25, topY + 0.72, 0.42), new THREE.Vector3(0.32, topY + 0.66, -0.12)];
+    this.plCandle = [new THREE.Vector3(-0.55, topY + 0.5, 0.55), new THREE.Vector3(0.6, topY + 0.45, -0.25)];
     this.plGold = [new THREE.Vector3(0.0, 2.3, -2.3), new THREE.Vector3(0.35, 0.75, 1.55)];
     this.pl[0].position.copy(this.plCandle[0]);
     this.pl[1].position.copy(this.plCandle[1]);
@@ -287,10 +287,12 @@ class CakeScene {
     this.fillLight.position.set(3, 2, 6);
     scene.add(...this.pl, this.hemi, this.key, this.key.target, this.rim, this.fillLight);
     this.colors = {
-      candle0: new THREE.Color(0xffa24f), candle1: new THREE.Color(0xffb867), gold: new THREE.Color(0xffa95e),
+      candle0: new THREE.Color(0xffa24f), candle1: new THREE.Color(0xffb867), gold: new THREE.Color(0xff9c62),
       rimCool: new THREE.Color(0x9aa8ff), rimGold: new THREE.Color(0xffc86e),
+      keyCool: new THREE.Color(0xeee6ff), keyGold: new THREE.Color(0xffd9a8),
+      skyCool: new THREE.Color(0x5162b0), skyGold: new THREE.Color(0x5a4a86),
       groundCool: new THREE.Color(0x1c0e08), groundGold: new THREE.Color(0x6a4010),
-      shaftCool: new THREE.Color(0.52, 0.58, 1.0), shaftWarm: new THREE.Color(1.0, 0.7, 0.34),
+      shaftCool: new THREE.Color(0.48, 0.48, 1.0), shaftWarm: new THREE.Color(1.0, 0.7, 0.34),
     };
 
     // sprites: strand head, topper & knife glints; the candle aura & light shaft
@@ -429,8 +431,9 @@ class CakeScene {
     const fov = portrait ? 40 : aspect < 1.25 ? 35 : 30;
     const t = Math.tan((fov / 2) * DEG);
     // fit the whole cake (stand → sun topper) with air above the topper and
-    // room below for the subtitles; tall screens keep it a little above centre
-    const W = portrait ? 3.3 : 3.6, H = 4.5;
+    // room below for the subtitles and the blowing controls; tall phones are
+    // width-bound anyway and keep the cake a little above centre
+    const W = portrait ? 3.3 : 3.6, H = aspect < 0.62 ? 4.5 : 5.4;
     const dist = Math.max(H / 2 / t, W / 2 / (t * aspect)) * 1.02;
     const vh = 2 * dist * t;
     const ty = Math.max(1.75 - vh * 0.07, 3.62 + 0.06 * vh - vh / 2);
@@ -517,35 +520,38 @@ class CakeScene {
       this.pl[0].color.copy(C.candle0); this.pl[1].color.copy(C.candle1);
     }
     this.pl[0].intensity = cl + g * 9.0 * (1 + 0.8 * kick);
-    this.pl[1].intensity = cl * 0.85 * (1 + 0.05 * Math.sin(t * 17.0)) + g * 0.9 * (1 + kick);
+    this.pl[1].intensity = cl * 0.85 * (1 + 0.05 * Math.sin(t * 17.0)) + g * 0.6 * (1 + kick);
     if (this.head && this.headOn > 0.01) {
       // the strand carries its own little warm light as it travels
       this.pl[1].position.copy(this.headPos);
       this.pl[1].color.copy(C.gold);
-      this.pl[1].intensity += 0.55 * this.headOn;
+      this.pl[1].intensity += 0.4 * this.headOn;
     }
     const hush = L.hush;
-    this.hemi.intensity = (0.32 * L.room + 0.14 * L.party) * (1 - 0.35 * hush);
+    this.hemi.intensity = (0.32 * L.room + 0.06 * L.party) * (1 - 0.35 * hush) * (1 - 0.3 * g);
+    this.hemi.color.copy(C.skyCool).lerp(C.skyGold, g);
     this.hemi.groundColor.copy(C.groundCool).lerp(C.groundGold, g);
-    this.key.intensity = (1.0 + 1.0 * frac) * L.room * (1 - 0.45 * L.party) + 0.85 * L.party + 0.4 * kick;
+    this.key.color.copy(C.keyCool).lerp(C.keyGold, g);
+    this.key.intensity = (1.0 + 1.0 * frac) * L.room * (1 - 0.55 * L.party) + 0.6 * L.party + 0.4 * kick;
     this.rim.intensity = 0.75 * L.room + 0.7 * g;
     this.rim.color.copy(C.rimCool).lerp(C.rimGold, g);
     this.fillLight.intensity = 0.35 * frac * L.room + 0.28 * L.party;
     const envLevel = 0.06 + 0.22 * L.room * (1 - 0.4 * L.party) + 0.5 * frac * (0.9 + 0.1 * flick) + 0.32 * g + 0.15 * L.party + 0.2 * kick;
     for (const [m, k] of this.envMats) m.envMapIntensity = envLevel * k;
     this.bokeh.uniforms.uTime.value = t;
-    this.bokeh.uniforms.uBright.value = (0.1 + 0.75 * L.room + 0.45 * L.party + 0.25 * g) * (1 - 0.6 * hush);
+    this.bokeh.uniforms.uBright.value = (0.1 + 0.75 * L.room + 0.2 * L.party + 0.15 * g) * (1 - 0.6 * hush);
     this.dust.uniforms.uTime.value = t;
     this.dust.uniforms.uBright.value = 0.18 + 0.8 * frac + 0.6 * g;
-    this.backdrop.material.uniforms.uRoom.value = (0.25 + 0.6 * L.room + 0.4 * L.party) * (1 - 0.55 * hush);
+    // the room stays a midnight room even in the celebration: the gold lives on the cake
+    this.backdrop.material.uniforms.uRoom.value = (0.25 + 0.6 * L.room) * (1 - 0.55 * hush) * (1 - 0.3 * g);
     this.backdrop.material.uniforms.uWarm.value = g * (1 + 0.5 * kick);
-    this.table.pool.material.opacity = 0.32 * frac * flick + 0.16 * g;
+    this.table.pool.material.opacity = 0.32 * frac * flick + 0.08 * g;
     // the haze: candle aura over the flames, a faint shaft of light from above
     const A = this.atmo;
     A.uniforms.uTime.value = t;
     A.aura.material.opacity = clamp(0.2 * frac * flick * (1 - 0.4 * g) + 0.08 * this.headOn, 0, 1);
-    const cool = 0.07 * clamp(L.room / 0.45, 0, 1.5) * (1 - 0.65 * hush);
-    const warm = 0.12 * g * (0.55 + 0.45 * L.party) + 0.1 * kick;
+    const cool = 0.014 * clamp(L.room / 0.45, 0, 1.5) * (1 - 0.7 * hush);
+    const warm = 0.012 * g * (0.55 + 0.45 * L.party) + 0.014 * kick;
     A.uniforms.uIntensity.value = cool * (1 - g) + warm;
     A.uniforms.uColor.value.copy(C.shaftCool).lerp(C.shaftWarm, g);
     if (this.bloom) this.bloom.strength = 0.35 + 0.45 * kick;
@@ -772,6 +778,8 @@ class CakeScene {
     this.setCanvasMode('blow');
     const done = new Promise((res) => { this.onAllOut = res; });
     this.buildBlowUI();
+    // the instruction stays with her until the last flame is out
+    this.later(this.reduced ? 0.3 : 0.9, () => { if (this.phase === 'blow' && !this.blowHintH) this.blowHintH = this.hint(this.T.blowHint); });
     await done;
     this.guard();
   }
@@ -836,8 +844,7 @@ class CakeScene {
     if (!this.fallbackShown) this.altBtn.classList.remove('on');
     this.uiEl.querySelector('.ck-key')?.classList.remove('on');
     this.chipEl.classList.add('on');
-    this.blowHintH?.remove();
-    this.blowHintH = this.hint(this.T.blowHint);
+    if (!this.blowHintH) this.blowHintH = this.hint(this.T.blowHint);
   }
 
   // gently bring the one-tap "Blow them out" button forward
@@ -935,14 +942,11 @@ class CakeScene {
       [0, -0.16, ['#b9a3e3', '#f4c463', '#f2a7c3']],
     ];
     bursts.forEach(([dx, dy, colors], k) => this.later(0.15 + k * (red ? 0.15 : 0.34), () => {
-      this.fx('colorBurst', { x: top.x + dx * spread, y: clamp(top.y + dy * h, h * 0.12, h * 0.6), colors, size: k === 2 ? 0.8 : 0.95 });
+      this.fx('colorBurst', { x: top.x + dx * spread, y: clamp(top.y + dy * h, h * 0.12, h * 0.6), colors, size: k === 2 ? 0.7 : 0.85 });
     }));
-    const sparkleAt = (v, n) => { const p = this.toScreen(v); this.fx('sparkle', p.x, p.y, n); };
-    this.later(0.4, () => sparkleAt(new THREE.Vector3(0, 2.9, 0.05), red ? 10 : 22));
-    this.later(0.9, () => sparkleAt(new THREE.Vector3(-0.6, 2.2, 0.4), 12));
-    this.later(1.3, () => sparkleAt(new THREE.Vector3(0.6, 2.1, 0.4), 12));
     this.sfx('swell');
-    await this.wait(red ? 0.8 : 1.4);
+    // let the confetti fall through before the line arrives
+    await this.wait(red ? 1.2 : 2.6);
     await this.narrate([T.afterBlow]);
   }
 
@@ -1185,7 +1189,7 @@ class CakeScene {
     const dest = plateLocal.clone().sub(bisAfter.multiplyScalar(DIM.t2.R * 0.62));
     const from = W.position.clone();
     const proxy = { t: 0 };
-    if (portrait) this.to(this.cam, { az: camAz, el: 0.36, distK: 0.66, tx: 1.45, ty: -0.62, tz: 0.38, duration: red ? 1.4 : 2.6, ease: 'power2.inOut' });
+    if (portrait) this.to(this.cam, { az: camAz, el: 0.34, distK: 0.86, tx: 1.3, ty: -0.34, tz: 0.4, duration: red ? 1.4 : 2.6, ease: 'power2.inOut' });
     else this.to(this.cam, { az: camAz, el: 0.3, distK: 0.78, tx: 1.25, ty: -0.62, tz: 0.45, duration: red ? 1.4 : 2.6, ease: 'power2.inOut' });
     const ease = this.gsap.parseEase('power1.inOut');
     await this.to(proxy, {
@@ -1239,15 +1243,31 @@ class CakeScene {
   // the secret: after the cut, tapping the sun topper (or its plaque) finds an extra wish
   tryWish(x, y) {
     const hits = this.aim(x, y).intersectObject(this.cake.topper, true);
-    if (!hits.length) return false;
-    const p = this.toScreen(hits[0].point);
+    let point = hits.length ? hits[0].point : null;
+    if (!point) {
+      // fingers are bigger than the topper on a phone: accept a tap near its heart
+      const c = new THREE.Vector3();
+      this.cake.plaque.getWorldPosition(c);
+      const s = this.toScreen(c);
+      const r = Math.max(34, Math.min(this.size.w, this.size.h) * 0.07);
+      if (Math.hypot(s.x - x, s.y - y) > r) return false;
+      point = c;
+    }
+    const p = this.toScreen(point);
     this.fx('sparkle', p.x, p.y, 18, { spread: 50 });
-    this.glitter.emit(hits[0].point, { n: this.low ? 6 : 14, spread: 0.35, up: 0.15, life: 1.2, size: 0.03 });
+    this.glitter.emit(point, { n: this.low ? 6 : 14, spread: 0.35, up: 0.15, life: 1.2, size: 0.03 });
     this.to(this.L, { glint: 1.2, duration: 0.2, yoyo: true, repeat: 1 });
     const wish = this.ctx.text?.cake?.wish;
     let isNew = false;
     try { isNew = !!this.ctx.eggs?.found?.('cake-wish', wish ? this.fillText(wish) : undefined); } catch (e) { /* ignore */ }
-    if (!isNew) this.sfx('chime');
+    if (!isNew) {
+      this.sfx('chime');
+      // found before (this visit or an earlier one): the wish is still there to read
+      if (wish && this.time - (this.wishShownAt ?? -99) > 5.5) {
+        try { this.ctx.eggs?.toast?.(this.fillText(wish)); } catch (e) { /* ignore */ }
+      }
+    }
+    this.wishShownAt = this.time;
     return true;
   }
 

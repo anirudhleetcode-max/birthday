@@ -7,7 +7,7 @@
  */
 import { PHOTO_CHAPTERS, ROLES, nextOrder, reorder, chapterInfo } from '../assets/js/shared/model.js';
 import * as I from './images.js';
-import { state, change, photoById, globalStrength } from './state.js';
+import { state, change, photoById, globalStrength, srcFor } from './state.js';
 import { clone, deepEqual, intRatio, ROLE_INFO } from './util.js';
 import { h, icon, toast, openSheet, textField, selectField, switchField, sliderField, segmented, debounce } from './ui.js';
 import { focalPicker } from './focal.js';
@@ -40,7 +40,7 @@ const signed = (v) => (v > 0 ? `+${Math.round(v * 100)}` : `${Math.round(v * 100
 
 export async function openEditor(id) {
   const orig = photoById(id);
-  if (!orig) return;
+  if (!orig || document.querySelector('.sheet-backdrop:not(.out) .editor-sheet')) return null; // a double tap opens ONE editor
   const p = clone(orig);
   p.grade = { strength: null, warmth: 0, exposure: 0, ...(p.grade || {}) };
   let src = null; //          decoded original
@@ -232,7 +232,7 @@ export async function openEditor(id) {
       stageBox.classList.remove('loading');
       status.textContent = 'Couldn’t load the original — words and settings can still be edited.';
       recropBtn.disabled = true;
-      const img = h('img', { src: `../${p.thumb || p.src}`, alt: '' });
+      const img = h('img', { src: srcFor(p.thumb || p.src), alt: '' }); // staged / just-published copies too
       fp.setMedia(img);
     });
   } else {

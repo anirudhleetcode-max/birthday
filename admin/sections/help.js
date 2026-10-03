@@ -48,8 +48,10 @@ export function renderHelp() {
           h('li', 'Send her the link (WhatsApp is perfect). Tell her: headphones on, lights low. ✨'),
           h('li', 'After her birthday you can keep adding memories — the same way, any time.'))),
       item('What is the “token”?', false,
-        h('p', 'A private key that lets this page update the website on GitHub for you. It only works for this one repository and is stored only in this browser.'),
-        h('p', 'Never share it. On a shared device use ', h('b', 'Settings → GitHub → Forget token'), '. If it expires, make a new one the same way.')),
+        h('p', 'A private key that lets this page update the website on GitHub for you. Make it for this one repository only, with “Contents: Read and write”, expiring a little after her birthday. It is kept only in this browser and is only ever sent to GitHub — never put into the site, your drafts or an export.'),
+        h('p', 'On a shared or borrowed device, switch off ', h('b', 'Remember on this device'), ' when you connect (it is then forgotten when the tab closes), or use ', h('b', 'Settings → GitHub → Forget token'), ' afterwards.'),
+        h('p', 'Lost the device, or worried? Delete the token on github.com (Settings → Developer settings → Personal access tokens) — it stops working at once. Then make a new one the same way.'),
+        h('p', 'Everything in the repository — words, settings and photos — is public, even before her birthday: the countdown only hides the film, not the files.')),
       item('Something went wrong', false,
         h('p', 'Your draft is saved on this device, so nothing is lost if the tab closes. If publishing fails, the message says why — usually an expired token or no internet. Fix that and press Publish again.'),
         h('p', 'iPhone HEIC photos may not open in some browsers: share them as JPEG / “Most Compatible” instead.'))));

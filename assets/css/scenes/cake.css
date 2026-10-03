@@ -74,3 +74,8 @@
 @media (max-height: 520px) { .ck-ui { bottom: calc(env(safe-area-inset-bottom, 0px) + 64px); } }
 @media (prefers-reduced-motion: reduce) { .ck-btn.primary.on, .ck-dot { animation: none; } }
 .reduced-motion .ck-btn.primary.on, .reduced-motion .ck-dot { animation: none; }
+/* wide screens: the two choices sit side by side under the cake */
+@media (min-aspect-ratio: 1/1) {
+  .ck-ui { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 8px 18px; bottom: calc(env(safe-area-inset-bottom, 0px) + max(11vh, 84px)); }
+  .ck-key { flex-basis: 100%; text-align: center; }
+}
