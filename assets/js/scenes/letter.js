@@ -19,15 +19,19 @@ export default {
     const { gsap, ui, audio, fx } = ctx;
     const t = ctx.text.letter || {};
     const from = ctx.site.from || {};
-    const p1 = ctx.photo('letter-1');
-    const p2 = ctx.photo('letter-2');
-    await Promise.all([ctx.preload(p1.url), ctx.preload(p2.url)]);
+    const pics = ctx.photos('letter', { limit: 3 });
+    await Promise.all(pics.map((p) => ctx.preload(p.url)));
     const voice = ctx.media('voice');
-    const body = (t.body || []).filter(Boolean);
+    const body = (t.body || []).filter(Boolean).map((b) => ctx.fill(b));
     const mid = Math.max(1, Math.ceil(body.length / 2));
+    const pin = (p, k) => p ? `<figure class="lt-pin lt-pin-${k + 1} polaroid"><i class="lt-tape"></i><div class="ph" style="aspect-ratio:${p.ratio}"><img alt="${esc(p.alt)}" src="${p.url}" style="object-position:${p.objectPosition}"></div>${p.caption ? `<figcaption class="cap">${esc(p.caption)}</figcaption>` : ''}</figure>` : '';
 
     el.innerHTML = `
       <div class="lt-bg"></div>
+      <div class="lt-desk" aria-hidden="true">
+        <div class="lt-candle"><i class="lt-wax"></i><i class="lt-wick"></i><i class="lt-flame"></i><i class="lt-candleglow"></i></div>
+        <svg class="lt-quill" viewBox="0 0 200 60"><path d="M6 52 C60 40 120 22 194 6 C170 26 120 40 70 48 C46 52 22 54 6 52 Z" fill="#efe3cf" opacity=".9"/><path d="M8 52 C70 38 130 22 192 7" stroke="#b79b72" stroke-width="1.4" fill="none"/></svg>
+      </div>
       <div class="lt-env-wrap">
         <div class="lt-env">
           <div class="lt-back"></div>
@@ -35,20 +39,21 @@ export default {
           <div class="lt-front"></div>
           <div class="lt-flap"><div class="lt-flap-in"></div></div>
           <button type="button" class="lt-seal" aria-label="Open the letter">${sunEmblem({ glow: false, fill: '#8a2d4d', inner: '#5e1a33', stroke: '#c75a7d' })}</button>
-          <p class="lt-to">for ${esc(ctx.site.her?.name || 'you')}</p>
+          <p class="lt-to">${esc(ctx.fill('for {name}'))}</p>
         </div>
-        <p class="lt-tap">tap the seal</p>
+        <p class="lt-tap">${esc(ctx.fill(t.tapSeal || 'Tap the seal to open'))}</p>
       </div>
       <div class="lt-paper" hidden>
         <div class="lt-scroll">
           <div class="lt-inner">
-            <figure class="lt-pin lt-pin-1 polaroid"><i class="lt-tape"></i><div class="ph" style="aspect-ratio:${p1.ratio}"><img alt="" src="${p1.url}"></div></figure>
-            <h3 class="lt-salute">${esc(t.salutation || '')}</h3>
+            ${pin(pics[0], 0)}
+            <h3 class="lt-salute">${esc(ctx.fill(t.salutation || 'Dear {name},'))}</h3>
             ${body.slice(0, mid).map((p) => `<p class="lt-p">${esc(p)}</p>`).join('')}
-            <figure class="lt-pin lt-pin-2 polaroid"><i class="lt-tape"></i><div class="ph" style="aspect-ratio:${p2.ratio}"><img alt="" src="${p2.url}"></div></figure>
+            ${pin(pics[1], 1)}
             ${body.slice(mid).map((p) => `<p class="lt-p">${esc(p)}</p>`).join('')}
-            <p class="lt-sign">${esc(t.signoff || from.signoff || '')}</p>
-            <p class="lt-from">${esc(from.name || '')}</p>
+            ${pin(pics[2], 2)}
+            <p class="lt-sign">${esc(ctx.fill(t.signoff || from.signoff || ''))}</p>
+            <p class="lt-from">${esc(ctx.fill(from.name || ''))}</p>
             ${voice ? '<button type="button" class="btn-ghost lt-voice" hidden>▶&nbsp; Hear it in my voice</button>' : ''}
             ${pressedFlower()}
           </div>
@@ -65,7 +70,8 @@ export default {
 
     fx.dust({ density: 0.35 });
     audio.setMood('tender');
-    await ui.chapterCard(t.kicker || 'Chapter Seven', t.title || 'A Letter');
+    ctx.letterbox(true);
+    await ui.chapterCard(t.kicker || 'Chapter Six', t.title || 'A Letter You Were Supposed to Read');
 
     gsap.fromTo(env, { y: 60, opacity: 0, rotationX: 20 }, { y: 0, opacity: 1, rotationX: 0, duration: 1.8, ease: 'power3.out' });
     gsap.fromTo(tap, { opacity: 0 }, { opacity: 0.8, duration: 1, delay: 1.6 });
@@ -82,6 +88,7 @@ export default {
     const sr = seal.getBoundingClientRect();
     fx.sparkle(sr.left + sr.width / 2, sr.top + sr.height / 2, 24, { spread: 70 });
     gsap.to(tap, { opacity: 0, duration: 0.4 });
+    gsap.fromTo(el.querySelector('.lt-flame'), { scaleY: 1 }, { scaleY: 1.35, scaleX: 0.8, duration: 0.18, yoyo: true, repeat: 5, transformOrigin: '50% 100%' });
     const open = gsap.timeline();
     open.to(seal, { scale: 1.3, opacity: 0, rotation: 25, duration: 0.7, ease: 'power2.in' })
       .to(flap, { rotationX: 180, duration: 1.1, ease: 'power2.inOut' }, 0.4)
@@ -118,16 +125,17 @@ export default {
       }
       return { el: w, spans };
     });
-    const pins = [el.querySelector('.lt-pin-1'), el.querySelector('.lt-pin-2')];
+    const pins = [...el.querySelectorAll('.lt-pin')];
     gsap.set(pins, { opacity: 0 });
 
     const cps = 34; // characters per second
     let lastChar = null;
     const tl = gsap.timeline({ paused: true });
     let at = 0.6;
-    tl.call(() => dropPin(0), [], at);
+    if (pins[0] && pins[0].nextElementSibling === chunks[0]?.el) tl.call(() => dropPin(0), [], at);
     chunks.forEach((c, idx) => {
-      if (c.el.previousElementSibling === pins[1]) tl.call(() => dropPin(1), [], at);
+      const k = pins.indexOf(c.el.previousElementSibling);
+      if (k > 0) tl.call(() => dropPin(k), [], at);
       tl.fromTo(c.spans, { opacity: 0, filter: 'blur(3px)' }, {
         opacity: 1, filter: 'blur(0px)', duration: 0.35, ease: 'none',
         stagger: { each: 1 / cps, onStart() { lastChar = this.targets()[0]; } },
@@ -136,16 +144,22 @@ export default {
       at += c.spans.length / cps + (idx === 0 ? 0.9 : 0.7);
     });
     const dropPin = (k) => {
-      gsap.fromTo(pins[k], { opacity: 0, y: -40, rotation: k ? -14 : 14, scale: 1.1 }, { opacity: 1, y: 0, rotation: k ? -4 : 6, scale: 1, duration: 1.1, ease: 'back.out(1.6)' });
+      gsap.fromTo(pins[k], { opacity: 0, y: -40, rotation: k % 2 ? -14 : 14, scale: 1.1 }, { opacity: 1, y: 0, rotation: k % 2 ? -4 : 6, scale: 1, duration: 1.1, ease: 'back.out(1.6)' });
       audio.sfx('chime');
     };
+    // never fight the reader: if she scrolls by hand, auto-scroll rests for a while
+    let handScrollUntil = 0;
+    const handScroll = () => { handScrollUntil = performance.now() + 5000; };
+    scroller.addEventListener('wheel', handScroll, { passive: true });
+    scroller.addEventListener('touchmove', handScroll, { passive: true });
     const follow = (node) => {
+      if (performance.now() < handScrollUntil) return;
       const target = node.offsetTop - scroller.clientHeight * 0.35;
       if (target > scroller.scrollTop) gsap.to(scroller, { scrollTop: target, duration: 1.4, ease: 'power2.inOut' });
     };
     // keep the newest line in view while writing
     const keepUp = setInterval(() => {
-      if (lastChar) {
+      if (lastChar && performance.now() >= handScrollUntil) {
         const r = lastChar.getBoundingClientRect();
         const sr2 = scroller.getBoundingClientRect();
         if (r.bottom > sr2.bottom - sr2.height * 0.22) gsap.to(scroller, { scrollTop: scroller.scrollTop + (r.bottom - (sr2.bottom - sr2.height * 0.45)), duration: 1.2, ease: 'power1.inOut', overwrite: true });
@@ -157,7 +171,7 @@ export default {
     // tap the letter to write faster
     const faster = () => tl.timeScale(Math.min(8, tl.timeScale() * 2.5));
     paper.addEventListener('click', faster);
-    const hint = ui.hint('tap the letter to write faster');
+    const hint = ui.hint(t.fasterHint || 'Tap the letter to write faster');
     setTimeout(() => hint.remove(), 4500);
     tl.play();
     await tl.then();
@@ -181,7 +195,8 @@ export default {
     await ctx.wait(1.5);
     await ui.waitContinue('Keep going');
     if (this.voiceEl) { this.voiceEl.pause(); audio.duck(1, 0.1); }
-    ctx.next();
+    const fl = el.querySelector('.lt-flame').getBoundingClientRect();
+    ctx.next({ kind: 'ember', x: fl.left + fl.width / 2, y: fl.top + fl.height / 2, color: '#ffb347' });
   },
   async exit() {
     if (this.voiceEl) { this.voiceEl.pause(); this.voiceEl = null; }

@@ -60,3 +60,35 @@
 }
 .lt-flower { position: absolute; right: 10px; bottom: 6px; width: 90px; opacity: .85; rotate: -18deg; pointer-events: none; }
 .lt-voice { margin-top: 22px; color: #6b2f57; background: rgba(107, 47, 87, .08); border-color: rgba(107, 47, 87, .4); }
+
+/* candle-lit writing desk */
+.lt-desk { position: absolute; left: 0; right: 0; bottom: 0; height: 34vh; pointer-events: none;
+  background: linear-gradient(180deg, rgba(40, 22, 30, 0) 0%, rgba(58, 34, 34, .55) 30%, #2a1720 62%, #1d0f17 100%); }
+.lt-desk::before { /* wood grain */
+  content: ''; position: absolute; inset: 30% 0 0 0; opacity: .25;
+  background: repeating-linear-gradient(178deg, rgba(255, 210, 160, .08) 0 2px, transparent 2px 11px), repeating-linear-gradient(181deg, rgba(0, 0, 0, .25) 0 1px, transparent 1px 17px);
+}
+.lt-candle { position: absolute; left: 8vw; bottom: 9vh; width: 34px; height: 92px; }
+.lt-wax { position: absolute; left: 0; bottom: 0; width: 100%; height: 76%; border-radius: 6px 6px 3px 3px;
+  background: linear-gradient(90deg, #d9c7ae, #fff4e0 40%, #e7d4b8 70%, #b9a183); box-shadow: inset 0 -10px 16px rgba(120, 80, 40, .25); }
+.lt-wax::before { content: ''; position: absolute; left: 6px; top: -2px; width: 9px; height: 22px; border-radius: 0 0 6px 6px; background: #fff4e0; opacity: .85; }
+.lt-wick { position: absolute; left: 50%; bottom: 76%; width: 2px; height: 8px; margin-left: -1px; background: #2a1a10; }
+.lt-flame { position: absolute; left: 50%; bottom: calc(76% + 6px); width: 14px; height: 30px; margin-left: -7px; border-radius: 50% 50% 46% 46% / 64% 64% 36% 36%;
+  background: radial-gradient(ellipse at 50% 72%, #fff 0 18%, #ffe7a0 34%, #ffb347 62%, rgba(255, 140, 60, 0) 76%);
+  transform-origin: 50% 100%; animation: lt-flicker 1.9s ease-in-out infinite; filter: blur(.3px); }
+@keyframes lt-flicker { 0%, 100% { transform: scale(1, 1) rotate(-1deg); } 27% { transform: scale(.94, 1.06) rotate(1.5deg); } 52% { transform: scale(1.03, .97) rotate(-.5deg); } 76% { transform: scale(.96, 1.04) rotate(1deg); } }
+.lt-candleglow { position: absolute; left: 50%; bottom: 60%; width: 52vmin; height: 52vmin; margin: 0 0 -26vmin -26vmin; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 200, 120, .34), rgba(255, 170, 90, .1) 38%, rgba(255, 170, 90, 0) 66%); mix-blend-mode: screen; animation: candle 3.2s ease-in-out infinite; }
+.lt-quill { position: absolute; right: 6vw; bottom: 7vh; width: min(34vw, 220px); rotate: -8deg; opacity: .8; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .45)); }
+.lt-pin-3 { width: 40%; max-width: 220px; margin: 8px 0 18px auto; }
+.lt-pin .cap { font-size: clamp(14px, 3.8vw, 18px); padding: 4% 2% 0; }
+.reduced-motion .lt-flame { animation-duration: 4s; }
+@media (min-aspect-ratio: 1/1) { .lt-candle { left: 12vw; bottom: 12vh; } }
+.lt-paper { z-index: 2; }
+.lt-desk { z-index: 3; }
+.lt-desk::before { z-index: -1; }
+.lt-desk { background: none; }
+.scene-letter::after { /* the desk surface stays behind the paper */
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 34vh; pointer-events: none; z-index: 1;
+  background: linear-gradient(180deg, rgba(40, 22, 30, 0) 0%, rgba(58, 34, 34, .55) 30%, #2a1720 62%, #1d0f17 100%);
+}
