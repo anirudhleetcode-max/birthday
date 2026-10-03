@@ -48,9 +48,20 @@ fs.mkdirSync(OUT, { recursive: true });
     const st = await page.evaluate(() => {
       const s = document.querySelector('#stage .scene');
       const c = document.getElementById('continue');
-      const vis = (el) => { if (!el) return false; const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && Number(cs.opacity) > 0.4 && !el.disabled; };
+      const vis = (el) => {
+        if (!el || el.disabled) return false;
+        const r = el.getBoundingClientRect();
+        if (!(r.width > 0 && r.height > 0)) return false;
+        let o = 1; // effective opacity: opacity isn't inherited, so walk up the tree
+        for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+          const cs = getComputedStyle(n);
+          if (cs.visibility === 'hidden' || cs.display === 'none') return false;
+          o *= Number(cs.opacity);
+        }
+        return o > 0.4;
+      };
       const buttons = s ? [...s.querySelectorAll('button, [role="button"]')].filter(vis).map((b) => ({ key: (b.className + '|' + b.textContent).slice(0, 80), x: b.getBoundingClientRect().left + b.getBoundingClientRect().width / 2, y: b.getBoundingClientRect().top + b.getBoundingClientRect().height / 2, text: b.textContent.trim().slice(0, 40) })) : [];
-      return { scene: s ? s.className.replace('scene ', '') : '', cont: vis(c) && !c.hidden, buttons, overflow: document.documentElement.scrollWidth > innerWidth + 1, end: !!document.querySelector('.cr-again, [data-action="again"]') };
+      return { scene: s ? s.className.replace('scene ', '') : '', cont: vis(c) && !c.hidden, buttons, overflow: document.documentElement.scrollWidth > innerWidth + 1, end: vis(document.querySelector('.cr-again, [data-action="again"]')) };
     }).catch(() => ({ scene: scene, buttons: [] }));
 
     if (st.scene !== scene) {
