@@ -21,7 +21,7 @@ const DEFAULT_TEXT = {
   kicker: 'Chapter Eight',
   title: 'Twenty Candles',
   lines: ['Okay… one last thing.', 'Make a wish, {name}.', 'But first…', 'Twenty candles.'],
-  blowHint: 'Wish first. Then blow into your phone. All twenty.',
+  blowHint: 'Make a wish. Then tap the mic and blow. All twenty.',
   tapFallback: 'Blow them out',
   afterBlow: 'Whatever you wished for — I’m already on its side.',
   cutHint: 'Now swipe across the cake to cut it',

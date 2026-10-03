@@ -62,7 +62,8 @@ export default {
     const D0 = P - eps;
     const VH = vh0 / S; // world px per viewport height on the far wall
     const Hwall = 1.32 * VH;
-    let ts = S * (low ? 1 : device.tier === 'mid' ? Math.min(dpr, 1.6) : dpr);
+    // painted walls (not text, not her photos): 2× is as sharp as the eye can tell, at half the memory of 3×
+    let ts = S * (low ? 1 : device.tier === 'mid' ? Math.min(dpr, 1.6) : Math.min(dpr, 2));
     ts = Math.min(ts, 1100 / bayW, 2300 / Hwall);
     const spb = low ? 4 : 5;
     const NS = NB * spb;

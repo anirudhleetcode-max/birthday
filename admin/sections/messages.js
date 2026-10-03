@@ -27,7 +27,7 @@ const L = (label, hint, add = 'Add a line', long = false) => ({ type: 'list', la
 export const SCHEMA = {
   personal: {
     title: 'Your memories (the letter)',
-    desc: 'The letter is built around these, and nothing in it is made up for you. Until you fill a box, the line that uses it is simply left out of her film (Preview shows it as [MEMORY 1] etc. so you can see where it goes). Write the way you talk to her. You can also rewrite any paragraph of the letter itself under “The letter”.',
+    desc: 'The letter is built around these, and nothing in it is made up for you. Until you fill a box, the line that uses it is simply left out of her film (Preview shows it as [MEMORY 1] etc. so you can see where it goes). Write the way you talk to her. You can also rewrite any paragraph of the letter itself under “The letter”. Like everything you publish, these words are public in the repository (the countdown only hides the film), so leave out anything she wouldn’t want strangers to read.',
     fields: Object.fromEntries(PERSONAL_FIELDS.map((f) => [f.key, (f.key === 'tease' ? S : T)(f.label, MEMORY_HINTS[f.key][0], MEMORY_HINTS[f.key][1])])),
   },
   invite: { title: 'Invitation', desc: 'The very first screen.', fields: { greeting: S('Greeting', 'The first words she sees, e.g. “Hey {nick1}.”'), lines: L('Lines', 'Shown one after another.'), button: S('Button'), foot: S('Small print at the bottom') } },
@@ -108,12 +108,16 @@ function groupEl(g) {
   const schema = SCHEMA[g];
   const body = h('div.group-body');
   const changedDot = h('span.changed-dot', { title: 'Changed (not published yet)' });
+  const sub = h('span.group-sub', summaryOf(g));
   const d = h('details.group', { open: open.has(g), dataset: { group: g } },
     h('summary.group-head',
-      h('span.group-titles', h('span.group-title', groupTitle(g), changedDot), h('span.group-sub', summaryOf(g))),
+      h('span.group-titles', h('span.group-title', groupTitle(g), changedDot), sub),
       h('span.group-chev', icon('down'))),
     body);
-  const sync = () => d.classList.toggle('is-changed', !deepEqual(getAt(state.site, ['text', g]), getAt(state.base, ['text', g])));
+  const sync = () => {
+    d.classList.toggle('is-changed', !deepEqual(getAt(state.site, ['text', g]), getAt(state.base, ['text', g])));
+    if (g === 'personal') sub.textContent = summaryOf(g); // "3 of 7 written", live
+  };
   d.addEventListener('toggle', () => {
     if (d.open) { open.add(g); if (!body.childElementCount) fill(); } else open.delete(g);
   });
