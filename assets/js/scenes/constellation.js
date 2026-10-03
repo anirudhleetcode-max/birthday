@@ -25,7 +25,8 @@ const FALLBACK = {
   lines: ['On their own, they’re just moments.', 'Connect them, and look what they were making all along.'],
   handwritten: 'That’s my best friend, by the way.',
 };
-const CAP = { high: 40, mid: 26, low: 16 };
+// the final montage: a chosen handful, not every photograph (the full reel lives in the extras)
+const CAP = { high: 14, mid: 13, low: 12 };
 const D0 = 10; // camera distance to the heart plane once everything settles
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -38,7 +39,7 @@ const ease5 = (k) => k * k * k * (k * (k * 6 - 15) + 10);
 const sine = (k) => 0.5 - 0.5 * Math.cos(Math.PI * clamp(k, 0, 1));
 const rnd = (a, b) => a + Math.random() * (b - a);
 
-/** Her photographs for the sky: real ones when there are enough, featured first, extras included, evenly sampled under the cap. */
+/** Her photographs for the sky: real ones when there are enough, every featured one, the rest evenly sampled under the cap — in film order. */
 function pickPhotos(ctx, tier, reveal) {
   const real = ctx.realPhotos();
   const base = real.length >= 8 ? real : ctx.allPhotos();
@@ -55,7 +56,8 @@ function pickPhotos(ctx, tier, reveal) {
     pick = [];
     for (let i = 0; i < room; i++) pick.push(rest[Math.floor(((i + 0.5) * rest.length) / room)]);
   }
-  return [...feat, ...pick];
+  const chosen = new Set([...feat, ...pick]);
+  return pool.filter((p) => chosen.has(p));
 }
 
 function createChapter(ctx, el) {
@@ -500,15 +502,19 @@ function createChapter(ctx, el) {
     if (n) {
       await Promise.race([atlasP, ctx.wait(6)]);
       audio.setMood('tender');
-      // they appear one by one out of the dark, nearest first
-      const order = [...items].sort((a, b) => b.z - a.z);
-      // quick at first, then slower and slower: the last memories get time to be seen
-      const spread = reduced ? 1.2 : Math.min(7.5, 3 + n * 0.13);
-      order.forEach((it, i) => { it.appearAt = t + 0.2 + (i / Math.max(1, n - 1)) ** 1.8 * spread + rnd(0, 0.18); });
+      // they appear one by one out of the dark, in the order the film showed them:
+      // quick at first, then slower and slower, so the last ones get time to be seen
+      const order = items;
+      const spread = reduced ? 1.2 : Math.min(9, 3 + n * 0.4);
+      order.forEach((it, i) => { it.appearAt = t + 0.2 + (i / Math.max(1, n - 1)) ** 1.8 * spread + rnd(0, 0.12); });
+      const lastIn = Math.max(...order.map((it) => it.appearAt));
+      if (window.__CN_DEV__) window.__cn = { montage: order.map((it) => ({ id: it.photo.id, at: it.appearAt - t })), reveal: revealPhoto ? revealPhoto.id : null }; // tests only
       tweens.push(gsap.to(S, { push: 1, duration: reduced ? 1 : 26, ease: 'none' }));
       await ctx.wait(reduced ? 0.6 : 1.4);
       await ui.narrate(first, { position: 'bottom' });
       await ctx.wait(reduced ? 0.2 : 1.2);
+      // the last photographs get their moment before anything moves (capped, should the clock stall)
+      for (let k = 0; !reduced && t < lastIn + 0.9 && k < 60; k++) await ctx.wait(0.1);
 
       // they begin moving toward each other; golden motes start to pass between them
       audio.setMood('wonder');

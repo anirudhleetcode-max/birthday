@@ -10,7 +10,7 @@
 //       is sky; the lanterns gather into a faint heart.
 //   3 · "20" — the ribbon writes 20, it glows, becomes a constellation, the stars
 //       become lanterns, and the lanterns rise away to reveal HAPPY 20TH BIRTHDAY + her name.
-//   4 · every photograph returns, orbiting the title.
+//   4 · her chosen photographs return, orbiting the title.
 //   5 · the last words; a handwritten line; → "One last thing".
 import * as THREE from 'three';
 import { createLanternField, createPhotoLantern } from '../core/lanternfield.js';
@@ -207,6 +207,7 @@ function build(ctx, el) {
   const ORBIT_MAX = { high: 14, mid: 12, low: 9 }[tier] || 12;
   const orbitPhotos = [...featuredPool, ...otherPool.filter((p) => !lanternPool.slice(0, PL_MAX).includes(p))].slice(0, ORBIT_MAX);
   for (const p of orbitPhotos) ctx.preload(p.thumbUrl || p.url); // warm the cache for the last beat
+  if (window.__BD_DEV__) window.__bd = { lanterns: lanternPool.slice(0, PL_MAX).map((p) => p.id), orbit: orbitPhotos.map((p) => p.id) }; // tests only
 
   /* ---------------------------------------------------------------- loop */
   let time = 0;

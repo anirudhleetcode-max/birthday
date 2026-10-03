@@ -9,7 +9,7 @@ const { chromium } = require('playwright');
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, v, i, all) => (v.startsWith('--') ? [...a, [v.slice(2), all[i + 1]]] : a), []));
 const [W, H] = (args.vp || '390x844').split('x').map(Number);
 const PORT = args.port || '8090';
-const SCENES = (args.scenes || 'prologue,tower,hair,names,dance,lanterns,letter,cake,constellation,birthday,hug,credits').split(',');
+const SCENES = (args.scenes || 'prologue,tower,story,hair,names,dance,lanterns,letter,cake,constellation,birthday,hug,credits').split(',');
 const kb = (n) => `${Math.round(n / 1024)} KB`;
 
 async function session(browser, url, settle) {

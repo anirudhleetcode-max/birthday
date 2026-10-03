@@ -1,4 +1,4 @@
-// The last beat of the birthday chapter: every photograph comes back and drifts
+// The last beat of the birthday chapter: her chosen photographs come back and drift
 // in a slow, soft swirl around the title — up to three tilted rings, depth-sorted
 // (the near side passes below the title, larger and brighter; the far side above,
 // smaller and dimmer). Photos fade whenever they would cross the words on screen,

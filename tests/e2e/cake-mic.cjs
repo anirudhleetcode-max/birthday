@@ -4,7 +4,10 @@
 // ~12 s), granted + a breath (the candles go out), permission denied, no microphone API, no device.
 // Also: the microphone stream is stopped once the candles are out / the chapter ends, and the mic
 // is never routed to the speakers.
-//   NODE_PATH=$(npm root -g) node tests/e2e/cake-mic.cjs     (needs `npm run serve`)
+// The recordings are made by tests/fixtures/audio/make-fixtures.mjs. Run it on an otherwise idle
+// machine: under software rendering the cake draws only a few frames a second when the CPU is busy,
+// and the detector samples the microphone once per frame.
+//   NODE_PATH=$(npm root -g) node tests/e2e/cake-mic.cjs [name filter]    (needs `npm run serve`)
 const { chromium } = require('playwright');
 const path = require('path');
 
@@ -24,7 +27,10 @@ const SPY = () => {
   window.__live = () => window.__streams.flatMap((s) => s.getTracks()).filter((t) => t.readyState === 'live').length;
 };
 
+const ONLY = process.argv[2] || '';
+
 async function scenario(name, { fake = 'silence', grant = true, init = null }, run) {
+  if (ONLY && !name.includes(ONLY)) return;
   console.log(`\n▸ ${name}`);
   const args = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required', '--use-fake-device-for-media-stream'];
   if (grant) args.push('--use-fake-ui-for-media-stream');

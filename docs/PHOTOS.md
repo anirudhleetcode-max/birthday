@@ -47,6 +47,6 @@ Captions and dates are empty on purpose: the owner can add them in the admin. Ch
 | 35 | 987×1754 | tall · fairy lights | Photo lantern (featured) | `lantern-1` |
 | 36 | 960×1280 | portrait · lit, decorated gateway · full length | Festival ring (featured) | `dance-5` |
 
-Every photo also appears in the finale's photo heart and the credits. The featured ones lead the last frame around "Happy 20th Birthday".
+The finale's photo heart is a chosen 12–14 (every ★ featured photo, plus a few evenly sampled from the rest), in film order; the final photograph stays out of it for its own moment. The featured ones also lead the ring around "Happy 20th Birthday", and every photo is in the album behind **Every photo** at the end of the credits.
 
 **Not used as fact:** what a photo shows (a corridor, a window, an outfit) only guided *where* it sits. No caption, date or memory was taken from a photo.

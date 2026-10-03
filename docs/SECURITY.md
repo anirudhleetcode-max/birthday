@@ -146,13 +146,20 @@ If the GitHub repository is **public** (GitHub Pages on a free account needs tha
 above, originals included, can also be browsed on github.com. If it's private, the website files
 are still downloadable from the website itself.
 
-### Where things stand right now (3 October 2026)
+### Where things stand right now (3 October 2026, checked on GitHub)
 
 - The repository **anirudhleetcode-max/birthday is public.** Her 36 photos (film copies,
   thumbnails and originals), the letter and every message have been on github.com since they were
   committed, and they are in the repository's history.
-- **GitHub Pages is not switched on yet** (there's no `main` branch). So there is no live website
-  yet, but the repository itself is browsable by anyone who finds it.
+- Its only branch, and its default branch, is `claude/focused-ramanujan-ntd4tc`. There is no `main`.
+- **GitHub Pages is not switched on** (Settings → Pages has no source), and the publish workflow
+  has never run: it runs on a push to `main`, or when started by hand from the Actions tab. So
+  there is no live website yet, but the repository itself is browsable by anyone who finds it.
+- The website build leaves the originals out (`photos/originals/` is not deployed), but they are
+  in the repository, because the admin re-renders from them.
+- Older commits, from before her nickname was corrected, still contain the earlier nickname
+  spellings in a few files. The current version contains none (see the nickname guard in
+  `tests/unit/model.test.mjs`). A private repository hides that history too.
 - The countdown will hide the *film*, not the files. Anyone can open a photo's address directly.
 
 **To keep everything private until her birthday** (it takes one minute, and nobody but you can do
@@ -176,8 +183,8 @@ for help with that; the admin doesn't do it.
 
 Phones store extra information inside photos and videos: **where they were taken (GPS)**, when,
 the phone's make, model and serial number, and sometimes a hidden copy of the uncropped picture.
-Because originals are published, the Lantern Room removes this **before anything is saved or
-uploaded**:
+Because originals are stored in the repository (which anyone can browse while it is public),
+the Lantern Room removes this **before anything is saved or uploaded**:
 
 - **Photos (JPEG / PNG / WebP):** the location, dates, camera details, XMP and IPTC data,
   comments and hidden extra images are removed. Only the "which way up" flag is kept, so the

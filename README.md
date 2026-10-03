@@ -20,7 +20,7 @@ It plays like a short animated film set in a lantern-lit fairy-tale world, inspi
 | 💌 | **A Letter You Were Supposed to Read** | A wax-sealed letter on a candle-lit desk that writes itself out in handwriting. |
 | 🎂 | **Twenty Candles** | "Okay… one last thing." A 3D cake. She **blows into her phone** to put the candles out (or taps), then **swipes to cut** it. |
 | 🎥 | *(optional)* **Video message** | Only appears if you upload one. |
-| 💖 | **Every Little Piece of You** | All her photos float in the dark, a golden ribbon connects them into a heart, then one final photo. |
+| 💖 | **Every Little Piece of You** | A chosen dozen or so of her photos arrive out of the dark in film order, quickly at first, then slower; a golden ribbon connects them into a heart; silence; then one final photo, alone. |
 | 🎉 | **The Last Lantern** | 20 years → 240 months → 7,305 days → thousands of lanterns → **Happy 20th Birthday, Deepu**. |
 | 🤗 | **One Last Thing** | "Send me a hug." Press and hold. |
 | 🎬 | **Credits** | Movie-style credits, the album, and a post-credits scene for whoever waits. |
@@ -39,7 +39,7 @@ npm run serve              # or: npx http-server . -p 8090 -c-1
 
 Handy addresses:
 - `?preview` watches the film before the unlock date.
-- `?preview&scene=lanterns` jumps to a chapter (`prologue tower hair names dance lanterns letter cake constellation birthday hug credits`).
+- `?preview&scene=lanterns` jumps to a chapter (`prologue tower story hair names dance lanterns letter cake constellation birthday hug credits`).
 - `?preview&draft` shows your **unsaved admin changes** on the same device.
 - `&reduced` and `&low` test the reduced-motion and low-power versions.
 
@@ -47,7 +47,7 @@ Handy addresses:
 
 1. The repository currently has a single branch, `claude/focused-ramanujan-ntd4tc`. Create `main` from it: on GitHub, open the branch dropdown → type `main` → **Create branch: main from claude/focused-ramanujan-ntd4tc**. Then set `main` as the default branch under **Settings → General**.
 2. On GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**. The workflow in `.github/workflows/pages.yml` then builds and publishes the site on every push to `main`, including every **Publish** from the admin. It deploys only the public site: film, admin, assets, data, photos and media, without tests, scripts or docs. The build fails, and nothing is published, if any file reference is broken.
-   *(Simpler alternative: **Source: Deploy from a branch → `main` / `(root)`**. That also works, but it serves the whole repository.)*
+   *(Avoid **Source: Deploy from a branch**: it would serve the whole repository, including the original photos, tests and docs. GitHub Actions serves only the built site.)*
 3. A minute or two later: **https://anirudhleetcode-max.github.io/birthday/**. The admin is at **/admin/**.
 
 The admin publishes to the branch set under **Settings → GitHub (where the site lives)** in the admin (`main` by default). That must be the same branch that Pages serves.
