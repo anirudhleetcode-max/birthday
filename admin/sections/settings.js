@@ -22,7 +22,7 @@ export function renderSettings() {
     textField({ label: 'Her name', value: site.her.name || '', maxlength: 40, oninput: (v) => set((s) => { s.her.name = v; }), attrs: { 'data-testid': 'her-name', autocomplete: 'off' } }),
     h('div.field-grid.three',
       [0, 1, 2].map((i) => textField({
-        label: `Nickname ${i + 1}${i === 0 ? ' (everyday)' : i === 1 ? ' ({nick1})' : ' ({nick2})'}`, value: nick[i] || '', maxlength: 30,
+        label: `Nickname ${i + 1}${i === 0 ? ' (everyday)' : i === 1 ? ' ({nick1})' : ' (optional)'}`, value: nick[i] || '', maxlength: 30,
         oninput: (v) => set((s) => { const n = [...(s.her.nicknames || [])]; while (n.length < 3) n.push(''); n[i] = v; s.her.nicknames = n; }),
       }))),
     textField({ label: 'Her birth date', type: 'date', value: site.her.birthDate || '2007-01-03', hint: 'Used for “7,305 days” and her age.', oninput: (v) => { if (/^\d{4}-\d{2}-\d{2}$/.test(v)) set((s) => { s.her.birthDate = v; }); } }),

@@ -5,11 +5,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {
   PHOTO_CHAPTERS, FILM_CHAPTERS, RATIO_PRESETS, ROLES, parseRatio, describeRatio, ratioMatches, newPhoto, photosFor, nextOrder,
-  reorder, usedFiles, combine, split, FILES, upgrade, normalize, validate, daysAlive, clone, MODEL_VERSION,
+  reorder, usedFiles, combine, split, FILES, upgrade, normalize, validate, daysAlive, clone, MODEL_VERSION, memoriesOf,
 } from '../../assets/js/shared/model.js';
 
 const read = (f) => JSON.parse(fs.readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8'));
-const loadSite = () => combine({ settings: read(FILES.settings), messages: read(FILES.messages), photos: read(FILES.photos) });
+// placeholder-state content (36 empty photo spots) — the live data/*.json now hold the real photos
+const FIXTURES = { settings: 'tests/fixtures/settings.json', messages: 'tests/fixtures/messages.json', photos: 'tests/fixtures/photos.json' };
+const loadSite = () => combine({ settings: read(FIXTURES.settings), messages: read(FIXTURES.messages), photos: read(FIXTURES.photos) });
+const loadLive = () => combine({ settings: read(FILES.settings), messages: read(FILES.messages), photos: read(FILES.photos) });
 
 /* ---------------------------------------------------------------- ratios */
 test('parseRatio: strings, numbers and junk', () => {
@@ -106,9 +109,17 @@ test('usedFiles lists photos (src/thumb/original) and media', () => {
 
 /* ---------------------------------------------------------------- validate */
 test('validate: the shipped content has no errors', () => {
-  const v = validate(loadSite());
-  assert.deepEqual(v.errors, []);
-  assert.ok(v.ok);
+  for (const site of [loadLive(), loadSite()]) {
+    const v = validate(site);
+    assert.deepEqual(v.errors, []);
+    assert.ok(v.ok);
+  }
+});
+
+test('the test fixtures are the placeholder state (every photo spot empty, the owner’s memories as written)', () => {
+  const site = loadSite();
+  assert.ok(site.photos.length >= 30 && site.photos.every((p) => !p.src && !p.thumb && !p.original));
+  assert.deepEqual(site.text.story.memories.map((m) => m.id), memoriesOf(loadLive()).map((m) => m.id));
 });
 
 test('validate: errors block, warnings inform', () => {
@@ -133,7 +144,9 @@ test('validate: errors block, warnings inform', () => {
   for (const p of noRole.photos) p.role = null;
   const v2 = validate(noRole);
   assert.ok(v2.ok);
-  assert.equal(v2.warnings.filter((w) => w.role).length, ROLES.length);
+  // hero and reveal are reminded about; “together” is optional (not everyone has a photo of the two of them)
+  assert.deepEqual(v2.warnings.filter((w) => w.role).map((w) => w.role).sort(), ['hero', 'reveal']);
+  assert.ok(ROLES.includes('together'));
 });
 
 test('validate: too many photos for a capped chapter is a warning', () => {
@@ -172,11 +185,11 @@ test('combine tolerates missing files (fresh repo)', () => {
 
 /* ---------------------------------------------------------------- upgrade */
 const V1 = {
-  her: { name: 'Deepu', nicknames: ['Deepu', 'Pinky', 'Kuchu Puchu'] },
+  her: { name: 'Deepu', nicknames: ['Deepu', 'Kuchu Puchu'] },
   from: { name: 'Me' },
   settings: { lock: { enabled: true, unlockAt: '2027-01-03T00:00:00+05:30' }, grading: { strength: 0.7 }, whatsapp: '919800000000' },
   media: { music: 'media/music-old.mp3' },
-  text: { invite: { greeting: 'Hey Pinky.' } },
+  text: { invite: { greeting: 'Hey Deepu.' } },
   slots: [
     { id: 'hero', chapter: 'prologue', label: 'Hero', ratio: '4:5', src: 'photos/hero-1.jpg', original: 'photos/originals/hero-1.jpg', caption: 'First' },
     { id: 'tower-1', chapter: 'tower', label: 'T1', ratio: '3:4', src: null },
@@ -204,7 +217,7 @@ test('upgrade(v1) → v2 keeps every photo, maps roles and extras', () => {
   assert.equal(s.settings.grading.strength, 0.7);
   assert.equal(s.settings.whatsapp, '919800000000');
   assert.equal(s.settings.theme.grain, 0.6); // defaults filled
-  assert.equal(s.text.invite.greeting, 'Hey Pinky.');
+  assert.equal(s.text.invite.greeting, 'Hey Deepu.');
   assert.equal(s.media.music, 'media/music-old.mp3');
   assert.ok(usedFiles(s).has('photos/extras/x-1.jpg'));
   assert.deepEqual(validate(s).errors, []);
@@ -220,6 +233,8 @@ test('daysAlive: 7,305 days at the unlock moment', () => {
 
 test('every photo chapter is a known film location', () => {
   const ids = PHOTO_CHAPTERS.map((c) => c.id);
-  assert.deepEqual(ids, ['prologue', 'tower', 'hair', 'names', 'dance', 'lanterns', 'letter', 'finale', 'album']);
+  assert.deepEqual(ids, ['prologue', 'tower', 'story', 'hair', 'names', 'dance', 'lanterns', 'letter', 'finale', 'album']);
+  // every photo chapter but the finale (constellation/birthday) and the album (credits/gallery) is a film chapter of its own
+  for (const id of ids.filter((x) => !['finale', 'album'].includes(x))) assert.ok(FILM_CHAPTERS.some((c) => c.id === id), id);
   for (const c of PHOTO_CHAPTERS) if (c.ratio) assert.ok(RATIO_PRESETS.includes(c.ratio), c.id);
 });

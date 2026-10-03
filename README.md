@@ -1,6 +1,6 @@
 # For Deepu 🏮
 
-A cinematic, interactive birthday **film** for **Deepu** (aka Pinky, aka Kuchi Puchi), born **3 January 2007**, turning **20** on **3 January 2027**. That's exactly **7,305 days**.
+A cinematic, interactive birthday **film** for **Deepu** (aka Kuchu Puchu), born **3 January 2007**, turning **20** on **3 January 2027**. That's exactly **7,305 days**.
 
 It plays like a short animated film set in a lantern-lit fairy-tale world, inspired by the atmosphere of *Tangled*, which she loves. Her real photographs are the heart of every scene. Everything you see and hear (lanterns, the tower, the golden ribbon, the little chameleon, the music) is **original**. No Disney footage, artwork, characters, music or dialogue is used.
 
@@ -9,11 +9,11 @@ It plays like a short animated film set in a lantern-lit fairy-tale world, inspi
 | | Chapter | What happens |
 |---|---|---|
 | ⏳ | **Countdown** | Before midnight (IST) on her birthday: twenty unlit lanterns and a countdown. At midnight they light up one by one. |
-| 🏮 | **Invitation** | "Hey Pinky." She lights the lantern, which starts the music, and the film begins. |
+| 🏮 | **Invitation** | "Hey Deepu." She lights the lantern, which starts the music, and the film begins. |
 | ✨ | **Once Upon a Deepu** | A drop of sunlight falls through the night, a golden flower blooms, dawn breaks, and her photo appears. |
 | 🎨 | **A Tower Full of You** | A sunlit tower room where her photos are brush-painted onto the walls. A golden ribbon waits outside the window. |
 | 💛 | **The Golden Thread** | Polaroids on a glowing golden thread, inspired by her long hair. They develop like instant film. |
-| 🦎 | **A Legend of Many Names** | A fake nature documentary, then an absurdly epic trailer-style reveal: Deepu… also known as… Pinky… Kuchi Puchi. |
+| 🦎 | **A Legend of Many Names** | A fake nature documentary, then an absurdly epic trailer-style reveal: Deepu… also known as… Kuchu Puchu. |
 | 🎪 | **Somewhere Between Chaos and Magic** | A twilight festival with her photos dancing in a 3D circle. |
 | 🌌 | **The Night of Lanterns** | A lake at night: one lantern, then thousands. Photo-lanterns she can tap to bring closer, and a sky she can send her own lanterns into. |
 | 💌 | **A Letter You Were Supposed to Read** | A wax-sealed letter on a candle-lit desk that writes itself out in handwriting. |
@@ -84,7 +84,7 @@ The initial spots and their shapes:
 | Prologue (first photo she sees) | 1 | 4:5 | Her prettiest solo portrait |
 | Tower walls | 6 | 3:4 · 1:1 · 4:5 · 4:3 | Candid, warm, everyday moments |
 | Golden thread (polaroids) | 8 | 3:4 | Memories in order, with captions |
-| Her names | 3 | 4:5 | One each for Deepu, Pinky, Kuchi Puchi |
+| Her names | 2 | 4:5 | One each for Deepu and Kuchu Puchu |
 | Festival | 8 | 3:4 | Happy, fun, festive |
 | Photo lanterns | 6 | 1:1 | Soft, glowy, emotional |
 | The letter | 2 | 1:1 · 3:4 | The two of you |

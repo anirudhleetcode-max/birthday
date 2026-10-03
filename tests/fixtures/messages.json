@@ -1,0 +1,273 @@
+{
+  "version": 2,
+  "personal": {
+    "memory1": "",
+    "memory2": "",
+    "tease": "",
+    "neverForget": "",
+    "admire": "",
+    "wantHerToKnow": "",
+    "insideJoke": ""
+  },
+  "gate": {
+    "kicker": "Not yet, {nick1}.",
+    "title": "Twenty lanterns, waiting for midnight",
+    "sub": "Refreshing won’t make it faster.",
+    "openKicker": "3 January · midnight",
+    "openTitle": "The lanterns are awake.",
+    "openSub": "All twenty of them. Look who’s twenty.",
+    "button": "Come in"
+  },
+  "invite": {
+    "greeting": "Hey {name}.",
+    "lines": [
+      "I made you something.",
+      "It got slightly out of hand.",
+      "Don’t skip anything. I’ll know."
+    ],
+    "button": "Light the lantern",
+    "foot": "headphones on · lights low"
+  },
+  "prologue": {
+    "kicker": "Prologue",
+    "title": "Once Upon a {name}",
+    "lines": [
+      "Once upon a time — 3 January 2007, to be precise —",
+      "the sun got careless and spilled a drop of light.",
+      "It fell quietly through the dark. Nobody noticed.",
+      "Where it landed, something golden bloomed.",
+      "By morning, everyone noticed."
+    ],
+    "titleSub": "the sunlight, twenty years later",
+    "date": "03 · 01 · 2007"
+  },
+  "tower": {
+    "kicker": "Chapter One",
+    "title": "A Tower Full of You",
+    "lines": [
+      "Imagine a tower, a lot of free time, and far too much paint.",
+      "Some people would paint the sky. Or flowers. Or the sea.",
+      "I’d run out of wall long before I ran out of you."
+    ],
+    "windowLine": "Wait. Something golden just drifted past the window. Follow it.",
+    "hint": "Drag to look around"
+  },
+  "story": {
+    "kicker": "Chapter Two",
+    "title": "How It Began",
+    "memories": [
+      {
+        "id": "met",
+        "kind": "beginning",
+        "when": "",
+        "text": "It started at a college event. That’s where we met."
+      },
+      {
+        "id": "daily",
+        "kind": "daily",
+        "when": "",
+        "text": "After that, we talked every day."
+      },
+      {
+        "id": "journeys",
+        "kind": "journey",
+        "when": "",
+        "text": "College to home, and back again. By bus. By train."
+      },
+      {
+        "id": "your-day",
+        "kind": "sharing",
+        "when": "",
+        "text": "And you’d tell me about your day."
+      }
+    ],
+    "end": "Every memory, another strand."
+  },
+  "hair": {
+    "kicker": "Chapter Two",
+    "title": "The Golden Thread",
+    "lines": [
+      "Some people keep their memories in a shoebox.",
+      "Ours needed something longer. About the length of your hair.",
+      "Every memory is another strand. Every year adds another."
+    ],
+    "heroHairLine": "The original. The golden thread is just doing an impression.",
+    "endLine": "Every moment connects to the next. And we’re nowhere near done."
+  },
+  "names": {
+    "kicker": "Chapter Three (a very serious one)",
+    "title": "A Legend of Many Names",
+    "fieldKicker": "Field notes",
+    "subject": "Subject: {name} (extremely rare)",
+    "documentary": [
+      "Here, in her natural habitat, we observe the rare {name}.",
+      "Confirmed sightings so far: {photoCount} photographs. We have the evidence.",
+      "Approach slowly, ideally with cake. Never touch the hair.",
+      "Do not startle her. She has access to a frying pan.",
+      "Remarkably, she answers to more than one name. The second one is… a lot."
+    ],
+    "aka": "also known as…",
+    "items": [
+      {
+        "name": "Deepu",
+        "line": "Keeper of the Lanterns.",
+        "sub": "Twenty of them, as of tonight. She’s going to need a bigger sky."
+      },
+      {
+        "name": "Kuchu Puchu",
+        "line": "The Final Form. Witnessed by very few.",
+        "sub": "Threat level: dangerously huggable."
+      }
+    ],
+    "scratch": "okay. we tried. this one is too cute for the scary font.",
+    "finale": "Two names. One legend. Absolutely impossible to recast."
+  },
+  "dance": {
+    "kicker": "Chapter Four",
+    "title": "Somewhere Between Chaos and Magic",
+    "lines": [
+      "Every good festival is about sixty percent chaos.",
+      "The other forty percent is magic. Same as every good friendship.",
+      "Look up. The sky’s starting to notice."
+    ],
+    "hint": "Swipe to spin"
+  },
+  "lanterns": {
+    "kicker": "Chapter Five",
+    "title": "The Night of Lanterns",
+    "lines": [
+      "One lantern is just a little light.",
+      "A hundred is a celebration.",
+      "Thousands? That’s the sky making a point.",
+      "And tonight, the point is you."
+    ],
+    "tapHint": "Tap the sky to send up a lantern of your own",
+    "photoHint": "Some of these lanterns are carrying memories. Tap one.",
+    "after": "All this light, and it’s still not the brightest thing in this film.",
+    "secret": "Of course you found the pink one. It was looking for you."
+  },
+  "letter": {
+    "kicker": "Chapter Six",
+    "title": "A Letter You Were Supposed to Read",
+    "tapSeal": "Tap the seal to open",
+    "fasterHint": "Reading faster than I can write? Tap to skip ahead.",
+    "salutation": "Dear {name},",
+    "body": [
+      "Okay. Before you say anything: yes, I made you an entire film instead of just saying this to your face. No, I will not be taking questions. Please put the frying pan down.",
+      "We met at a college event. After that, we talked every day. That’s the whole origin story: no dramatic music, no magic lanterns. Just a conversation that kept going.",
+      "Then there were the journeys, college to home and back again, by bus and by train. If you look closely, they’re in this film too: the windows, the light, the long way home.",
+      "And you’d tell me about your day. I liked hearing it. I still do.",
+      "{memory1}",
+      "{memory2}",
+      "And yes, I’m still going to tease you about {tease}. Forever. Some traditions are sacred.",
+      "If I had to pick one moment, though, it’s this one: {neverForget}",
+      "The thing I admire most about you? {admire}",
+      "You love Tangled, so I borrowed a little of its magic: the lanterns, the tower, a golden thread about as long as your hair. Every memory is another strand. Tonight, all of them lead to twenty.",
+      "Here’s what I want for your twenties: good days that run late, hair that keeps growing and worries that don’t, and more journeys, the kind worth telling me about.",
+      "And if you only remember one line from this whole film, make it this one: {wantHerToKnow}",
+      "Happy 20th birthday, Kuchu Puchu. Thank you for being my best friend. (You’re allowed to screenshot that part.) Now go back to the film. There’s cake."
+    ],
+    "signoff": "Stuck with me forever. No refunds,",
+    "ps": "P.S. {insideJoke}"
+  },
+  "cake": {
+    "kicker": "Chapter Seven",
+    "title": "Twenty Candles",
+    "lines": [
+      "Okay… one last thing.",
+      "Make a wish, {name}.",
+      "But first…",
+      "Twenty candles."
+    ],
+    "blowHint": "Make a wish. Then tap the mic and blow. All twenty. No pressure.",
+    "tapFallback": "Blow them out",
+    "afterBlow": "Show-off. Whatever you wished for, I’m already on its side.",
+    "cutHint": "Now swipe across the cake to cut it",
+    "afterCut": "First slice is yours. The last one is… under negotiation.",
+    "wish": "I snuck in a wish too: that you get yours, plus whatever you forgot to ask for."
+  },
+  "constellation": {
+    "kicker": "Chapter Eight",
+    "title": "Every Little Piece of You",
+    "lines": [
+      "On their own, they’re just moments.",
+      "Connect them, and look what they were making all along."
+    ],
+    "handwritten": "That’s my best friend, by the way."
+  },
+  "birthday": {
+    "title": "The Last Lantern",
+    "years": "20 years.",
+    "months": "",
+    "days": "7,305 days of becoming you.",
+    "memories": "Countless memories.",
+    "somehow": "And somehow…",
+    "beginning": "this is only the beginning.",
+    "lanterns": [
+      "Every one of those days deserved a lantern.",
+      "Tonight, they all get one."
+    ],
+    "strands": "Tonight, all those strands lead to 20.",
+    "big": "Happy 20th Birthday",
+    "name": "{name}",
+    "loved": [
+      "In case you ever forget, on some bad day:",
+      "you are loved. Not politely. Properly.",
+      "The kind that would build you a whole sky. And did."
+    ],
+    "closing": "I’m really glad you were born. That’s the whole film."
+  },
+  "hug": {
+    "title": "One Last Thing",
+    "lines": [
+      "Okay, final step.",
+      "Send me a hug."
+    ],
+    "holdHint": "Press and hold",
+    "holdLonger": "Longer. It’s a hug, not a high five.",
+    "done": [
+      "Hug received. Excellent technique. Very strong.",
+      "Now go send me the real one."
+    ],
+    "message": "I watched the whole thing. You’re ridiculous. Come here. Hug. Now. 🫂"
+  },
+  "credits": {
+    "opening": "A little birthday film for…",
+    "roles": [
+      [
+        "Starring",
+        "{name}, as herself"
+      ],
+      [
+        "Made by",
+        "{creator}"
+      ],
+      [
+        "Made with",
+        "{photoCount} photographs, one golden thread, and a lot of memories"
+      ],
+      [
+        "With special appearances by",
+        "one shy chameleon · twenty candles · a sky full of lanterns"
+      ],
+      [
+        "",
+        "Made for {name}. 3 January 2027."
+      ]
+    ],
+    "end": "The end of chapter nineteen.",
+    "endSub": "Chapter twenty begins now.",
+    "postCredits": [
+      "Wait. Where did the last slice go?",
+      "The chameleon is now exactly the colour of frosting.",
+      "It says happy birthday. With its mouth full."
+    ],
+    "extrasTitle": "The Extended Edition",
+    "extrasSub": "Everything that didn’t fit, and everything still to come.",
+    "secrets": "Secrets found: {found} of {total}"
+  },
+  "gallery": {
+    "allKicker": "The full reel",
+    "allTitle": "All of You, So Far"
+  }
+}

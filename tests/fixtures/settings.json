@@ -1,0 +1,104 @@
+{
+  "version": 2,
+  "her": {
+    "name": "Deepu",
+    "nicknames": [
+      "Deepu",
+      "Kuchu Puchu"
+    ],
+    "birthDate": "2007-01-03"
+  },
+  "from": {
+    "name": "Your best friend",
+    "signoff": "Stuck with me forever. No refunds,"
+  },
+  "settings": {
+    "lock": {
+      "enabled": true,
+      "unlockAt": "2027-01-03T00:00:00+05:30"
+    },
+    "grading": {
+      "strength": 0.85
+    },
+    "whatsapp": "",
+    "github": {
+      "owner": "anirudhleetcode-max",
+      "repo": "birthday",
+      "branch": "main"
+    },
+    "theme": {
+      "grain": 0.6,
+      "particles": 1,
+      "ribbon": true
+    }
+  },
+  "media": {
+    "music": null,
+    "musicTitle": "",
+    "video": null,
+    "videoCaption": "A little something I recorded for you",
+    "voice": null
+  },
+  "chapters": [
+    {
+      "id": "gate",
+      "enabled": true
+    },
+    {
+      "id": "invite",
+      "enabled": true
+    },
+    {
+      "id": "prologue",
+      "enabled": true
+    },
+    {
+      "id": "tower",
+      "enabled": true
+    },
+    {
+      "id": "hair",
+      "enabled": true
+    },
+    {
+      "id": "names",
+      "enabled": true
+    },
+    {
+      "id": "dance",
+      "enabled": true
+    },
+    {
+      "id": "lanterns",
+      "enabled": true
+    },
+    {
+      "id": "letter",
+      "enabled": true
+    },
+    {
+      "id": "cake",
+      "enabled": true
+    },
+    {
+      "id": "video",
+      "enabled": true
+    },
+    {
+      "id": "constellation",
+      "enabled": true
+    },
+    {
+      "id": "birthday",
+      "enabled": true
+    },
+    {
+      "id": "hug",
+      "enabled": true
+    },
+    {
+      "id": "credits",
+      "enabled": true
+    }
+  ]
+}

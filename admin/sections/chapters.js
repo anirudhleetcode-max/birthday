@@ -18,11 +18,11 @@ export const USES = {
 
 const BLURB = {
   gate: 'The gentle countdown people see before the unlock time (Settings → Countdown lock).',
-  invite: '“Hey Pinky.” — the invitation and the first tap that starts the sound.',
+  invite: '“Hey Deepu.” — the invitation and the first tap that starts the sound.',
   prologue: 'Once upon a time… her very first photo.',
   tower: 'A tower whose walls are painted with her.',
   hair: 'The golden thread of memories, like polaroids on a ribbon.',
-  names: 'Deepu, Pinky, Kuchi Puchi — a legend of many names (the funny one).',
+  names: 'Deepu… also known as… Kuchu Puchu — a legend of more than one name (the funny one).',
   dance: 'The festival — a 3D carousel of happy photos.',
   lanterns: 'The night of lanterns, with her photos floating among them.',
   letter: 'Your letter, with photos pinned to it.',

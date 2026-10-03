@@ -6,7 +6,7 @@
  */
 import { PHOTO_CHAPTERS, photosFor, chapterInfo, validate } from '../../assets/js/shared/model.js';
 import { state, srcFor, rawUrl, isDraftPhoto, basePhoto, rerender, lsSet } from '../state.js';
-import { intRatio, plural, ROLE_INFO } from '../util.js';
+import { intRatio, plural, ROLE_INFO, STORY, memoryName } from '../util.js';
 import { h, icon } from '../ui.js';
 import { addPhotos, replacePhoto, fillEmptySpots, deletePhoto, moveDialog, shiftPhoto, reorderChapter, openPreview, sceneFor } from '../photos.js';
 import { openEditor } from '../editor.js';
@@ -114,7 +114,7 @@ function frameStyle(v) {
   return v >= 1 ? { width: '100%', height: `${(100 / v).toFixed(2)}%` } : { width: `${(100 * v).toFixed(2)}%`, height: '100%' };
 }
 
-function thumbEl(p) {
+export function thumbEl(p) {
   const path = p.thumb || p.src;
   if (!path) {
     const r = intRatio(p.ratio);
@@ -144,7 +144,8 @@ export function photoCard(p, { index = 0, total = 1, sortable = true, showChapte
     p.enabled === false ? h('span.badge.off', 'Hidden') : null,
     draft ? h('span.badge.draft', isNew ? 'New' : 'Draft') : null);
   const title = p.label || (p.caption ? `“${p.caption}”` : 'Untitled photo');
-  const meta = [showChapter ? chapterInfo(p.chapter).short : null, p.date || null, p.caption && p.label ? `“${p.caption}”` : null].filter(Boolean).join(' · ');
+  const mem = p.chapter === STORY ? (memoryName(state.site, p.memory) || 'Not linked to a memory') : null;
+  const meta = [showChapter ? chapterInfo(p.chapter).short : null, mem, p.date || null, p.caption && p.label ? `“${p.caption}”` : null].filter(Boolean).join(' · ');
   const act = (name, label, ic, fn, extra = {}) => h(`button.pact${extra.danger ? '.danger' : ''}`, {
     type: 'button', dataset: { act: name, fk: `${name}-${p.id}` }, 'aria-label': `${label} — ${title}`, title: label, onclick: fn,
   }, icon(ic), h('span.pact-label', label));

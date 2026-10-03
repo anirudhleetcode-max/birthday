@@ -1,9 +1,10 @@
 /**
  * util.js — pure helpers for the admin (no DOM; unit-tested in tests/admin):
  * deep compare, 3-way merge of the combined v2 site, change summaries + commit
- * messages, integer ratios, unique file names, IST date helpers, formatting.
+ * messages, integer ratios, unique file names, IST date helpers, formatting, and the
+ * owner's memories (“How it began”: labels, linked photos, delete/undo).
  */
-import { usedFiles, PHOTO_CHAPTERS, FILM_CHAPTERS, ROLES, normalize, clone as jsonClone } from '../assets/js/shared/model.js';
+import { usedFiles, PHOTO_CHAPTERS, FILM_CHAPTERS, ROLES, normalize, clone as jsonClone, memoriesOf, newMemoryId } from '../assets/js/shared/model.js';
 
 /* ---------------------------------------------------------------- generic */
 export function clone(v) {
@@ -150,7 +151,7 @@ function countLeafChanges(a, b) {
 
 const chapterShort = (id) => (PHOTO_CHAPTERS.find((c) => c.id === id) || { short: id }).short;
 const photoName = (p) => (p && (p.label || p.caption)) || (p && p.id) || 'photo';
-const DETAIL_KEYS = ['caption', 'date', 'alt', 'label', 'hint', 'role', 'featured', 'heroHair', 'enabled', 'focal', 'animation', 'effect', 'duration'];
+const DETAIL_KEYS = ['caption', 'date', 'alt', 'label', 'hint', 'role', 'featured', 'heroHair', 'enabled', 'focal', 'animation', 'effect', 'duration', 'memory'];
 const IMAGE_KEYS = ['crop', 'cropMode', 'grade'];
 
 /**
@@ -241,7 +242,7 @@ export function describeChanges(base, site) {
 }
 
 function detailName(k) {
-  return { heroHair: 'hair moment', alt: 'alt text', focal: 'focal point', enabled: 'on/off' }[k] || k;
+  return { heroHair: 'hair moment', alt: 'alt text', focal: 'focal point', enabled: 'on/off', memory: 'its memory' }[k] || k;
 }
 
 function commitMessage(t, items, words) {
@@ -412,3 +413,81 @@ export const ROLE_INFO = {
   together: { label: 'You two', text: 'A photo of both of you, for the finale.' },
 };
 export { ROLES };
+
+/* ------------------------------------------------------- memories (“How it began”) */
+/** The photo chapter whose photos belong to the owner's memories (messages.json → story.memories). */
+export const STORY = 'story';
+const byOrder = (a, b) => (a.order - b.order) || String(a.id).localeCompare(String(b.id));
+
+/** A new, empty memory. Nothing is ever pre-written: the owner types the words and the date. */
+export function newMemory(existing = []) {
+  return { id: newMemoryId(existing), kind: 'moment', when: '', text: '' };
+}
+
+/** “Memory 2 · October 2026”, or its first words when it has no date, or just “Memory 2”. Never shows the id. */
+export function memoryLabel(m, i = 0, { words = 6 } = {}) {
+  const n = `Memory ${i + 1}`;
+  const when = m && typeof m.when === 'string' ? m.when.trim() : '';
+  if (when) return `${n} · ${when}`;
+  const all = (m && typeof m.text === 'string' ? m.text : '').trim().split(/\s+/).filter(Boolean);
+  if (!all.length) return n;
+  const first = all.slice(0, words).join(' ');
+  return `${n} · “${all.length > words ? `${first.replace(/[\s,.;:!?…–—-]+$/, '')}…` : first}”`;
+}
+
+/** The label of memory `id` (null when there is no such memory). */
+export function memoryName(site, id) {
+  const list = memoriesOf(site);
+  const i = id ? list.findIndex((m) => m.id === id) : -1;
+  return i < 0 ? null : memoryLabel(list[i], i);
+}
+
+/** “How it began” photos linked to memory `id`, in film order. */
+export function memoryPhotos(site, id) {
+  return ((site && site.photos) || []).filter((p) => id && p.chapter === STORY && p.memory === id).sort(byOrder);
+}
+
+/** “How it began” photos without an existing memory: the film shows them with the last memory. */
+export function unlinkedStoryPhotos(site) {
+  const ids = new Set(memoriesOf(site).map((m) => m.id));
+  return ((site && site.photos) || []).filter((p) => p.chapter === STORY && !(p.memory && ids.has(p.memory))).sort(byOrder);
+}
+
+/** Options for a “Belongs to memory” select. A link to a memory that no longer exists stays visible (never changed silently). */
+export function memoryOptions(site, current = '') {
+  const list = memoriesOf(site);
+  const opts = [{ value: '', label: 'None — shown with the last memory' }, ...list.map((m, i) => ({ value: m.id, label: memoryLabel(m, i) }))];
+  if (current && !list.some((m) => m.id === current)) opts.push({ value: current, label: 'A memory that no longer exists (shown with the last memory)' });
+  return opts;
+}
+
+/** Link a photo to memory `id`, or unlink it. Only “How it began” photos belong to a memory. Mutates `photo`. */
+export function linkMemory(photo, id) {
+  if (photo.chapter === STORY && id) photo.memory = id;
+  else delete photo.memory;
+  return photo;
+}
+
+/** Delete memory `id`; its photos are kept (and unlinked). Mutates `site`. Returns what undo needs, or null. */
+export function removeMemory(site, id) {
+  const list = site && site.text && site.text.story && site.text.story.memories;
+  if (!Array.isArray(list)) return null;
+  const index = list.findIndex((m) => m && m.id === id);
+  if (index < 0) return null;
+  const [memory] = list.splice(index, 1);
+  const unlinked = [];
+  for (const p of site.photos || []) if (p.memory === id) { delete p.memory; unlinked.push(p.id); }
+  return { memory, index, unlinked };
+}
+
+/** Undo removeMemory(): the memory goes back in its place and its photos (still in “How it began”) are linked again. */
+export function restoreMemory(site, undo) {
+  if (!undo || !undo.memory) return site;
+  if (!isPlainObject(site.text)) site.text = {};
+  if (!isPlainObject(site.text.story)) site.text.story = {};
+  const story = site.text.story;
+  if (!Array.isArray(story.memories)) story.memories = [];
+  if (!story.memories.some((m) => m && m.id === undo.memory.id)) story.memories.splice(Math.min(undo.index, story.memories.length), 0, undo.memory);
+  for (const p of site.photos || []) if (undo.unlinked.includes(p.id) && p.chapter === STORY && !p.memory) p.memory = undo.memory.id;
+  return site;
+}

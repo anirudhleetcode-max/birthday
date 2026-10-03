@@ -1,6 +1,8 @@
 /**
- * PREVIEW — open the film with the draft (whole film or one chapter), compare with the
- * live version, see what's waiting to be published and the validation checks.
+ * PREVIEW — open the film with the draft (whole film or one chapter), or the published
+ * version, each in a new tab; see what's waiting to be published and the validation checks.
+ *   Preview draft      ../index.html?preview&draft   (this device's unpublished changes)
+ *   Preview published  ../index.html?preview         (what is live right now)
  */
 import { FILM_CHAPTERS } from '../../assets/js/shared/model.js';
 import { state, changes, flushSave, hasUnsavedDraft, liveUrl } from '../state.js';
@@ -19,14 +21,15 @@ export function renderPreview() {
       icon('play'), h('span', c.label))));
   const saved = state.savedAt ? `Draft saved on this device ${timeAgo(state.savedAt)}.` : 'Your draft is saved on this device as you work.';
   return h('div.preview',
-    sectionHead('Preview', 'See it exactly as she will', 'Previews open in a new tab with your draft — new photos, words and music included. They skip the countdown. Nobody else can see your draft.'),
+    sectionHead('Preview', 'See it exactly as she will', 'Watch your draft — new photos, words and music included — or what’s live right now. Nobody else can see your draft.'),
     h('div.preview-grid',
       panel('Watch the film', { icon: 'film' },
         h('div.preview-hero',
-          h('button.btn.gold.lg', { type: 'button', 'data-testid': 'preview-film', onclick: () => openPreview(null) }, icon('play'), 'Preview the whole film'),
-          h('button.btn.ghost', { type: 'button', onclick: () => openPreview(null, { draft: false }) }, icon('eye'), 'See the live version')),
+          h('button.btn.gold.lg', { type: 'button', 'data-testid': 'preview-draft', onclick: () => openPreview(null) }, icon('play'), 'Preview draft'),
+          h('button.btn.ghost', { type: 'button', 'data-testid': 'preview-published', onclick: () => openPreview(null, { draft: false }) }, icon('eye'), 'Preview published')),
+        h('p.preview-diff', h('b', 'Draft'), ' is the film with your unpublished changes from this device. ', h('b', 'Published'), ' is exactly what’s live on the site right now. Both open in a new tab and skip the countdown.'),
         h('p.field-hint', saved),
-        h('h4.sub-head', 'Jump to a chapter'),
+        h('h4.sub-head', 'Jump to a chapter (draft)'),
         h('ul.chip-links', list)),
       panel('Before you publish', { icon: 'check' },
         checksPanel(),

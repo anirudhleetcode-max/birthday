@@ -1,12 +1,15 @@
 /**
  * photos.js — every photo operation the library and the editor use:
  *
- *   addPhotos({chapter})        pick 1..n files → chapter + shape → crop → details
+ *   addPhotos({chapter, memory}) pick 1..n files → chapter + shape → crop → details
+ *                               (any-shape chapters can keep each photo's own shape; “How it began”
+ *                               photos can be linked to one of the owner's memories)
  *   replacePhoto(id)            the HARD ratio rule: matching → accepted; otherwise
  *                               "Expected ratio: 4:5 · Uploaded ratio: 16:9" → CROP | CONTAIN | CHOOSE ANOTHER
  *   fillEmptySpots()            placeholder records (src null) → focal-aware auto crops → review grid → Adjust
  *   deletePhoto(id)             with Undo
- *   movePhoto(id, chapter)      keeps its ratio, goes to the end of the new chapter
+ *   movePhoto(id, chapter)      keeps its ratio, goes to the end of the new chapter (a memory link
+ *                               only stays on photos in “How it began”)
  *   shiftPhoto(id, ±1)          accessible reorder; reorderChapter(chapter, ids) for drag-and-drop
  *   regenerate(photo, source)   display + thumb from the ORIGINAL (crop / contain / grade)
  *   regradeAll()                every photo, from its original
@@ -18,7 +21,7 @@ import * as I from './images.js';
 import {
   state, change, stageFile, newPhotoPaths, getFileBlob, globalStrength, photoById, flushSave,
 } from './state.js';
-import { clone, plural, intRatio, ratioWords } from './util.js';
+import { clone, plural, intRatio, ratioWords, STORY, memoryOptions, memoryName, linkMemory } from './util.js';
 import { h, icon, toast, openSheet, confirmDialog, progressSheet, pickFiles, textField, selectField, choiceDialog } from './ui.js';
 import { openCropper } from './cropper.js';
 
@@ -116,7 +119,8 @@ export async function buildImages(photo, decoded, { upload = null, crop = null, 
   stageFile(paths.src, out.display.blob);
   stageFile(paths.thumb, out.thumb.blob);
   if (originalBlob) stageFile(paths.original, originalBlob);
-  const patch = { src: paths.src, thumb: paths.thumb, crop: cropN, cropMode: mode, updatedAt: nowIso() };
+  // w/h: the display copy's size (the film uses it to let small slots load the thumbnail)
+  const patch = { src: paths.src, thumb: paths.thumb, crop: cropN, cropMode: mode, w: out.display.width, h: out.display.height, updatedAt: nowIso() };
   if (upload) patch.original = paths.original;
   if (focalSrc) patch.focal = I.focalToDisplay(focalSrc, { crop: cropN, mode, srcW: W, srcH: H, ratio });
   return patch;
@@ -240,8 +244,17 @@ export async function replacePhoto(id, { file = null } = {}) {
 const fit = (w, h, max) => { const s = Math.min(1, max / Math.max(w, h)); return [Math.max(1, Math.round(w * s)), Math.max(1, Math.round(h * s))]; };
 
 /* ---------------------------------------------------------------- add */
-function shapeChips(selected, onPick) {
-  const chips = RATIO_PRESETS.map((r) => {
+/** Shape choice “Its own shape”: each photo keeps the shape it was taken in (chapters that take any shape). */
+export const OWN_SHAPE = 'own';
+
+function shapeChips(selected, onPick, { own = false } = {}) {
+  const values = [OWN_SHAPE, ...RATIO_PRESETS];
+  const chips = values.map((r) => {
+    if (r === OWN_SHAPE) {
+      return h('button.shape-chip.own', { type: 'button', role: 'radio', 'aria-checked': String(r === selected), hidden: !own, dataset: { ratio: r }, onclick: () => pick(r) },
+        h('span.shape-glyph.own', { 'aria-hidden': 'true' }),
+        h('span.shape-txt', h('b', 'Its own shape'), h('small', 'as taken')));
+    }
     const v = intRatio(r).value;
     const box = 20;
     return h('button.shape-chip', { type: 'button', role: 'radio', 'aria-checked': String(r === selected), dataset: { ratio: r }, onclick: () => pick(r) },
@@ -250,38 +263,59 @@ function shapeChips(selected, onPick) {
   });
   const row = h('div.shape-row.wrap', { role: 'radiogroup', 'aria-label': 'Shape' }, chips);
   row.addEventListener('keydown', (e) => {
-    const i = chips.findIndex((c) => c.getAttribute('aria-checked') === 'true');
+    const live = chips.filter((c) => !c.hidden);
+    const i = live.findIndex((c) => c.getAttribute('aria-checked') === 'true');
     const j = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : null;
     if (j === null) return;
     e.preventDefault();
-    const k = (j + chips.length) % chips.length;
-    pick(RATIO_PRESETS[k]);
-    chips[k].focus();
+    const k = (j + live.length) % live.length;
+    pick(live[k].dataset.ratio);
+    live[k].focus();
   });
   function pick(r) {
     for (const c of chips) c.setAttribute('aria-checked', String(c.dataset.ratio === r));
     onPick(r);
   }
   row.pick = pick;
+  /** Show (or hide) the “Its own shape” choice. */
+  row.setOwn = (on) => { chips[0].hidden = !on; };
   return row;
 }
 
-/** ADD PHOTO: chapter + shape → files → crop each → details → new records. */
-export async function addPhotos({ chapter = 'album' } = {}) {
+/**
+ * ADD PHOTO: chapter + shape → files → crop each → details → new records.
+ * `memory` (an id from messages.json → story.memories) preselects “How it began” and links the new photos to it.
+ */
+export async function addPhotos({ chapter = 'album', memory = null } = {}) {
   let ch = chapterInfo(chapter).id;
-  let ratio = chapterInfo(ch).ratio || '3:4';
+  let ratio = chapterInfo(ch).ratio || (ch === STORY ? OWN_SHAPE : '3:4');
+  let mem = ch === STORY && memory ? memory : '';
   const note = h('p.field-hint');
-  const shapes = shapeChips(ratio, (r) => { ratio = r; syncNote(); });
+  const shapes = shapeChips(ratio, (r) => { ratio = r; syncNote(); }, { own: !chapterInfo(ch).ratio });
   const syncNote = () => {
     const info = chapterInfo(ch);
     note.textContent = info.ratio
       ? (ratio === info.ratio ? `${info.short} photos are usually ${info.ratio}. ${info.hint}` : `${info.short} usually uses ${info.ratio} — ${ratio} works too; the film frames it.`)
-      : `${info.hint} Pick any shape.`;
+      : ratio === OWN_SHAPE ? `${info.hint} Each photo keeps the shape it was taken in (you can still choose what to keep).` : `${info.hint} Pick any shape.`;
   };
+  const memField = selectField({
+    label: 'Belongs to memory', value: mem, options: memoryOptions(state.site, mem),
+    hint: 'Its photos appear with that memory in “How it began”.',
+    onchange: (v) => { mem = v; },
+  });
+  memField.control.setAttribute('data-testid', 'add-memory');
+  memField.hidden = ch !== STORY;
   const chapterSel = selectField({
     label: 'Chapter', value: ch,
     options: PHOTO_CHAPTERS.map((c) => ({ value: c.id, label: c.label })),
-    onchange: (v) => { ch = v; const r = chapterInfo(v).ratio; if (r) { ratio = r; shapes.pick(r); } syncNote(); },
+    onchange: (v) => {
+      ch = v;
+      const r = chapterInfo(v).ratio;
+      shapes.setOwn(!r);
+      if (r) { ratio = r; shapes.pick(r); } else if (v === STORY) { ratio = OWN_SHAPE; shapes.pick(OWN_SHAPE); }
+      memField.hidden = v !== STORY;
+      syncNote();
+    },
   });
   chapterSel.control.setAttribute('data-testid', 'add-chapter');
   syncNote();
@@ -290,6 +324,7 @@ export async function addPhotos({ chapter = 'album' } = {}) {
     content: [
       h('p.sheet-text', 'There’s no limit — add photos now or any time later. Each one is cropped to the shape you pick, and that shape stays locked so a future replacement always fits.'),
       chapterSel,
+      memField,
       h('div.field', h('span.field-label', 'Shape'), shapes, note),
     ],
     actions: [
@@ -313,10 +348,11 @@ export async function addPhotos({ chapter = 'album' } = {}) {
     }
     const est = I.estimateFocal(dec.canvas);
     const focalSrc = est.confidence > 0.15 ? est : I.DEFAULT_FOCAL;
+    const shape = ratio === OWN_SHAPE ? describeRatio(dec.width, dec.height) : ratio;
     const res = await openCropper({
-      source: dec.canvas, ratio, focal: focalSrc,
+      source: dec.canvas, ratio: shape, focal: focalSrc,
       title: `Add to ${chapterInfo(ch).short}`,
-      rule: `Locked to ${intRatio(ratio).label} — this photo will always keep this shape`,
+      rule: `${ratio === OWN_SHAPE ? `Its own shape, ${intRatio(shape).label}` : `Locked to ${intRatio(shape).label}`} — this photo will always keep this shape`,
       step: files.length > 1 ? `Photo ${i + 1} of ${files.length}` : '',
       grade: { strength: globalStrength() }, allowSkip: files.length > 1, confirmLabel: 'Next',
     });
@@ -329,7 +365,7 @@ export async function addPhotos({ chapter = 'album' } = {}) {
       if (d.quick) quick = true;
       details = d;
     }
-    const rec = newPhoto({ chapter: ch, ratio, order: nextOrder(state.site, ch), label: details.label || `${chapterInfo(ch).short} photo`, caption: details.caption, date: details.date, alt: details.alt, addedAt: nowIso() });
+    const rec = linkMemory(newPhoto({ chapter: ch, ratio: shape, order: nextOrder(state.site, ch), label: details.label || `${chapterInfo(ch).short} photo`, caption: details.caption, date: details.date, alt: details.alt, addedAt: nowIso() }), ch === STORY ? mem : null);
     try {
       const patch = await withBusy('Preparing your photo…', () => buildImages(rec, dec, { upload: files[i], crop: I.toNorm(res.rect, dec.width, dec.height), mode: 'cover', focalSrc }));
       Object.assign(rec, patch);
@@ -340,7 +376,8 @@ export async function addPhotos({ chapter = 'album' } = {}) {
       failed.push({ name: files[i].name || 'photo', err });
     }
   }
-  const done = added ? `${plural(added, 'photo')} added to ${chapterInfo(ch).short}.` : '';
+  const linked = ch === STORY && mem ? memoryName(state.site, mem) : null;
+  const done = added ? `${plural(added, 'photo')} added to ${chapterInfo(ch).short}${linked ? ` (${linked})` : ''}.` : '';
   if (failed.length) reportFailed(failed, done);
   else if (added) toast(`${done} Saved in your draft — preview, then publish.`, { type: 'success' });
   return added;
@@ -400,14 +437,17 @@ export function deletePhoto(id) {
   });
 }
 
-export function movePhoto(id, chapter, { undoable = true, at = null } = {}) {
+/** Move a photo to the end of `chapter` (or to position `at`). `memory` links it when it goes to “How it began”. */
+export function movePhoto(id, chapter, { undoable = true, at = null, memory = null } = {}) {
   const p = photoById(id);
   if (!p || p.chapter === chapter) return;
   const from = p.chapter;
+  const fromMemory = p.memory || null;
   const fromIds = photosFor(state.site, from, { includeDisabled: true }).map((x) => x.id);
   change((site) => {
     const q = site.photos.find((x) => x.id === id);
     q.chapter = chapter;
+    linkMemory(q, memory); // a memory link only means something in “How it began”
     q.order = nextOrder(site, chapter) + 0.5;
     reorder(site, from, []);
     if (at) reorder(site, chapter, at);
@@ -415,7 +455,8 @@ export function movePhoto(id, chapter, { undoable = true, at = null } = {}) {
   });
   if (!undoable) return;
   // Undo puts it back exactly where it was (not at the end of its old chapter)
-  toast(`Moved to ${chapterInfo(chapter).short}.`, { type: 'success', action: { label: 'Undo', run: () => movePhoto(id, from, { undoable: false, at: fromIds }) } });
+  const linked = chapter === STORY && memory ? memoryName(state.site, memory) : null;
+  toast(`Moved to ${chapterInfo(chapter).short}${linked ? ` (${linked})` : ''}.`, { type: 'success', action: { label: 'Undo', run: () => movePhoto(id, from, { undoable: false, at: fromIds, memory: fromMemory }) } });
 }
 
 /** Ask where to move a photo. */
@@ -430,15 +471,18 @@ export async function moveDialog(id) {
       ? `${info.short} usually uses ${info.ratio}. This photo keeps its ${p.ratio} shape — the film frames it gracefully.`
       : 'It goes to the end of that chapter; reorder it there if you like.';
   };
+  let mem = '';
+  const memField = selectField({ label: 'Belongs to memory', value: '', options: memoryOptions(state.site), onchange: (v) => { mem = v; } });
+  memField.hidden = true;
   const sel = selectField({
     label: 'Move to', value: p.chapter,
     options: PHOTO_CHAPTERS.map((c) => ({ value: c.id, label: c.label })),
-    onchange: (v) => { target = v; sync(); },
+    onchange: (v) => { target = v; memField.hidden = v !== STORY || p.chapter === STORY; sync(); },
   });
   sync();
   const s = openSheet({
     key: 'move-photo', kicker: 'Move photo', title: p.label || 'Move photo', size: 'sm',
-    content: [sel, note],
+    content: [sel, note, memField],
     actions: [
       h('button.btn.ghost', { type: 'button', onclick: () => s.close(null) }, 'Cancel'),
       h('button.btn.gold', { type: 'button', autofocus: true, 'data-testid': 'move-confirm', onclick: () => s.close(target) }, icon('move'), 'Move'),
@@ -446,7 +490,7 @@ export async function moveDialog(id) {
   });
   if (s.duplicate) return;
   const to = await s.result;
-  if (to && to !== p.chapter) movePhoto(id, to);
+  if (to && to !== p.chapter) movePhoto(id, to, { memory: to === STORY ? mem || null : null });
 }
 
 export function shiftPhoto(id, delta) {

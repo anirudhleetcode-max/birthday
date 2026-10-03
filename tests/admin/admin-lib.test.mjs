@@ -13,7 +13,9 @@ import { GitHub, jsonText, decodeBase64Utf8, isApiUrl } from '../../admin/github
 import { planPublish } from '../../admin/publish.js';
 
 const read = (f) => JSON.parse(fs.readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8'));
-const loadSite = () => combine({ settings: read(FILES.settings), messages: read(FILES.messages), photos: read(FILES.photos) });
+// placeholder-state content (36 empty photo spots) — the live data/*.json now hold the real photos
+const FIXTURES = { settings: 'tests/fixtures/settings.json', messages: 'tests/fixtures/messages.json', photos: 'tests/fixtures/photos.json' };
+const loadSite = () => combine({ settings: read(FIXTURES.settings), messages: read(FIXTURES.messages), photos: read(FIXTURES.photos) });
 
 /* ---------------------------------------------------------------- zip */
 test('crc32 known vectors', () => {
@@ -26,13 +28,13 @@ test('makeZip (STORE) round-trips names, bytes and CRCs; unzip can read it', asy
   const bin = new Uint8Array(70000).map((_, i) => (i * 31) & 255);
   const entries = [
     { name: 'data/settings.json', data: '{"a":1}\n' },
-    { name: 'data/messages.json', data: '{"greeting":"Hey Pinky ✨"}\n' },
+    { name: 'data/messages.json', data: '{"greeting":"Hey Deepu ✨"}\n' },
     { name: 'photos/tower-1-20261102-101500.webp', data: bin },
   ];
   const zip = makeZip(entries);
   const back = readZip(zip);
   assert.deepEqual(back.map((e) => e.name), entries.map((e) => e.name));
-  assert.equal(new TextDecoder().decode(back[1].data), '{"greeting":"Hey Pinky ✨"}\n');
+  assert.equal(new TextDecoder().decode(back[1].data), '{"greeting":"Hey Deepu ✨"}\n');
   assert.deepEqual(back[2].data, bin);
   for (const e of back) assert.equal(e.crc, crc32(e.data));
   const blob = await zipBlob([{ name: 'x.txt', blob: new Blob(['hello']) }]);
@@ -221,12 +223,12 @@ function mockRepo(site, { conflictOnce = false } = {}) {
 
 test('GitHub.getContent combines the three files (UTF-8)', async () => {
   const site = loadSite();
-  site.text.invite.greeting = 'Hey Pinky ✨ — ünïcode';
+  site.text.invite.greeting = 'Hey Deepu ✨ — ünïcode';
   const { fetch } = mockRepo(site);
   const gh = new GitHub({ owner: 'o', repo: 'r', token: 't', fetch });
   const { site: got, legacy } = await gh.getContent();
   assert.equal(legacy, false);
-  assert.equal(got.text.invite.greeting, 'Hey Pinky ✨ — ünïcode');
+  assert.equal(got.text.invite.greeting, 'Hey Deepu ✨ — ünïcode');
   assert.equal(decodeBase64Utf8(Buffer.from('ä✨', 'utf8').toString('base64')), 'ä✨');
 });
 

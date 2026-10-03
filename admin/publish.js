@@ -14,6 +14,7 @@ import { clone, deepEqual, mergeSites, isManagedPath, plural, formatBytes, stamp
 import { jsonText } from './github.js';
 import { zipBlob } from './zip.js';
 import { h, icon, toast, openSheet, confirmDialog, progressSheet, switchField, single } from './ui.js';
+import { SCHEMA as MESSAGE_GROUPS, showGroup } from './sections/messages.js';
 
 /* ---------------------------------------------------------------- validation */
 /** model.validate + a few friendly extras. */
@@ -27,13 +28,30 @@ export function checks(site = state.site) {
   return { errors: v.errors, warnings, ok: v.errors.length === 0 };
 }
 
+/** Show the photo library filtered to one chapter. */
+function openLibrary(chapter) {
+  state.ui.filter = chapter;
+  if (location.hash === '#library') rerender({ keepScroll: false });
+  else location.hash = '#library';
+}
+
 export function checksPanel(site = state.site) {
   const c = checks(site);
-  const item = (it, kind) => h(`li.check-item.${kind}`, icon(kind === 'error' ? 'warn' : 'info'),
-    h('span', it.message),
-    it.chapter && PHOTO_CHAPTERS.some((x) => x.id === it.chapter)
-      ? h('button.link-btn', { type: 'button', onclick: () => { state.ui.filter = it.chapter; location.hash = '#library'; } }, 'Open')
-      : null);
+  const photo = (id) => (id ? (site.photos || []).find((p) => p.id === id) : null);
+  // where to fix it: a photo chapter, a photo (its chapter), or a Messages group (e.g. How it began)
+  const target = (it) => {
+    if (it.chapter && PHOTO_CHAPTERS.some((x) => x.id === it.chapter)) return () => openLibrary(it.chapter);
+    const p = photo(it.id);
+    if (p) return () => openLibrary(p.chapter);
+    if (it.group && MESSAGE_GROUPS[it.group]) return () => showGroup(it.group);
+    return null;
+  };
+  const item = (it, kind) => {
+    const go = target(it);
+    return h(`li.check-item.${kind}`, icon(kind === 'error' ? 'warn' : 'info'),
+      h('span', it.message),
+      go ? h('button.link-btn', { type: 'button', onclick: go }, 'Open') : null);
+  };
   return h('div.checks', { 'data-testid': 'checks' },
     c.errors.length
       ? h('div.check-group.errors', h('p.check-head', icon('warn'), `${plural(c.errors.length, 'problem')} to fix before publishing`), h('ul', c.errors.map((e) => item(e, 'error'))))

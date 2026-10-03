@@ -2,13 +2,14 @@
  * editor.js — the EDIT PHOTO panel.
  *
  * Edits are staged on a copy and applied with "Save changes". Words, chapter, role,
- * switches, focal point and motion are plain data; crop / crop mode / grading
- * regenerate the display + thumb from the stored ORIGINAL (originals never change).
+ * the memory a “How it began” photo belongs to, switches, focal point and motion are
+ * plain data; crop / crop mode / grading regenerate the display + thumb from the stored
+ * ORIGINAL (originals never change).
  */
 import { PHOTO_CHAPTERS, ROLES, nextOrder, reorder, chapterInfo } from '../assets/js/shared/model.js';
 import * as I from './images.js';
 import { state, change, photoById, globalStrength, srcFor } from './state.js';
-import { clone, deepEqual, intRatio, ROLE_INFO } from './util.js';
+import { clone, deepEqual, intRatio, ROLE_INFO, STORY, memoryOptions, linkMemory } from './util.js';
 import { h, icon, toast, openSheet, textField, selectField, switchField, sliderField, segmented, debounce } from './ui.js';
 import { focalPicker } from './focal.js';
 import { openCropper } from './cropper.js';
@@ -80,8 +81,18 @@ export async function openEditor(id) {
       ? `${info.hint}`
       : `Moves to the end of ${info.short}. It keeps its ${p.ratio} shape${info.ratio && info.ratio !== p.ratio ? ` (that chapter usually uses ${info.ratio} — the film frames it gracefully)` : ''}.`;
   };
-  const chapterSel = selectField({ label: 'Chapter', value: p.chapter, options: PHOTO_CHAPTERS.map((c) => ({ value: c.id, label: c.label })), onchange: (v) => { p.chapter = v; syncChapterNote(); } });
+  // “How it began” photos belong to one of the owner's memories (messages.json → story.memories)
+  let memory = p.memory || '';
+  const memorySel = selectField({
+    label: 'Belongs to memory', value: memory, options: memoryOptions(state.site, memory),
+    hint: 'The film shows this photo with that memory. Write or add memories in Messages → How it began.',
+    onchange: (v) => { memory = v; },
+  });
+  memorySel.control.setAttribute('data-testid', 'edit-memory');
+  const syncMemory = () => { memorySel.hidden = p.chapter !== STORY; };
+  const chapterSel = selectField({ label: 'Chapter', value: p.chapter, options: PHOTO_CHAPTERS.map((c) => ({ value: c.id, label: c.label })), onchange: (v) => { p.chapter = v; syncChapterNote(); syncMemory(); } });
   syncChapterNote();
+  syncMemory();
 
   const roleNote = h('p.field-hint');
   const syncRoleNote = () => {
@@ -142,7 +153,7 @@ export async function openEditor(id) {
 
   const fields = h('div.editor-fields',
     h('fieldset.fs', h('legend', 'Words'), caption, date, alt, label),
-    h('fieldset.fs', h('legend', 'Place in the film'), chapterSel, chapterNote, roleSel, roleNote, featured, heroHair, enabled),
+    h('fieldset.fs', h('legend', 'Place in the film'), chapterSel, chapterNote, memorySel, roleSel, roleNote, featured, heroHair, enabled),
     h('fieldset.fs', h('legend', 'Framing'), cropSeg, framingHint),
     h('fieldset.fs', h('legend', 'Colour'), h('p.field-hint', 'Grading only changes the copy shown in the film. Your original stays untouched.'), useGlobal, strength, warmth, exposure, resetGrade),
     h('details.fs.more', h('summary', 'Motion (optional)'), h('div.fs-body', h('p.field-hint', 'Leave on Auto unless you want something specific — each chapter already has its own choreography.'), anim, effect, duration)));
@@ -243,6 +254,7 @@ export async function openEditor(id) {
 
   /* ---------- save ---------- */
   async function save() {
+    linkMemory(p, memory); // kept only while the photo is in “How it began”; moving it out clears it
     const regen = !!p.src && !srcError && (!deepEqual(orig.crop, p.crop) || orig.cropMode !== p.cropMode || !deepEqual(normGrade(orig.grade), normGrade(p.grade)));
     if (!Number.isFinite(p.grade.strength)) p.grade.strength = null;
     // nothing really changed → no new "updatedAt", no phantom draft change
