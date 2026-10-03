@@ -268,7 +268,7 @@ class CakeScene {
     this.pl[1].position.copy(this.plCandle[1]);
     this.hemi = new THREE.HemisphereLight(0x5162b0, 0x1c0e08, 0.2);
     // the key: a soft, high spot from the front-left — the only shadow caster
-    this.key = new THREE.SpotLight(0xeee6ff, 0, 0, 0.42, 0.9, 0);
+    this.key = new THREE.SpotLight(0xeee6ff, 0, 0, 0.36, 0.9, 0);
     this.key.position.set(-3.2, 7.5, 5.5);
     this.key.target.position.set(0, 1.2, 0);
     if (shadows) {
@@ -536,7 +536,7 @@ class CakeScene {
     this.rim.intensity = 0.75 * L.room + 0.7 * g;
     this.rim.color.copy(C.rimCool).lerp(C.rimGold, g);
     this.fillLight.intensity = 0.35 * frac * L.room + 0.28 * L.party;
-    const envLevel = 0.06 + 0.22 * L.room * (1 - 0.4 * L.party) + 0.5 * frac * (0.9 + 0.1 * flick) + 0.32 * g + 0.15 * L.party + 0.2 * kick;
+    const envLevel = 0.06 + 0.22 * L.room * (1 - 0.4 * L.party) + 0.5 * frac * (0.9 + 0.1 * flick) + 0.32 * g + 0.15 * L.party + 0.1 * kick;
     for (const [m, k] of this.envMats) m.envMapIntensity = envLevel * k;
     this.bokeh.uniforms.uTime.value = t;
     this.bokeh.uniforms.uBright.value = (0.1 + 0.75 * L.room + 0.2 * L.party + 0.15 * g) * (1 - 0.6 * hush);
@@ -554,7 +554,7 @@ class CakeScene {
     const warm = 0.012 * g * (0.55 + 0.45 * L.party) + 0.014 * kick;
     A.uniforms.uIntensity.value = cool * (1 - g) + warm;
     A.uniforms.uColor.value.copy(C.shaftCool).lerp(C.shaftWarm, g);
-    if (this.bloom) this.bloom.strength = 0.35 + 0.45 * kick;
+    if (this.bloom) this.bloom.strength = 0.35 + 0.2 * kick;
     this.renderer.toneMappingExposure = L.exposure + 0.06 * kick;
     this.blackEl.style.opacity = L.black.toFixed(3);
     this.vigEl.style.opacity = clamp(L.vignette + 0.5 * hush, 0, 1).toFixed(3);
@@ -1182,15 +1182,17 @@ class CakeScene {
     this.guard();
     // 2. lift & carry it to the plate, turning its layers toward her
     const portrait = this.fit.portrait;
-    const camAz = portrait ? 0.98 : 0.46;
+    const shot = this.serveShot();
+    const camAz = shot.az;
     const rotY = camAz + Math.PI / 2 - wA - 0.55;
     const plateLocal = DIM.plateAt.clone().add(new THREE.Vector3(0, 0.03, 0)).sub(tier.group.position);
     const bisAfter = new THREE.Vector3(Math.sin(DIM.wedgeCentre + rotY), 0, Math.cos(DIM.wedgeCentre + rotY));
     const dest = plateLocal.clone().sub(bisAfter.multiplyScalar(DIM.t2.R * 0.62));
     const from = W.position.clone();
     const proxy = { t: 0 };
-    if (portrait) this.to(this.cam, { az: camAz, el: 0.34, distK: 0.86, tx: 1.3, ty: -0.34, tz: 0.4, duration: red ? 1.4 : 2.6, ease: 'power2.inOut' });
-    else this.to(this.cam, { az: camAz, el: 0.3, distK: 0.78, tx: 1.25, ty: -0.62, tz: 0.45, duration: red ? 1.4 : 2.6, ease: 'power2.inOut' });
+    this.to(this.cam, { ...shot, duration: red ? 1.4 : 2.6, ease: 'power2.inOut' });
+    // the key light follows the slice to its plate
+    this.to(this.key.target.position, { x: 1.0, y: 0.8, z: 0.25, duration: red ? 1.4 : 2.6, ease: 'power2.inOut' });
     const ease = this.gsap.parseEase('power1.inOut');
     await this.to(proxy, {
       t: 1, duration: red ? 1.0 : 1.8, ease: 'power2.inOut',
@@ -1217,6 +1219,41 @@ class CakeScene {
     this.fx('sparkle', p.x, p.y, red ? 12 : 24);
     this.sfx('chime');
     await this.wait(red ? 0.6 : 1.3);
+  }
+
+  // The serving shot: the cake behind, the slice on its plate in front. Pull back
+  // just enough that the sun topper and the plate (with the narration under it)
+  // both fit — on a phone, a tablet or a wide desktop.
+  serveShot() {
+    const f = this.fit;
+    const base = f.portrait ? { az: 0.98, el: 0.34, tx: 1.3, tz: 0.4 } : { az: 0.48, el: 0.23, tx: 1.0, tz: 0.33 };
+    const cam = new THREE.PerspectiveCamera(f.fov, f.aspect, 0.05, 120);
+    const top = new THREE.Vector3(0, 3.62, 0);
+    const front = new THREE.Vector3(DIM.plateAt.x, 0.05, DIM.plateAt.z + 0.68);
+    const right = new THREE.Vector3(DIM.plateAt.x + 0.68, 0.05, DIM.plateAt.z);
+    const tmp = new THREE.Vector3();
+    const proj = (v) => tmp.copy(v).project(cam);
+    const t = Math.tan((f.fov / 2) * DEG);
+    let pick = null;
+    for (let distK = 0.7; distK <= 1.6 && !pick; distK += 0.02) {
+      const d = f.dist * distK;
+      let ty = 0;
+      for (let it = 0; it < 8; it++) {
+        const y = f.ty + ty;
+        cam.position.set(base.tx + d * Math.cos(base.el) * Math.sin(base.az), y + d * Math.sin(base.el), base.tz + d * Math.cos(base.el) * Math.cos(base.az));
+        cam.lookAt(base.tx, y, base.tz);
+        cam.updateMatrixWorld();
+        const a = 0.5 - proj(top).y * 0.5, b = 0.5 - proj(front).y * 0.5; // 0 = top of the screen
+        const mid = (a + b) / 2;
+        if (Math.abs(mid - 0.43) < 0.004) {
+          const rx = proj(right).x * 0.5 + 0.5;
+          if (a >= 0.07 && b <= 0.8 && rx <= 0.96) pick = { ...base, distK, ty };
+          break;
+        }
+        ty += (0.43 - mid) * 2 * d * t;
+      }
+    }
+    return pick || { ...base, distK: 1.0, ty: 0 };
   }
 
   hideCandle(i) {

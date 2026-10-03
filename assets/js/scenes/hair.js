@@ -78,7 +78,7 @@ export default {
     cards.forEach((c, i) => { if (i % 4 === 2 && !c.hero && i > 0) c.wrapped = true; });
     const last = cards[n - 1];
     const ember = last
-      ? { x: last.x + last.w * (portrait ? 0.95 : 1.05), y: Math.max(vh * 0.13, last.y - vh * 0.03) + vh * 0.04 }
+      ? { x: last.x + last.w * (portrait ? 0.9 : 1.1), y: last.y + Math.min(last.h * 0.42, vh * 0.22) }
       : { x: vw * 0.62, y: vh * 0.36 };
     const camEnd = last ? Math.max(0, last.x - vw * (portrait ? 0.3 : 0.36)) : 0;
     const travel = camEnd + vw;
@@ -163,7 +163,7 @@ export default {
     if (!n) {
       segs.push({ pts: segPoints({ x: -vw * 0.15, y: vh * 0.42 }, ember, 0, null), lead: 'out' });
     } else {
-      segs.push({ pts: segPoints({ x: cards[0].x - spacing * 1.1 - vw * 0.2, y: vh * 0.4 }, clip(cards[0]), 0, cards[0].wrapped ? cards[0] : null), lead: 'in' });
+      segs.push({ pts: segPoints({ x: Math.min(cards[0].x - spacing, 0) - vw * 0.25, y: vh * 0.42 }, clip(cards[0]), 0, cards[0].wrapped ? cards[0] : null), lead: 'in' });
       for (let i = 0; i < n - 1; i++) segs.push({ pts: segPoints(clip(cards[i]), clip(cards[i + 1]), i + 1, cards[i + 1].wrapped ? cards[i + 1] : null), from: i });
       segs.push({ pts: segPoints(clip(last), ember, n + 1, null), lead: 'out', from: n - 1 });
     }

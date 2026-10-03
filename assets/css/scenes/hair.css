@@ -79,3 +79,4 @@
 }
 @keyframes hr-pulse { from { scale: .9; opacity: .85; } to { scale: 1.08; opacity: 1; } }
 .reduced-motion .hr-ember i, .reduced-motion .hr-spark { animation: none; }
+.reduced-motion .hr-card.in:not(.wrapped) .hr-sway { animation: none; }

@@ -65,14 +65,14 @@ export function timelineGeom(W, H) {
 }
 
 /**
- * The lead-in: from the golden point at the centre, a soft hair-like curl that
+ * The lead-in: from the golden point (the centre unless `start` is given), a soft hair-like curl that
  * dips below the line and comes up into its first day. Returns the full ribbon
  * path and the fraction (by arc length) where the timeline itself begins.
  */
-export function timelinePath(W, H) {
+export function timelinePath(W, H, start = null) {
   const g = timelineGeom(W, H);
-  const cx = W / 2;
-  const cy = H / 2;
+  const cx = start && Number.isFinite(start.x) ? start.x : W / 2;
+  const cy = start && Number.isFinite(start.y) ? start.y : H / 2;
   const s = g.anchors[0];
   const dy = Math.max(26, H * 0.06);
   const lead = [

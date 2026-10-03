@@ -49,16 +49,23 @@ export function createOrbit(container, photos, { device = {} } = {}) {
 
   const st = { W: 0, H: 0, cx: 0, cy: 0, alpha: 1, spread: 1, speed: 1, rings: RINGS.portrait, base: 80, zones: [], phase: 0 };
 
-  function layout({ W, H, cx, cy }) {
+  /** `clear` = half the size of the title block (px): the rings pass above and below it. */
+  function layout({ W, H, cx, cy, clear = null }) {
     st.W = W;
     st.H = H;
     st.cx = cx;
     st.cy = cy;
     const portrait = H >= W * 1.05;
-    st.rings = portrait ? RINGS.portrait : RINGS.landscape;
     // a photo about a fifth of the short side (smaller when there are many)
     const crowd = items.length > 24 ? 0.86 : items.length > 14 ? 0.93 : 1;
     st.base = clamp(Math.min(W, H) * (portrait ? 0.215 : 0.135) * crowd, 58, 150);
+    st.rings = (portrait ? RINGS.portrait : RINGS.landscape).map((R, k) => {
+      if (!clear) return R;
+      // tall titles (tablets): open the rings up so the near and far passes clear it
+      const half = (st.base * R.size) / 2;
+      const need = (clear.hh + half * 1.08 + 10) / H + k * 0.06;
+      return { ...R, ry: clamp(Math.max(R.ry, need), R.ry, 0.47) };
+    });
     for (const it of items) {
       const s = st.base * st.rings[it.ring].size;
       it.w = Math.round(s * Math.sqrt(it.ratio));

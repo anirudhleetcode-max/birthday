@@ -56,8 +56,8 @@
 .tw-flame {
   pointer-events: none; border-radius: 50%;
   background:
-    radial-gradient(ellipse 13% 24% at 50% 52%, #fffef4 0 35%, #ffe08a 60%, rgba(255, 156, 59, .9) 82%, rgba(255, 120, 40, 0) 100%),
-    radial-gradient(closest-side, rgba(255, 196, 110, .42), rgba(255, 170, 80, .12) 55%, rgba(255, 170, 80, 0));
+    radial-gradient(ellipse 6.5% 14% at 50% 52%, #fffef4 0 30%, #ffe08a 58%, rgba(255, 156, 59, .9) 80%, rgba(255, 120, 40, 0) 100%),
+    radial-gradient(closest-side, rgba(255, 200, 120, .5), rgba(255, 170, 80, .16) 40%, rgba(255, 170, 80, 0));
   animation: tw-flicker var(--fd, 2s) ease-in-out infinite alternate;
 }
 @keyframes tw-flicker { 0% { opacity: .82; scale: 1 1; } 35% { opacity: 1; scale: .97 1.04; } 70% { opacity: .9; scale: 1.02 .98; } 100% { opacity: 1; scale: 1 1.03; } }
@@ -150,3 +150,7 @@
 
 /* shared keyframe still used by other chapters (letter, dance) */
 @keyframes candle { 0%, 100% { opacity: .9; } 30% { opacity: .75; } 55% { opacity: 1; } 78% { opacity: .82; } }
+
+/* reduced motion: the room stays still (no drifting clouds, curtains, branches, birds) */
+.reduced-motion .tw-cloud, .reduced-motion .tw-birds, .reduced-motion .tw-branch, .reduced-motion .tw-curtain { animation: none; }
+.reduced-motion .tw-flame { animation-duration: 6s; }

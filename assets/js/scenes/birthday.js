@@ -91,6 +91,17 @@ function build(ctx, el) {
   let H = el.clientHeight || window.innerHeight;
   let phase = 0;
 
+  // the golden point the previous chapter ended on (fallback: the centre), as a fraction of the stage
+  const start = (() => {
+    const inc = ctx.incoming;
+    if (!inc || !Number.isFinite(inc.x) || !Number.isFinite(inc.y)) return { u: 0.5, v: 0.5 };
+    const r = el.getBoundingClientRect();
+    return { u: clamp((inc.x - r.left) / (W || 1), 0.05, 0.95), v: clamp((inc.y - r.top) / (H || 1), 0.05, 0.95) };
+  })();
+  seedEl.style.left = `${(start.u * 100).toFixed(3)}%`;
+  seedEl.style.top = `${(start.v * 100).toFixed(3)}%`;
+  fx.dust({ density: 0, alpha: 0 }); // a clean black frame (the sky's dust comes back with the lanterns)
+
   /* ---------------------------------------------------------------- renderer */
   const pr = Math.min(window.devicePixelRatio || 1, low ? 1 : device.mobile ? 1.6 : 1.75);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !low, powerPreference: 'high-performance' });
@@ -229,7 +240,7 @@ function build(ctx, el) {
   let tl = null;
 
   function layoutTimeline() {
-    tl = timelinePath(W, H);
+    tl = timelinePath(W, H, { x: start.u * W, y: start.v * H });
     el.style.setProperty('--line-y', `${Math.round(tl.y0)}px`);
     const tmp = V();
     days.layout((u, off) => screenToWorld(tl.xOf(u), tl.yOf(u) + off, 100, tmp), Math.max(4.5, Math.min(W, H) * 0.0145));
@@ -431,6 +442,8 @@ function build(ctx, el) {
     rib.dissolve({ duration: reduced ? 1.8 : 3 });
     tw(U.uReveal, { value: 1, duration: reduced ? 6 : 10, ease: 'sine.inOut', delay: 0.6 });
     tw(U.uStars, { value: 1, duration: 12, ease: 'sine.inOut', delay: 2.5 });
+    const dustId = setTimeout(() => !disposed && fx.dust({ density: low ? 0.18 : 0.28, alpha: 0.55, speed: 0.5 }), 4000);
+    cleanups.push(() => clearTimeout(dustId));
     audio.setMood('wonder');
     let l0 = null;
     if (lines[0]) { await wait(1.2); l0 = say(lines[0]); }
@@ -703,8 +716,12 @@ function build(ctx, el) {
     const r = titleEl.getBoundingClientRect();
     const room = Math.min(cy - 12, H - cy - 12) * 2;
     titleEl.style.setProperty('--fit', r.height > room ? String((room / r.height).toFixed(3)) : '1');
-    if (orbit) orbit.layout({ W, H, cx: W / 2, cy });
+    if (orbit) orbit.layout({ W, H, cx: W / 2, cy, clear: titleClear() });
     updateZones();
+  }
+  function titleClear() {
+    const r = titleEl.getBoundingClientRect();
+    return r.height ? { hw: r.width / 2, hh: r.height / 2 } : null;
   }
 
   function rectOf(node, pad = 0, floor = 0.1) {
@@ -780,7 +797,7 @@ function build(ctx, el) {
   async function partOrbit() {
     if (!orbitPhotos.length) { await wait(reduced ? 3 : 4.5); return; }
     orbit = createOrbit(orbitEl, orbitPhotos, { device });
-    orbit.layout({ W, H, cx: W / 2, cy: titleCenterY() });
+    orbit.layout({ W, H, cx: W / 2, cy: titleCenterY(), clear: titleClear() });
     updateZones();
     await wait(reduced ? 1.4 : 2.4);
     sfx('shimmer');

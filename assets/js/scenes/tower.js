@@ -174,8 +174,9 @@ export default {
       for (const cd of candles.filter((c) => c.j === j && !c.el)) {
         const u = j * bayW + cd.x;
         const a = angleOfU(u, circ);
-        const s = 14 * cd.size * (VH / 1500);
-        cd.el = place(Object.assign(document.createElement('div'), { className: 'tw-flame' }), { a, r: Rw - 3, w: s, h: s * 1.9, y: cd.y - Hwall / 2 - s * 0.7 });
+        const fw = 8 * cd.size * (VH / 1500); // flame width (world px)
+        const s = fw * 8; // the element holds the flame and its halo
+        cd.el = place(Object.assign(document.createElement('div'), { className: 'tw-flame' }), { a, r: Rw - 3, w: s, h: s, y: cd.y - Hwall / 2 - fw * 1.1 });
         cd.el.style.setProperty('--fd', `${(1.6 + Math.random()).toFixed(2)}s`);
         items.push({ el: cd.el, a, r: Rw - 3, hw: s });
       }
@@ -241,10 +242,11 @@ export default {
     items.push(frItem);
     winGroup.push(frItem);
     {
-      const s = 10 * (VH / 1500) * fk;
+      const fw = 4.5 * (VH / 1500) * fk;
+      const s = fw * 8;
       const lx = (fr.candle.x - frW / 2) * fk;
       const cd = place(Object.assign(document.createElement('div'), { className: 'tw-flame' }), {
-        a: a0 + (-lx / (rF - 2)) / RAD, r: rF - 2, w: s, h: s * 1.9, y: (frTop + fr.candle.y) * fk - s * 0.7,
+        a: a0 + (-lx / (rF - 2)) / RAD, r: rF - 2, w: s, h: s, y: (frTop + fr.candle.y) * fk - fw * 1.1,
       });
       const it = { el: cd, a: a0, r: rF - 2, hw: s, group: 'win' };
       items.push(it);

@@ -63,8 +63,8 @@ export function buildScenery(root, { vw, vh, travel, reduced, low }) {
 
   // far mountains + the tower on its rock
   const farW = Math.ceil(vw * 1.3 + travel * 0.07);
-  const towerH = H * 0.26;
-  const towerX = vw * (vh > vw ? 0.62 : 0.56);
+  const towerH = H * 0.2;
+  const towerX = vw * (vh > vw ? 0.7 : 0.62);
   add('hr-far', 0.07, `
     <svg width="${farW}" height="${H}" viewBox="0 0 ${farW} ${H}">
       <defs>
