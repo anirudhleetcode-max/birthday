@@ -62,11 +62,11 @@ Privacy: before anything is published, the admin removes hidden photo details (G
 |---|---|
 | **Photo library** | Thumbnails of every photo by chapter. **Edit · Replace · Move · Delete · Preview**, **Add photo**, reorder (drag or arrows), turn a photo on or off, mark it ★ featured or as the *hero-hair* photo, assign the special roles (first photo, grand reveal, the two of you). |
 | **Chapters** | Turn chapters on or off and see how many photos each has. |
-| **Messages** | Every word in the film: greetings, chapter lines, captions, the letter, the credits. **Your memories** (at the top) is where the letter gets personal: see below. |
+| **Messages** | Every word in the film: greetings, chapter lines, captions, the letter, the credits. **Your memories** (at the top) is where the letter gets personal, and **How it began (your memories)** right below it is your story, one memory at a time, each with its own photos: see below. |
 | **Audio / Video** | Your own song, a voice note for the letter, a video message. |
 | **Theme** | Film grain, particle amount, golden ribbon on/off. |
 | **Settings** | Names, birth date, your name, the countdown unlock time (IST), WhatsApp number for the hug, colour-grading strength. |
-| **Preview** | Watch the real film with your draft. Nothing goes live until you publish. |
+| **Preview** | **Preview draft** plays the real film with your unpublished changes. **Preview published** shows exactly what's live. Both open in a new tab. Nothing goes live until you publish. |
 | **Publish / Export** | Publish saves everything to GitHub in one go (live in 1–2 minutes). Export downloads a zip instead. |
 
 **Save draft** keeps your work on that device. **Reset** throws the draft away. Before publishing, the admin warns about missing photos and blocks real errors. It also warns you before you leave with unsaved changes.
@@ -120,7 +120,16 @@ Until a box is filled, the line that uses it is **left out of her film**, so she
 A few lines are jokes you may want to tune to your friendship: the documentary narrator and the three name cards in **Her names**, the festival lines, and the line after the lanterns. None of them assume what her name means. If “Deepu” comes from a name meaning *lamp* or *light* (Deepa, Deepika…) and that matters to you two, the admin shows where such a joke fits.
 
 ### Adding new photos (October, November, December, January…)
-Photo library → **Add photo** → choose the chapter (or **Extra memories**) → pick a shape → crop → add a caption and date → **Publish**. There is no limit. Chapters adapt to however many photos they have, and every enabled photo also appears in the finale heart, the credits and the album.
+Photo library → **Add photo** → choose the chapter (or **Extra memories**) → pick a shape → crop → add a caption and date → **Publish**. There is no limit. Chapters adapt to however many photos they have, and every enabled photo also appears in the finale heart, the credits and the album. Photos of a new memory go in through the memory itself (next section).
+
+### Adding memories later (October, November, December…)
+**How it began** (the chapter right after the tower) tells your story through your own memories, in order. Each memory has a date (optional), your words, a style, and its own photos. Nothing is written for you. To add one, say for November:
+1. **Messages → How it began (your memories) → Add a memory.**
+2. Write **When** (e.g. “November 2026”) and **The memory**, in your own words. Pick a **Style** if you like.
+3. Tap **Add photos to this memory** and choose the photos. Each one keeps the shape it was taken in; you just choose what to keep.
+4. Use the arrows to put the memory in its place, then **Preview draft** and **Publish**.
+
+A memory with no words and no photos is skipped. Deleting a memory never deletes its photos: they stay in **Photo library → Our story**, shown with the last memory, until you open one and choose another memory under **Belongs to memory**. Moving a photo out of Our story unlinks it.
 
 ## 4. The January 3, 2027 release (checklist)
 

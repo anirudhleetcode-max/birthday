@@ -5,8 +5,10 @@
 // Covers: library renders all photos · ADD (count +1, ratio locked) · REPLACE matching ratio (no warning) ·
 // REPLACE mismatched → "Expected ratio: 4:5 · Uploaded ratio: 16:9" → CROP (exact ratio) / CONTAIN (exact ratio) /
 // CHOOSE ANOTHER · DELETE + undo · REORDER (buttons, keyboard, drag) · edit caption + focal point · messages &
-// settings edits · unsaved-changes guard · draft restore · SAVE DRAFT → film ?preview&draft shows blob: images while
-// ?preview does not · PUBLISH = one commit (split JSON + new blobs + deletion of the replaced files) · EXPORT zip.
+// settings edits · HOW IT BEGAN: add / edit / reorder / delete a memory, “Add photos to this memory” (own shape,
+// linked), linking a photo to a memory in the editor, deleting a memory with photos (+ undo) · unsaved-changes guard ·
+// draft restore · SAVE DRAFT → film ?preview&draft shows blob: images while ?preview does not · PUBLISH = one commit
+// (split JSON + new blobs + deletion of the replaced files; the memories round-trip into messages.json) · EXPORT zip.
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -380,6 +382,92 @@ async function goSection(page, id) {
     await page.click('.sheet button:has-text("Choose another")');
     ok(await page.evaluate(() => window.__lanternRoom.state.site.media.video) === null, 'declining keeps the video empty');
 
+    /* ---------- how it began: the owner's memories ---------- */
+    section('HOW IT BEGAN — memories: add, edit, reorder, delete; their photos');
+    await goSection(page, 'messages');
+    const storyG = '.group[data-group="story"]';
+    const memories = () => page.evaluate(() => JSON.parse(JSON.stringify(window.__lanternRoom.state.site.text.story.memories)));
+    const mems0 = await memories();
+    const n0m = mems0.length;
+    ok(await page.locator(`${storyG}[open]`).count() === 1 && await page.evaluate(() => { const g = [...document.querySelectorAll('details.group')].map((d) => d.dataset.group); return g.indexOf('story') === g.indexOf('personal') + 1; }), '“How it began” starts open, right after “Your memories”');
+    ok(await page.locator(`${storyG} .mem-card`).count() === n0m, `one card per memory (${n0m})`);
+    const shown = await page.evaluate((sel) => { const g = document.querySelector(sel); return { text: g.textContent, values: [...g.querySelectorAll('input, textarea')].map((i) => i.value) }; }, storyG);
+    ok(mems0.every((m) => !shown.values.includes(m.id) && (mems0.some((x) => (x.text || '').includes(m.id)) || !shown.text.includes(m.id))), 'memory ids are never shown or editable');
+    ok(mems0.every((m, i) => shown.values.includes(m.text)) && await page.locator(`${storyG} .mem-card >> nth=0`).locator('select').inputValue() === mems0[0].kind, 'each card shows the memory’s words and its style');
+    // add
+    await page.click(`${storyG} [data-testid="memory-add"]`);
+    await page.waitForFunction((n) => window.__lanternRoom.state.site.text.story.memories.length === n + 1, n0m);
+    let mems = await memories();
+    const memNew = mems[n0m];
+    ok(memNew.kind === 'moment' && memNew.when === '' && memNew.text === '' && !!memNew.id && !mems0.some((m) => m.id === memNew.id), 'Add a memory: its own id, style “moment”, nothing pre-written');
+    ok(await page.waitForFunction((n) => { const a = document.activeElement; const cards = [...document.querySelectorAll('.group[data-group="story"] .mem-card')]; return a && a.dataset.field === 'when' && cards.indexOf(a.closest('.mem-card')) === n; }, n0m, { timeout: 3000 }).then(() => true).catch(() => false), 'the new memory’s “When” box gets the focus');
+    ok(/For later months \(October, November, December…\)/.test(shown.text), 'the “later months” how-to is shown under the button');
+    await page.keyboard.type('December 2026');
+    const newCard = `${storyG} .mem-card >> nth=${n0m}`;
+    await page.locator(newCard).locator('textarea').fill('Words typed by the e2e test.');
+    await page.locator(newCard).locator('select').selectOption('journey');
+    mems = await memories();
+    ok(JSON.stringify(mems[n0m]) === JSON.stringify({ ...memNew, when: 'December 2026', text: 'Words typed by the e2e test.', kind: 'journey' }), 'edit: when, words and style land in the draft');
+    ok(new RegExp(`${n0m + 1} memories`).test(await page.textContent(`${storyG} .group-sub`)), `the group summary counts ${n0m + 1} memories`);
+    ok(await page.locator(newCard).evaluate((e) => e.classList.contains('is-changed')) && await page.locator(`${storyG} .mem-card.is-changed`).count() === 1, 'only the new memory is marked as changed');
+    // reorder
+    await page.click(`${storyG} button[aria-label="Move memory ${n0m + 1} up"]`);
+    mems = await memories();
+    ok(mems[n0m - 1].id === memNew.id && mems[n0m].id === mems0[n0m - 1].id, 'reorder: “move up” swaps it with the memory before');
+    ok(await page.evaluate((n) => document.activeElement && document.activeElement.getAttribute('aria-label') === `Move memory ${n} up`, n0m), 'focus follows the moved memory');
+    // delete (no photos → no question) + undo
+    await page.click(`${storyG} button[aria-label="Remove memory ${n0m}"]`);
+    await page.waitForFunction((n) => window.__lanternRoom.state.site.text.story.memories.length === n, n0m);
+    ok(await page.locator('.sheet-backdrop:not(.out)').count() === 0 && !(await memories()).some((m) => m.id === memNew.id), 'delete: a memory without photos goes straight away');
+    await page.click('.toast.has-action .toast-action:has-text("Undo")');
+    await page.waitForFunction((n) => window.__lanternRoom.state.site.text.story.memories.length === n + 1, n0m);
+    mems = await memories();
+    ok(mems[n0m - 1].id === memNew.id && mems[n0m - 1].text === 'Words typed by the e2e test.', 'Undo puts it back in its place, words and all');
+    // add photos to this memory (the normal add flow, preset to “How it began” + this memory, the photo's own shape)
+    await page.locator(`${storyG} .mem-card >> nth=${n0m - 1}`).locator('[data-act="mem-photos"]').click();
+    await page.waitForSelector('[data-testid="add-chapter"]');
+    ok(await page.$eval('[data-testid="add-chapter"]', (el) => el.value) === 'story' && await page.$eval('[data-testid="add-memory"]', (el) => el.value) === memNew.id, '“Add photos to this memory” opens Add photo with How it began + this memory preselected');
+    ok(await page.getAttribute('.sheet .shape-chip[aria-checked="true"]', 'data-ratio') === 'own', 'the shape defaults to “Its own shape”');
+    await chooseFile(page, () => page.click('[data-testid="add-choose"]'), file('memory-wide.png', IMG.w169));
+    await page.waitForSelector('.cropper.in');
+    ok((await page.textContent('.crop-rule .ratio-badge')).trim() === '16:9', 'cropper keeps the photo’s own 16:9 shape');
+    await page.click('[data-testid="crop-confirm"]');
+    await page.waitForSelector('[data-testid="details-label"]');
+    await page.fill('[data-testid="details-label"]', 'Memory photo (e2e)');
+    await page.click('[data-testid="details-add"]');
+    await page.waitForFunction((id) => window.__lanternRoom.state.site.photos.some((p) => p.memory === id), memNew.id, { timeout: 20000 });
+    await waitIdle(page);
+    const memPhoto = (await allPhotos(page)).find((p) => p.memory === memNew.id);
+    const mpd = await blobInfo(page, memPhoto.src);
+    ok(memPhoto.chapter === 'story' && memPhoto.ratio === '16:9' && exact(mpd, '16:9') && memPhoto.w === mpd.w && memPhoto.h === mpd.h, `the new photo: How it began, linked to the memory, exactly 16:9 (${mpd && `${mpd.w}×${mpd.h}`})`);
+    ok(await page.locator(`${storyG} .mem-card >> nth=${n0m - 1}`).locator('.mem-thumb').count() === 1, 'its thumbnail shows on the memory');
+    // link it to another memory in the photo editor (opened from the thumbnail)
+    await page.locator(`${storyG} .mem-card >> nth=${n0m - 1}`).locator('.mem-thumb').click();
+    await page.waitForSelector('[data-testid="edit-memory"]');
+    ok(await page.$eval('[data-testid="edit-memory"]', (el) => el.value) === memNew.id && await page.isVisible('[data-testid="edit-memory"]'), 'the editor shows “Belongs to memory” for How it began photos');
+    const memLabels = await page.$$eval('[data-testid="edit-memory"] option', (os) => os.map((o) => o.textContent));
+    const { memoryLabel } = await import(pathToFileURL(path.join(ROOT, 'admin/util.js')).href);
+    ok(memLabels[0] === 'None — shown with the last memory' && memLabels.includes(memoryLabel(mems0[1], 1)) && memLabels.includes(`Memory ${n0m} · December 2026`), `memories are named by their date or first words (${memLabels.slice(1, 3).join(' | ')})`);
+    await page.selectOption('[data-testid="edit-memory"]', mems0[1].id);
+    await page.click('[data-testid="edit-save"]');
+    await page.waitForFunction(([id, m]) => window.__lanternRoom.state.site.photos.find((p) => p.id === id).memory === m, [memPhoto.id, mems0[1].id]);
+    ok(await page.locator(`${storyG} .mem-card >> nth=1`).locator('.mem-thumb').count() === 1 && await page.locator(`${storyG} .mem-card >> nth=${n0m - 1}`).locator('.mem-thumb').count() === 0, 'editor: the photo now belongs to memory 2 (its thumbnail moved)');
+    // delete a memory that has photos → asked first; the photos stay (unlinked); Undo links them again
+    await page.click(`${storyG} button[aria-label="Remove memory 2"]`);
+    await page.waitForSelector('.sheet .sheet-title:has-text("Delete this memory?")');
+    ok(/1 photo/.test(await page.textContent('.sheet .sheet-text')) && /stay in your library/.test(await page.textContent('.sheet .sheet-text')), 'deleting a memory with photos asks first and says the photos stay');
+    await page.click('[data-testid="confirm-ok"]');
+    await page.waitForFunction((id) => !window.__lanternRoom.state.site.text.story.memories.some((m) => m.id === id), mems0[1].id);
+    const kept = await photo(page, memPhoto.id);
+    ok(!!kept && kept.chapter === 'story' && !('memory' in kept), 'the memory is gone; its photo is kept, unlinked');
+    ok(await page.locator(`${storyG} .mem-loose .mem-thumb`).count() === 1, 'unlinked photos are listed (“shown with the last memory”)');
+    await page.click('.toast.has-action .toast-action:has-text("Undo")');
+    await page.waitForFunction((id) => window.__lanternRoom.state.site.text.story.memories.some((m) => m.id === id), mems0[1].id);
+    mems = await memories();
+    ok(JSON.stringify(mems[1]) === JSON.stringify(mems0[1]) && (await photo(page, memPhoto.id)).memory === mems0[1].id, 'Undo restores the memory and links its photo again');
+    await goSection(page, 'library');
+    ok((await page.textContent(`.pcard[data-id="${memPhoto.id}"] .pcard-meta`)).includes('Memory 2'), 'the library card says which memory the photo belongs to');
+
     // every control in every section has an accessible name
     const unlabeled = [];
     for (const sec of ['library', 'chapters', 'messages', 'audio', 'video', 'theme', 'preview', 'settings', 'help']) {
@@ -465,6 +553,10 @@ async function goSection(page, id) {
     const pub = JSON.parse(byPath['data/photos.json'].content);
     ok(pub.photos.length === expectPhotos && pub.photos.find((p) => p.id === repo.heroId).caption === 'Our very first photo ✨', 'photos.json carries the new photos and edits');
     ok(JSON.parse(byPath['data/messages.json'].content).invite.greeting === 'Hey {nick1}, it’s finally here.', 'messages.json carries the edit');
+    const pubMems = JSON.parse(byPath['data/messages.json'].content).story.memories;
+    const wantMems = [...mems0.slice(0, n0m - 1), { ...memNew, when: 'December 2026', text: 'Words typed by the e2e test.', kind: 'journey' }, mems0[n0m - 1]];
+    ok(JSON.stringify(pubMems) === JSON.stringify(wantMems), 'messages.json: the new memory (when, words, style) in its place; every other memory exactly as written');
+    ok(pub.photos.find((p) => p.id === memPhoto.id).memory === mems0[1].id && pub.photos.find((p) => p.id === memPhoto.id).chapter === 'story', 'photos.json: the photo’s memory link is published');
     ok(JSON.parse(byPath['data/settings.json'].content).settings.whatsapp === '919812345678', 'settings.json carries the edit');
     const uploads = tree.filter((e) => e.sha && !e.content);
     const refs = new Set([...pub.photos.flatMap((p) => [p.src, p.thumb, p.original]), ...Object.values(JSON.parse(byPath['data/settings.json'].content).media)].filter(Boolean));

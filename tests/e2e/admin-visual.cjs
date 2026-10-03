@@ -5,7 +5,9 @@
 //
 //   (static server on :8090)  NODE_PATH=$(npm root -g) node tests/e2e/admin-visual.cjs [--shots dir] [--vp 390x844,1440x900] [--only library,settings]
 //
-// GitHub is mocked (no token → the site's own copy). Exits 1 on any problem.
+// GitHub is mocked (no token → the site's own copy). The site's copy is served from tests/fixtures/*.json
+// (the placeholder state) plus the live “How it began” photos, so the memories' thumbnails are audited too.
+// Exits 1 on any problem.
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -16,6 +18,14 @@ const SHOTS = typeof args.shots === 'string' ? args.shots : '';
 const VPS = (typeof args.vp === 'string' ? args.vp : '390x844,412x915,768x1024,1440x900').split(',').map((s) => s.split('x').map(Number));
 const SECTIONS = ['library', 'chapters', 'messages', 'audio', 'video', 'theme', 'preview', 'settings', 'help'];
 const ONLY = typeof args.only === 'string' ? args.only.split(',') : null;
+const ROOT = path.resolve(__dirname, '../..');
+const readJSON = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
+const DATA = (() => {
+  const photos = readJSON('tests/fixtures/photos.json');
+  const story = readJSON('data/photos.json').photos.filter((p) => p.chapter === 'story');
+  photos.photos.push(...story.filter((p) => !photos.photos.some((q) => q.id === p.id)));
+  return { settings: readJSON('tests/fixtures/settings.json'), messages: readJSON('tests/fixtures/messages.json'), photos };
+})();
 
 let failures = 0;
 let passes = 0;
@@ -139,9 +149,10 @@ function audit(rootSel) {
 }
 
 /** Tab through the page and check every focused control shows a visible focus ring. */
-async function focusAudit(page, n = 25) {
+async function focusAudit(page, n = 25, start = null) {
   const missing = [];
-  await page.evaluate(() => { document.activeElement && document.activeElement.blur(); window.scrollTo(0, 0); });
+  if (start) await page.focus(start);
+  else await page.evaluate(() => { document.activeElement && document.activeElement.blur(); window.scrollTo(0, 0); });
   for (let i = 0; i < n; i++) {
     await page.keyboard.press('Tab');
     await page.waitForTimeout(260); // focus rings fade in
@@ -170,6 +181,10 @@ const fmt = (list) => list.slice(0, 8).join(' | ') + (list.length > 8 ? ` … (+
       console.log(`\n▸ ${w}×${hgt}${phone ? ' (touch)' : ''}`);
       const context = await browser.newContext({ viewport: { width: w, height: hgt }, hasTouch: phone, isMobile: phone, deviceScaleFactor: 1 });
       await context.route('https://api.github.com/**', (r) => r.fulfill({ status: 404, contentType: 'application/json', body: '{"message":"Not Found"}' }));
+      await context.route(/\/data\/(settings|messages|photos)\.json(\?|$)/, (r) => {
+        const name = /\/data\/(\w+)\.json/.exec(r.request().url())[1];
+        return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(DATA[name]) });
+      });
       await context.addInitScript(() => { try { localStorage.setItem('deepu-admin-welcomed', '1'); } catch { /* */ } });
       const page = await context.newPage();
       const errors = [];
@@ -208,6 +223,17 @@ const fmt = (list) => list.slice(0, 8).join(' | ') + (list.length > 8 ? ` … (+
         if (!phone) {
           const f = await focusAudit(page);
           ok(!f.length, `${tag}: keyboard focus is always visible`, fmt(f));
+          if (sec === 'messages') {
+            const fm = await focusAudit(page, 30, '.group[data-group="story"] summary');
+            ok(!fm.length, `${tag}: keyboard focus is always visible in How it began (memories)`, fmt(fm));
+          }
+        }
+        if (sec === 'messages') {
+          const mem = await page.evaluate(() => {
+            const g = document.querySelector('.group[data-group="story"][open]');
+            return g ? { cards: g.querySelectorAll('.mem-card').length, thumbs: g.querySelectorAll('.mem-thumb img').length } : null;
+          });
+          ok(mem && mem.cards >= 1 && mem.thumbs >= 1, `${tag}: How it began shows its memories and their photos`, JSON.stringify(mem));
         }
         if (SHOTS) { fs.mkdirSync(SHOTS, { recursive: true }); await page.screenshot({ path: path.join(SHOTS, `${sec}-${w}.png`), fullPage: false }); }
       }
@@ -217,6 +243,8 @@ const fmt = (list) => list.slice(0, 8).join(' | ') + (list.length > 8 ? ` … (+
           ['connect', async () => { await page.click('#status'); await page.waitForSelector('#gh-token'); }],
           ['add', async () => { await page.evaluate(() => { location.hash = '#library'; }); await page.click('[data-testid="add-photo"]'); await page.waitForSelector('[data-testid="add-choose"]'); }],
           ['editor', async () => { await page.evaluate(() => { location.hash = '#library'; }); await page.click('.pcard [data-act="edit"]'); await page.waitForSelector('[data-testid="edit-save"]'); }],
+          ['memory-photo editor', async () => { await page.evaluate(() => { location.hash = '#library'; }); await page.click('.pcard[data-chapter="story"] [data-act="edit"]'); await page.waitForSelector('[data-testid="edit-memory"]'); }],
+          ['add-to-memory', async () => { await page.evaluate(() => { location.hash = '#messages'; }); await page.waitForSelector('#view[data-section="messages"]'); await page.click('.group[data-group="story"] [data-act="mem-photos"]'); await page.waitForSelector('[data-testid="add-memory"]'); }],
           phone ? ['drawer', async () => { await page.click('#bnav-more'); await page.waitForSelector('.drawer-nav'); }]
             : ['menu', async () => { await page.click('[data-testid="more"]'); await page.waitForSelector('.menu'); }],
         ];

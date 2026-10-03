@@ -758,7 +758,9 @@ FLOWS.words = async () => {
   const lines0 = (await site(page)).text.invite.lines;
   await tap(page, `${invite} .add-btn`);
   const added = page.locator(`${invite} textarea[aria-label^="Lines "]`).last();
-  ok(await S(page, () => document.activeElement && document.activeElement.getAttribute('aria-label')) === `Lines ${lines0.length + 1}`, 'new line gets focus');
+  // the focus moves on the next animation frame
+  const focused = await page.waitForFunction((want) => document.activeElement && document.activeElement.getAttribute('aria-label') === want, `Lines ${lines0.length + 1}`, { timeout: 3000 }).then(() => true).catch(() => false);
+  ok(focused, 'new line gets focus', await S(page, () => document.activeElement && document.activeElement.getAttribute('aria-label')));
   await added.fill('A brand new line');
   await tap(page, `${invite} button[aria-label="Move line ${lines0.length + 1} up"]`);
   let lines = (await site(page)).text.invite.lines;
@@ -843,6 +845,109 @@ FLOWS.words = async () => {
   await context.close();
 };
 
+FLOWS.memories = async () => {
+  section('HOW IT BEGAN on the phone: checks for broken memories, add a memory + its photos (own shape), link / move / unlink');
+  // a memory without an id (an error) and a photo linked to a memory that no longer exists (a reminder)
+  const files = repoFiles(IMG);
+  const msgs = JSON.parse(files['data/messages.json']);
+  msgs.story.memories.push({ kind: 'moment', when: '', text: 'QA: a memory typed by hand without an id' });
+  files['data/messages.json'] = text(msgs);
+  const photos = JSON.parse(files['data/photos.json']);
+  photos.photos.push(model.newPhoto({ id: 'story-lost', chapter: 'story', order: 1, ratio: '1:1', label: 'Lost link', memory: 'm-gone' }));
+  files['data/photos.json'] = text(photos);
+  const { context, page, errors } = await setup({ phone: true, git: new MockGit(files) });
+  await boot(page);
+  const memories = () => S(page, () => JSON.parse(JSON.stringify(window.__lanternRoom.state.site.text.story.memories)));
+  const n0 = (await memories()).length;
+  ok(/Not linked to a memory/.test(await page.textContent('.pcard[data-id="story-lost"] .pcard-meta')), 'library: a How it began photo whose memory is gone says “Not linked to a memory”');
+  // the model's checks render in the admin: the Preview checks panel …
+  await tap(page, '.checks-banner');
+  await page.waitForSelector('#view[data-section="preview"] [data-testid="checks"]');
+  const checksText = await page.textContent('[data-testid="checks"]');
+  ok(/Memory \d+ has no id/.test(checksText) && /belongs to a memory that no longer exists/.test(checksText), 'Preview → checks list the memory error and the lost-link reminder');
+  await tap(page, '.check-item.error:has-text("has no id") .link-btn');
+  await page.waitForSelector('#view[data-section="messages"] .group[data-group="story"][open]');
+  await page.waitForTimeout(300);
+  const inView = await S(page, () => { const r = document.querySelector('.group[data-group="story"]').getBoundingClientRect(); return r.top >= 0 && r.top < innerHeight && document.activeElement && document.activeElement.closest('.group[data-group="story"]'); });
+  ok(!!inView, '“Open” goes to Messages → How it began (open, scrolled into view, focused)');
+  // add a memory for a later month
+  await tap(page, '.group[data-group="story"] [data-testid="memory-add"]');
+  await page.waitForFunction((n) => window.__lanternRoom.state.site.text.story.memories.length === n + 1, n0);
+  const mem = (await memories())[n0];
+  let card = `.group[data-group="story"] .mem-card >> nth=${n0}`;
+  await page.locator(card).locator('input').fill('November 2026');
+  ok((await memories())[n0].when === 'November 2026' && (await memories())[n0].text === '', 'a new memory for November: the date is in, the words stay empty until written');
+  // … and the publish sheet
+  await tap(page, '[data-testid="publish"]');
+  await page.waitForSelector('.sheet-title:has-text("need fixing")');
+  ok(/has no id/.test(await page.textContent('.sheet [data-testid="checks"]')), 'Publish is blocked and the sheet names the broken memory');
+  await tap(page, '.sheet button:has-text("OK")');
+  await noSheet(page);
+  // fix it: delete the broken memory (no photos → no question)
+  await tap(page, `.group[data-group="story"] button[aria-label="Remove memory ${n0}"]`);
+  await page.waitForFunction((n) => window.__lanternRoom.state.site.text.story.memories.length === n, n0);
+  ok(model.validate(await site(page)).ok && (await memories())[n0 - 1].id === mem.id, 'after deleting it nothing blocks publishing');
+  card = `.group[data-group="story"] .mem-card >> nth=${n0 - 1}`;
+  // its photos: the add sheet is preset; “Its own shape” only for chapters that take any shape
+  await page.locator(card).locator('[data-act="mem-photos"]').tap();
+  await page.waitForSelector('[data-testid="add-memory"]');
+  const sheetState = () => S(page, () => ({
+    chapter: document.querySelector('[data-testid="add-chapter"]').value,
+    memory: document.querySelector('[data-testid="add-memory"]').value,
+    memoryShown: !document.querySelector('[data-testid="add-memory"]').closest('[hidden]'),
+    shape: document.querySelector('.sheet .shape-chip[aria-checked="true"]').dataset.ratio,
+    ownShown: !document.querySelector('.sheet .shape-chip[data-ratio="own"]').hidden,
+  }));
+  let st = await sheetState();
+  ok(st.chapter === 'story' && st.memory === mem.id && st.memoryShown && st.shape === 'own' && st.ownShown, 'Add photos to this memory: How it began + this memory + “Its own shape”', JSON.stringify(st));
+  await page.selectOption('[data-testid="add-chapter"]', 'tower');
+  st = await sheetState();
+  ok(st.shape === '3:4' && !st.ownShown && !st.memoryShown, 'switching to the tower: its 3:4 shape, no memory, no “own shape”', JSON.stringify(st));
+  await page.selectOption('[data-testid="add-chapter"]', 'story');
+  st = await sheetState();
+  ok(st.shape === 'own' && st.ownShown && st.memoryShown && st.memory === mem.id, 'and back: own shape and the memory again', JSON.stringify(st));
+  await chooseFile(page, () => tap(page, '[data-testid="add-choose"]'), fileOf('square.png', IMG.sq));
+  await page.waitForSelector('.cropper.in');
+  ok((await page.textContent('.crop-rule .ratio-badge')).trim() === '1:1', 'the cropper keeps the photo’s own square shape');
+  await tap(page, '[data-testid="crop-confirm"]');
+  await page.waitForSelector('[data-testid="details-add"]');
+  await tap(page, '[data-testid="details-add"]');
+  await page.waitForFunction((id) => window.__lanternRoom.state.site.photos.some((p) => p.memory === id && p.src), mem.id, { timeout: 20000 });
+  await waitIdle(page);
+  const ph = (await allPhotos(page)).find((p) => p.memory === mem.id);
+  ok(ph.chapter === 'story' && ph.ratio === '1:1' && exact(await blobInfo(page, ph.src), '1:1') && /November 2026/.test(await lastToast(page)), `added to How it began, linked to the memory, exactly 1:1 (“${await lastToast(page)}”)`);
+  await noSheet(page);
+  ok(await page.locator(card).locator('.mem-thumb').count() === 1, 'the memory shows its photo');
+  const small = await S(page, () => [...document.querySelectorAll('.group[data-group="story"] button, .group[data-group="story"] input, .group[data-group="story"] select, .group[data-group="story"] textarea')]
+    .map((e) => e.getBoundingClientRect()).filter((r) => r.width && r.height && Math.min(r.width, r.height) < 40).length);
+  ok(small === 0 && await S(page, () => document.documentElement.scrollWidth <= innerWidth + 1), 'How it began on a phone: every control ≥ 40 px, no sideways scroll');
+  // the editor: moving the photo out of How it began clears its memory
+  await page.locator(card).locator('.mem-thumb').tap();
+  await page.waitForSelector('[data-testid="edit-memory"]');
+  ok(await page.$eval('[data-testid="edit-memory"]', (e) => e.value) === mem.id && await page.isVisible('[data-testid="edit-memory"]'), 'editor: “Belongs to memory” shows its memory');
+  await page.selectOption('.editor-fields select >> nth=0', 'tower');
+  ok(!(await page.isVisible('[data-testid="edit-memory"]')), 'editor: no memory choice outside How it began');
+  await tap(page, '[data-testid="edit-save"]');
+  await noSheet(page);
+  let moved = await photo(page, ph.id);
+  ok(moved.chapter === 'tower' && !('memory' in moved), 'moved out of How it began → its memory link is cleared');
+  // the Move dialog: back into How it began, choosing the memory; Undo puts it back unlinked
+  await goSection(page, 'library');
+  await tap(page, `.pcard[data-id="${ph.id}"] [data-act="move"]`);
+  await page.waitForSelector('[data-testid="move-confirm"]');
+  await page.selectOption('.sheet select >> nth=0', 'story');
+  await page.selectOption('.sheet select >> nth=1', mem.id);
+  await tap(page, '[data-testid="move-confirm"]');
+  await noSheet(page);
+  moved = await photo(page, ph.id);
+  ok(moved.chapter === 'story' && moved.memory === mem.id && /November 2026/.test(await lastToast(page)), 'Move to How it began can choose the memory');
+  await tap(page, '.toast.has-action .toast-action:has-text("Undo")');
+  moved = await photo(page, ph.id);
+  ok(moved.chapter === 'tower' && !('memory' in moved) && ordersOk(await allPhotos(page)), 'Undo: back in the tower, unlinked, orders contiguous');
+  ok(!errors.length, 'no console errors (memories)', errors.join(' | '));
+  await context.close();
+};
+
 FLOWS.settings = async () => {
   section('Settings: IST round-trip in another time zone, names, WhatsApp; draft restore; reset');
   const { context, page, errors, dialogs } = await setup({ timezone: 'America/Los_Angeles' });
@@ -912,6 +1017,21 @@ FLOWS.preview = async () => {
   const live = await film.waitForFunction(() => document.body.innerText.length > 10, null, { timeout: 20000 }).then(() => film.evaluate(() => !/Draft greeting for the preview/.test(document.body.innerText))).catch(() => false);
   ok(live, 'the non-draft film keeps the published words');
   await film.close();
+  // the Preview section: two clear actions, one line on the difference
+  await goSection(page, 'preview');
+  const diff = await page.textContent('.preview-diff');
+  ok(/unpublished changes from this device/.test(diff) && /live on the site right now/.test(diff), `Preview explains draft vs published (“${diff.slice(0, 60)}…”)`);
+  const [draftTab] = await Promise.all([context.waitForEvent('page'), page.click('[data-testid="preview-draft"]')]);
+  await draftTab.waitForURL(/index\.html\?preview&draft$/, { timeout: 15000 }).catch(() => {});
+  ok(/\/index\.html\?preview&draft$/.test(draftTab.url()), `“Preview draft” opens ${draftTab.url().replace(BASE, '')} in a new tab`);
+  ok(await draftTab.waitForFunction(() => /Draft greeting for the preview/.test(document.body.innerText), null, { timeout: 30000 }).then(() => true).catch(() => false), '… which shows the draft');
+  await draftTab.close();
+  const [liveTab] = await Promise.all([context.waitForEvent('page'), page.click('[data-testid="preview-published"]')]);
+  await liveTab.waitForURL(/index\.html\?preview$/, { timeout: 15000 }).catch(() => {});
+  ok(/\/index\.html\?preview$/.test(liveTab.url()), `“Preview published” opens ${liveTab.url().replace(BASE, '')} in a new tab`);
+  const liveTabOk = await liveTab.waitForFunction(() => document.body.innerText.length > 10, null, { timeout: 20000 }).then(() => liveTab.evaluate(() => !/Draft greeting for the preview/.test(document.body.innerText))).catch(() => false);
+  ok(liveTabOk, '… which shows the published words, not the draft');
+  await liveTab.close();
   ok(!errors.length, 'no console errors (preview)', errors.join(' | '));
   await context.close();
 };
