@@ -260,6 +260,14 @@ export default {
         c.ang = ang;
         const shade = Math.max(0, Math.min(0.62, 0.5 - front * 0.5 + 0.06));
         c.shade.style.opacity = shade.toFixed(3);
+        // edge-on or turned away: not something to tap, Tab to or announce (unless it already has focus)
+        const usable = front > 0.35 || document.activeElement === c.el;
+        if (usable !== c.usable) {
+          c.usable = usable;
+          c.el.tabIndex = usable ? 0 : -1;
+          c.el.style.pointerEvents = usable ? '' : 'none';
+          if (usable) c.el.removeAttribute('aria-hidden'); else c.el.setAttribute('aria-hidden', 'true');
+        }
       }
     };
     apply();

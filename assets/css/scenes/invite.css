@@ -75,7 +75,7 @@ svg.lt { display: block; width: 100%; height: 100%; overflow: visible; }
   padding: 10px 26px 6px; margin: 0; border: 0; background: none; cursor: pointer; color: inherit;
   -webkit-tap-highlight-color: transparent;
 }
-.inv-light:focus-visible { outline: none; }
+.inv-light:focus-visible { outline: 2px solid rgba(255, 227, 163, .85); outline-offset: 2px; border-radius: 26px; }
 .inv-lantern {
   position: relative; display: block;
   height: clamp(112px, 19vh, 204px); aspect-ratio: 100 / 140;
@@ -91,7 +91,7 @@ svg.lt { display: block; width: 100%; height: 100%; overflow: visible; }
   background: linear-gradient(90deg, transparent, rgba(244, 196, 99, .8));
 }
 .inv-label::after { background: linear-gradient(270deg, transparent, rgba(244, 196, 99, .8)); margin-right: .34em; }
-.inv-light:focus-visible .inv-label { border-radius: 999px; box-shadow: 0 0 0 1.5px rgba(255, 227, 163, .9), 0 0 22px rgba(244, 196, 99, .35); }
+.inv-light:focus-visible .inv-label { color: #fff3d0; text-shadow: 0 0 20px rgba(255, 210, 120, .85); }
 @media (hover: hover) {
   .inv-light.ready:hover .inv-label { color: #fff3d0; text-shadow: 0 0 20px rgba(255, 210, 120, .85); }
   .inv-light.ready:hover .lt-ember { animation-duration: 1s; }

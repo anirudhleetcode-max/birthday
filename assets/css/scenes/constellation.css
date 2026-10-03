@@ -15,7 +15,7 @@
   background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .cn-secret-hit:focus { outline: none; }
-.cn-secret-hit:focus-visible { outline: 1px dashed rgba(255, 227, 163, .45); outline-offset: 2px; }
+.cn-secret-hit:focus-visible { outline: 2px dashed rgba(255, 227, 163, .8); outline-offset: 2px; }
 .cn-secret-hit:disabled { cursor: default; pointer-events: none; }
 
 .cn-veil { position: absolute; inset: 0; z-index: 3; background: #000; pointer-events: none; }

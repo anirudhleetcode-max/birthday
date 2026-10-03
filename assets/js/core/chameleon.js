@@ -27,9 +27,7 @@ const CSS = `
 .chm svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;display:block;
   filter:drop-shadow(0 .06em .1em rgba(12,4,24,.45))}
 .chm:focus{outline:none}
-.chm:focus-visible{outline:none}
-.chm:focus-visible .chm-flip::after{content:'';position:absolute;inset:-6% -4%;border-radius:46%;
-  border:1.5px dashed rgba(255,227,163,.85)}
+.chm:focus-visible{outline:2px dashed rgba(255,227,163,.85);outline-offset:4px;border-radius:46%}
 `;
 
 function injectStyle() {

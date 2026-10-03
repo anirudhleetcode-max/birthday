@@ -129,8 +129,20 @@ function preloadChapter(def) {
 function buildProgress() {
   const nav = document.getElementById('progress');
   nav.innerHTML = '';
+  // On a phone, fifteen dots can't each be a comfortable touch target (that would take ~600 px),
+  // so there they're only a quiet progress indicator. With a mouse or keyboard, a seen dot is a
+  // button that jumps back to its chapter.
+  const indicator = device.mobile;
+  nav.classList.toggle('is-indicator', indicator);
+  if (indicator) nav.setAttribute('aria-hidden', 'true');
   app.list.forEach((def, i) => {
     if (def.nav === false) return;
+    if (indicator) {
+      const d = document.createElement('i');
+      d.dataset.i = i;
+      nav.appendChild(d);
+      return;
+    }
     const b = document.createElement('button');
     b.type = 'button';
     b.dataset.i = i;
@@ -147,11 +159,11 @@ function buildProgress() {
 function updateProgress() {
   const nav = document.getElementById('progress');
   nav.classList.toggle('on', app.index > 0 && app.list[app.index]?.nav !== false);
-  nav.querySelectorAll('button').forEach((b) => {
+  nav.querySelectorAll('[data-i]').forEach((b) => {
     const i = Number(b.dataset.i);
     b.classList.toggle('now', i === app.index);
     b.classList.toggle('seen', app.seen.has(i));
-    b.disabled = !app.seen.has(i);
+    if (b.tagName === 'BUTTON') b.disabled = !app.seen.has(i);
     if (i === app.index) b.setAttribute('aria-current', 'step');
     else b.removeAttribute('aria-current');
   });
