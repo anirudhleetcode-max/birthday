@@ -53,7 +53,7 @@ const CARD_FRAG = /* glsl */ `
     float inside = 1.0 - smoothstep(-aa, aa, dOut);
     float light = vState.z;
     float op = vState.x * (1.0 - smoothstep(0.55, 0.95, light));
-    if (inside * op < 0.002) discard;
+    if (inside * op < 0.01) discard;
 
     // the photograph, exactly as it is (only light around it)
     vec2 uv = clamp((vP + hb) / (2.0 * hb), 0.0, 1.0);
@@ -70,13 +70,13 @@ const CARD_FRAG = /* glsl */ `
 
     // a faint sheen sliding across as it rotates (glass-like, very subtle)
     float s = (vP.x * 0.62 + vP.y * 0.78) / max(hb.x, hb.y) - (vShade * 2.2 - 0.6);
-    col += vec3(1.0, 0.95, 0.86) * exp(-s * s * 10.0) * 0.04;
+    col += vec3(1.0, 0.95, 0.86) * exp(-s * s * 10.0) * 0.025;
 
     // warm light when the golden thread touches it (stronger on the border than the photo)
-    col += vec3(1.0, 0.72, 0.38) * vState.y * mix(0.16, 0.05, inPhoto);
+    col += vec3(1.0, 0.72, 0.38) * vState.y * 0.16 * (1.0 - inPhoto);
 
     // turning into light: the print warms, brightens and condenses into a star
-    col = mix(col, vec3(1.0, 0.9, 0.7), smoothstep(0.0, 0.75, light) * 0.9);
+    col = mix(col, vec3(1.0, 0.86, 0.6) * (1.0 + 0.25 * light), smoothstep(0.05, 0.7, light) * 0.92);
     float a = inside * op;
     gl_FragColor = vec4(col * a, a);
   }
@@ -94,7 +94,7 @@ const HALO_FRAG = /* glsl */ `
     float od = max(sdBox(vP, hb, min(hb.x, hb.y) * 0.06), 0.0);
     float fall = vPad * 0.3;
     float g = exp(-od / fall) * (1.0 - smoothstep(vPad * 0.5, vPad, od));
-    float a = g * vState.x * (0.12 + 0.42 * vState.y) * (1.0 - smoothstep(0.15, 0.8, vState.z)) * uIntensity;
+    float a = g * vState.x * (0.06 + 0.24 * vState.y + 0.5 * vState.z) * (1.0 - smoothstep(0.6, 0.95, vState.z)) * uIntensity;
     vec3 col = mix(vec3(1.0, 0.58, 0.26), vec3(1.0, 0.86, 0.62), exp(-od / (fall * 0.45)));
     gl_FragColor = vec4(col * a, a);
   }
@@ -120,11 +120,12 @@ const STAR_FRAG = /* glsl */ `
   void main() {
     vec2 q = gl_PointCoord - 0.5;
     float d = length(q) * 2.0;
-    float core = exp(-d * d * 60.0);
-    float halo = exp(-d * d * 7.0) * 0.3;
-    float rays = (exp(-abs(q.x) * 140.0) * exp(-abs(q.y) * 7.0) + exp(-abs(q.y) * 140.0) * exp(-abs(q.x) * 7.0)) * 0.5;
-    float a = (core + halo + rays * 0.55) * vA * (1.0 - smoothstep(0.8, 1.0, d));
-    vec3 col = mix(vec3(1.0, 0.7, 0.36), vec3(1.0, 0.97, 0.88), clamp(core * 1.4, 0.0, 1.0));
+    float core = exp(-d * d * 110.0);
+    float glow = exp(-d * d * 16.0) * 0.5;
+    float halo = exp(-d * d * 3.6) * 0.14;
+    float rays = (exp(-abs(q.x) * 110.0) * exp(-abs(q.y) * 6.5) + exp(-abs(q.y) * 110.0) * exp(-abs(q.x) * 6.5)) * 0.42;
+    float a = (core + glow + halo + rays) * vA * (1.0 - smoothstep(0.82, 1.0, d));
+    vec3 col = mix(vec3(1.0, 0.68, 0.34), vec3(1.0, 0.97, 0.9), clamp(core * 1.2 + glow * 0.5, 0.0, 1.0));
     gl_FragColor = vec4(col * a, a);
   }
 `;
@@ -156,7 +157,7 @@ const MOTE_FRAG = /* glsl */ `
  * Draw every photo (thumbUrl) into one atlas canvas of square cells (`cell` px,
  * shrunk to fit `maxSize`). The photo keeps its aspect (its `ratio`); if the image
  * file differs, a focal-point crop window is used.
- * Resolves { texture, rects[], canvas } (rects[k] = { u0, v0, du, dv, ok }).
+ * Resolves { texture, rects[] } (rects[k] = { u0, v0, du, dv, ok }).
  */
 export async function buildAtlas(photos, { cell = 320, maxSize = 4096, preload, timeout = 9 } = {}) {
   const n = Math.max(1, photos.length);
@@ -219,7 +220,12 @@ export async function buildAtlas(photos, { cell = 320, maxSize = 4096, preload, 
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
   texture.anisotropy = 4;
-  return { texture, rects, canvas };
+  // once it is on the GPU, let the (large) 2D canvas go
+  texture.onUpdate = () => {
+    texture.onUpdate = null;
+    canvas.width = canvas.height = 1;
+  };
+  return { texture, rects };
 }
 
 /**
@@ -252,7 +258,7 @@ export function createCards({ count, device = {}, motes = 0 }) {
     uniforms: cardU, vertexShader: CARD_VERT, fragmentShader: CARD_FRAG,
     transparent: true, premultipliedAlpha: true, depthWrite: true, depthTest: true, side: THREE.DoubleSide,
   });
-  const haloU = { uPad: { value: 0.85 }, uZ: { value: -0.03 }, uIntensity: { value: 1 } };
+  const haloU = { uPad: { value: 0.62 }, uZ: { value: -0.03 }, uIntensity: { value: 1 } };
   const haloMat = new THREE.ShaderMaterial({
     uniforms: haloU, vertexShader: CARD_VERT, fragmentShader: HALO_FRAG,
     transparent: true, premultipliedAlpha: true, depthWrite: false, depthTest: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,

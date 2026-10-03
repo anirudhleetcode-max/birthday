@@ -13,6 +13,7 @@ const VERT = /* glsl */ `
   attribute float aS;       // arc length (world units)
   attribute float aStrand;  // 0 core · 1, 2 side strands · 3 glow
   attribute float aEnv;     // how far the side strands part (0 = gathered)
+  attribute float aW;       // width factor (narrower through sharp corners, so the glow never folds)
   uniform float uTime;
   uniform float uWidth;
   uniform float uViewScale;
@@ -42,7 +43,7 @@ const VERT = /* glsl */ `
     float sl = length(sv);
     sv = sl > 1e-5 ? sv / sl : vec3(1.0, 0.0, 0.0);
     float glow = step(2.5, aStrand);
-    float w = uWidth * uSwell * (glow > 0.5 ? uGlowW : side > 0.5 ? 0.62 : 1.0);
+    float w = uWidth * uSwell * (glow > 0.5 ? uGlowW * aW : (side > 0.5 ? 0.62 : 1.0) * mix(1.0, aW, 0.5));
     float px = w * uViewScale / max(-mv.z, 0.05);
     float grow = glow > 0.5 ? 1.0 : max(1.0, uMinPx / max(px, 1e-4));
     vFade = 1.0 / grow;
@@ -106,6 +107,7 @@ export function createThread({ segments = 260, width = 0.04, color = '#ffd98a', 
   const tan = new Float32Array(V * 3);
   const env = new Float32Array(V);
   const arc = new Float32Array(V);
+  const wid = new Float32Array(V);
   const side = new Float32Array(V);
   const tt = new Float32Array(V);
   const strand = new Float32Array(V);
@@ -124,10 +126,12 @@ export function createThread({ segments = 260, width = 0.04, color = '#ffd98a', 
   const tanA = new THREE.BufferAttribute(tan, 3).setUsage(THREE.DynamicDrawUsage);
   const envA = new THREE.BufferAttribute(env, 1).setUsage(THREE.DynamicDrawUsage);
   const arcA = new THREE.BufferAttribute(arc, 1).setUsage(THREE.DynamicDrawUsage);
+  const widA = new THREE.BufferAttribute(wid, 1).setUsage(THREE.DynamicDrawUsage);
   geo.setAttribute('position', posA);
   geo.setAttribute('aTan', tanA);
   geo.setAttribute('aEnv', envA);
   geo.setAttribute('aS', arcA);
+  geo.setAttribute('aW', widA);
   geo.setAttribute('aSide', new THREE.BufferAttribute(side, 1));
   geo.setAttribute('aT', new THREE.BufferAttribute(tt, 1));
   geo.setAttribute('aStrand', new THREE.BufferAttribute(strand, 1));
@@ -166,6 +170,11 @@ export function createThread({ segments = 260, width = 0.04, color = '#ffd98a', 
   const T = new THREE.Vector3();
   const E = new Float32Array(M);
   const L = new Float32Array(M);
+  const WF = new Float32Array(M);
+  const dA = new THREE.Vector3();
+  const dB = new THREE.Vector3();
+  const K = 4; // corner window (samples)
+  const at = (j) => P[((j % (M - 1)) + (M - 1)) % (M - 1)];
 
   function set(curve, envFn) {
     for (let j = 0; j < M; j++) curve(j / (M - 1), P[j]);
@@ -174,6 +183,15 @@ export function createThread({ segments = 260, width = 0.04, color = '#ffd98a', 
       if (j) acc += P[j].distanceTo(P[j - 1]);
       L[j] = acc;
       E[j] = envFn ? envFn(j / (M - 1)) : 0.5;
+    }
+    for (let j = 0; j < M; j++) {
+      // how sharply the loop turns here (heart tip, the dip between the lobes)
+      dA.subVectors(at(j), at(j - K));
+      dB.subVectors(at(j + K), at(j));
+      const la = dA.length();
+      const lb = dB.length();
+      const c = la > 1e-6 && lb > 1e-6 ? 1 - dA.dot(dB) / (la * lb) : 0;
+      WF[j] = 1 / (1 + c * 7);
     }
     for (let j = 0; j < M; j++) {
       // closed loop: the neighbours of the seam are on the other side
@@ -189,10 +207,11 @@ export function createThread({ segments = 260, width = 0.04, color = '#ffd98a', 
           tan[i3] = T.x; tan[i3 + 1] = T.y; tan[i3 + 2] = T.z;
           env[v + k] = E[j];
           arc[v + k] = L[j];
+          wid[v + k] = WF[j];
         }
       }
     }
-    posA.needsUpdate = tanA.needsUpdate = envA.needsUpdate = arcA.needsUpdate = true;
+    posA.needsUpdate = tanA.needsUpdate = envA.needsUpdate = arcA.needsUpdate = widA.needsUpdate = true;
   }
 
   let head = 0;

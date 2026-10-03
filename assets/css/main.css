@@ -168,7 +168,13 @@ img { -webkit-user-drag: none; user-select: none; }
   animation: goldshift 6s ease-in-out infinite alternate;
   padding: 0 .1em;
 }
-#chapter-card .cc-title .ch { display: inline-block; }
+/* animated letters get their own gold (background-clip on the parent can't paint into transformed children) */
+#chapter-card .cc-title .ch {
+  display: inline-block; color: transparent;
+  background: linear-gradient(176deg, #fff4d6 0%, #ffe3a3 30%, #f4c463 62%, #d39a39 100%);
+  -webkit-background-clip: text; background-clip: text;
+  padding: 0 .02em;
+}
 #chapter-card svg.cc-orn { width: min(320px, 70vw); height: 28px; overflow: visible; }
 @keyframes goldshift { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
 

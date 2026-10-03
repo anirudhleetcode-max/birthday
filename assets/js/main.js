@@ -154,7 +154,7 @@ function updateProgress() {
   });
 }
 
-function makeCtx(def, ac) {
+function makeCtx(def, ac, incoming) {
   const { store, audio, fx, ui, eggs } = app;
   let nexted = false;
   const ctx = {
@@ -186,6 +186,8 @@ function makeCtx(def, ac) {
     device,
     theme: store.site.settings.theme || {},
     signal: ac.signal,
+    /** Where the previous chapter's light ended ({x, y, color, kind, from}) — for seamless 'none' transitions. */
+    incoming: incoming || null,
     wait: (s) => sleep(s, ac.signal),
     letterbox,
     grade: setGrade,
@@ -219,6 +221,8 @@ async function goTo(index, { instant = false } = {}) {
     return;
   }
 
+  const handoff = app.handoff;
+  app.handoff = null;
   const swap = async () => {
     const prev = app.current;
     if (prev) {
@@ -236,7 +240,7 @@ async function goTo(index, { instant = false } = {}) {
     el.setAttribute('aria-label', def.title || def.id);
     document.getElementById('stage').appendChild(el);
     const ac = new AbortController();
-    const ctx = makeCtx(def, ac);
+    const ctx = makeCtx(def, ac, handoff);
     app.ui.setSignal(ac.signal);
     app.current = { def, mod, el, ac, ctx };
     app.index = index;
@@ -250,8 +254,6 @@ async function goTo(index, { instant = false } = {}) {
     preloadChapter(app.list[index + 1]);
   };
 
-  const handoff = app.handoff;
-  app.handoff = null;
   // the owner can switch the decorative golden ribbon off (admin → Theme)
   const via = def.via === 'ribbon' && app.store.site.settings.theme?.ribbon === false ? 'glow' : def.via;
   if (instant || via === 'none') {

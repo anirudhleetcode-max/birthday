@@ -133,8 +133,8 @@ export function createSecret({ name, device = {}, host, onFound } = {}) {
     const breathe = Math.exp(-Math.pow((ph - 0.5) / 0.11, 2));
     const f = st.fade;
     if (!found) {
-      lineMat.opacity = (0.055 + 0.12 * breathe) * f;
-      U.uBright.value = (0.62 + 0.3 * breathe) * f;
+      lineMat.opacity = (0.016 + 0.05 * breathe) * f;
+      U.uBright.value = (0.42 + 0.22 * breathe) * f;
     } else {
       lineMat.opacity = st.line * f;
       U.uBright.value = (0.95 + 0.2 * U.uFlare.value) * f;

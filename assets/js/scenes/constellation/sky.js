@@ -37,7 +37,7 @@ const STAR_VERT = /* glsl */ `
     vA = aStar.y * tw * uFade;
     vWarm = aStar.w;
     vRay = step(0.82, aStar.y);
-    gl_PointSize = aStar.x * uPr * (vRay > 0.5 ? 3.2 : 1.6);
+    gl_PointSize = aStar.x * uPr * (vRay > 0.5 ? 2.6 : 1.5);
     gl_Position = projectionMatrix * mv;
   }
 `;
@@ -50,10 +50,10 @@ const STAR_FRAG = /* glsl */ `
     float d = length(q) * 2.0;
     float k = vRay > 0.5 ? 2.0 : 1.0;      // bright stars: a wider sprite with hair-thin rays
     float core = exp(-d * d * 26.0 * k * k);
-    float halo = exp(-d * d * 6.0 * k) * 0.22;
+    float halo = exp(-d * d * 9.0 * k) * 0.12;
     float rays = vRay * (exp(-abs(q.x) * 160.0) * exp(-abs(q.y) * 9.0) + exp(-abs(q.y) * 160.0) * exp(-abs(q.x) * 9.0)) * 0.35;
     float a = (core + halo + rays) * vA * (1.0 - smoothstep(0.85, 1.0, d));
-    vec3 col = mix(vec3(0.84, 0.88, 1.0), vec3(1.0, 0.86, 0.62), vWarm);
+    vec3 col = mix(vec3(0.86, 0.9, 1.0), vec3(1.0, 0.9, 0.74), vWarm);
     col = mix(col, vec3(1.0), core * 0.5);
     gl_FragColor = vec4(col * a, a);
   }
@@ -111,7 +111,7 @@ export function createSky({ device = {}, count } = {}) {
     pos[i * 3 + 2] = z;
     const b = Math.random();
     const bright = b > 0.965 ? 0.95 : b > 0.85 ? 0.62 : 0.16 + Math.random() * 0.36;
-    star[i * 4] = 1.1 + Math.random() * 1.2 + (bright > 0.9 ? 1.4 : 0);
+    star[i * 4] = 1.1 + Math.random() * 1.1 + (bright > 0.9 ? 0.9 : 0);
     star[i * 4 + 1] = bright;
     star[i * 4 + 2] = Math.random();
     star[i * 4 + 3] = Math.random() < 0.28 ? 0.6 + Math.random() * 0.4 : Math.random() * 0.25;

@@ -63,30 +63,37 @@ export function createHeart(samples = 900) {
   return { at, normal, length: total, height: (maxY - minY) / w };
 }
 
-/** Periodic Catmull-Rom interpolation of values v[k] placed at u = (k + 0.5) / n (u periodic). */
+const dist = (a, b) => Math.max(1e-4, Math.sqrt(Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z)));
+// Barry–Goldman pyramid for one coordinate (knots 0, t1, t2, t3)
+function cr(a, b, c, d, t1, t2, t3, t) {
+  const a1 = a + (b - a) * (t / t1);
+  const a2 = b + (c - b) * ((t - t1) / (t2 - t1));
+  const a3 = c + (d - c) * ((t - t2) / (t3 - t2));
+  const b1 = a1 + (a2 - a1) * (t / t2);
+  const b2 = a2 + (a3 - a2) * ((t - t1) / (t3 - t1));
+  return b1 + (b2 - b1) * ((t - t1) / (t2 - t1));
+}
+
+/**
+ * Periodic centripetal Catmull-Rom interpolation of values v[k] placed at u = (k + 0.5) / n (u periodic).
+ * Centripetal (α = ½) never overshoots into little loops when neighbours are unevenly spaced.
+ */
 export function periodicInterp(values, u, out) {
   const n = values.length;
   if (!n) return out;
   if (n === 1) return out.copy(values[0]);
   const f = (u - Math.floor(u)) * n - 0.5;
   const i1 = Math.floor(f);
-  const t = f - i1;
+  const s = f - i1;
   const idx = (i) => ((i % n) + n) % n;
   const p0 = values[idx(i1 - 1)];
   const p1 = values[idx(i1)];
   const p2 = values[idx(i1 + 1)];
   const p3 = values[idx(i1 + 2)];
-  const t2 = t * t;
-  const t3 = t2 * t;
-  // uniform Catmull-Rom
-  const c0 = -0.5 * t3 + t2 - 0.5 * t;
-  const c1 = 1.5 * t3 - 2.5 * t2 + 1;
-  const c2 = -1.5 * t3 + 2 * t2 + 0.5 * t;
-  const c3 = 0.5 * t3 - 0.5 * t2;
-  out.set(
-    p0.x * c0 + p1.x * c1 + p2.x * c2 + p3.x * c3,
-    p0.y * c0 + p1.y * c1 + p2.y * c2 + p3.y * c3,
-    p0.z * c0 + p1.z * c1 + p2.z * c2 + p3.z * c3,
-  );
+  const t1 = dist(p0, p1);
+  const t2 = t1 + dist(p1, p2);
+  const t3 = t2 + dist(p2, p3);
+  const t = t1 + (t2 - t1) * s;
+  out.set(cr(p0.x, p1.x, p2.x, p3.x, t1, t2, t3, t), cr(p0.y, p1.y, p2.y, p3.y, t1, t2, t3, t), cr(p0.z, p1.z, p2.z, p3.z, t1, t2, t3, t));
   return out;
 }

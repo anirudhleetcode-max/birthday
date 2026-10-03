@@ -49,6 +49,8 @@ export function createReveal(el, photo, { device = {}, signal } = {}) {
   let fs = 32;
   let text = '';
   let handLines = [];
+  let written = false;
+  let disposed = false;
 
   const measure = document.createElement('canvas').getContext('2d');
   function wrapText(str, maxW) {
@@ -105,7 +107,10 @@ export function createReveal(el, photo, { device = {}, signal } = {}) {
     dust.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
     point.style.left = `${W / 2}px`;
     point.style.top = `${H / 2}px`;
-    if (handLines.length && text) buildHand();
+    if (handLines.length && text) {
+      buildHand();
+      if (written) hand.querySelectorAll('.cn-hand-row').forEach((r) => r.style.setProperty('--p', '99999px'));
+    }
   }
 
   /** Appear: alone, large, softly lit; a slow push-in. */
@@ -117,6 +122,7 @@ export function createReveal(el, photo, { device = {}, signal } = {}) {
       ]);
     }
     try { await img.decode(); } catch { /* fine */ }
+    if (disposed) return;
     root.classList.add('on');
     keep(gsap.fromTo(light, { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: reduced ? 1.4 : 3.2, ease: 'sine.out' }));
     keep(gsap.fromTo(fig, { opacity: 0, scale: reduced ? 1 : 0.965, filter: 'blur(10px) brightness(0.6)' },
@@ -129,7 +135,10 @@ export function createReveal(el, photo, { device = {}, signal } = {}) {
     const portrait = H > W * 1.05;
     handLines = wrapText(text, Math.min(W * 0.86, portrait ? W * 0.86 : 640));
     hand.textContent = '';
-    hand.setAttribute('aria-label', text);
+    const sr = document.createElement('span');
+    sr.className = 'cn-sr';
+    sr.textContent = text;
+    hand.appendChild(sr);
     handLines.forEach((ln) => {
       const row = document.createElement('span');
       row.className = 'cn-hand-row';
@@ -142,9 +151,12 @@ export function createReveal(el, photo, { device = {}, signal } = {}) {
   }
 
   /** The line writes itself, pen-speed: quick strokes, little pauses between words, a breath at the comma. */
-  function write(str) {
+  async function write(str) {
     text = String(str || '').trim();
-    if (!text) return Promise.resolve();
+    if (!text) return;
+    // the canvas measures with the real script, so the pen follows the letters exactly
+    try { await Promise.race([document.fonts.load(`400 ${fs}px Caveat`), new Promise((r) => setTimeout(r, 1500))]); } catch { /* fallback font */ }
+    if (disposed) return;
     buildHand();
     measure.font = `400 ${fs}px Caveat, 'Bradley Hand', cursive`;
     const rows = [...hand.querySelectorAll('.cn-hand-row')];
@@ -174,7 +186,7 @@ export function createReveal(el, photo, { device = {}, signal } = {}) {
     const total = time;
     hand.classList.add('on');
     rows.forEach((r) => r.style.setProperty('--p', '0px'));
-    return new Promise((resolve) => {
+    await new Promise((resolve) => {
       const t0 = performance.now();
       let k = 0;
       const step = () => {
@@ -194,6 +206,7 @@ export function createReveal(el, photo, { device = {}, signal } = {}) {
         if (t < total + 0.1) raf = requestAnimationFrame(step);
         else {
           rows.forEach((row) => { row.style.setProperty('--p', '99999px'); row.classList.remove('writing'); });
+          written = true;
           resolve();
         }
       };
@@ -243,7 +256,7 @@ export function createReveal(el, photo, { device = {}, signal } = {}) {
     const fy0 = rect.top - host.top;
     const fw = rect.width;
     const fh = rect.height;
-    const cols = tier === 'low' ? 26 : tier === 'mid' ? 40 : 54;
+    const cols = tier === 'low' ? 20 : tier === 'mid' ? 28 : 36;
     const rowsN = Math.max(8, Math.round(cols / (fw / fh)));
     const data = sample(cols, rowsN);
     const cellW = fw / cols;
@@ -252,21 +265,28 @@ export function createReveal(el, photo, { device = {}, signal } = {}) {
     const parts = [];
     for (let j = 0; j < rowsN; j++) {
       for (let i = 0; i < cols; i++) {
-        const x = fx0 + (i + 0.5) * cellW;
-        const y = fy0 + (j + 0.5) * cellH;
+        // jittered, so the dust never shows the grid it was sampled on
+        const x = fx0 + (i + 0.5 + (Math.random() - 0.5) * 0.9) * cellW;
+        const y = fy0 + (j + 0.5 + (Math.random() - 0.5) * 0.9) * cellH;
         const nx = ((i + 0.5) / cols) * 2 - 1;
         const ny = ((j + 0.5) / rowsN) * 2 - 1;
         const rr = Math.hypot(nx, ny);
         const o = (j * cols + i) * 4;
         const col = data ? [data[o], data[o + 1], data[o + 2]] : GOLD;
+        // the colour on its way to gold, in a few cached steps (no string building per frame)
+        const steps = [];
+        for (let k = 0; k <= 5; k++) {
+          const e = smooth(0, 1, k / 5);
+          steps.push(`rgb(${(col[0] + (GOLD[0] - col[0]) * e) | 0},${(col[1] + (GOLD[1] - col[1]) * e) | 0},${(col[2] + (GOLD[2] - col[2]) * e) | 0})`);
+        }
         const dist = Math.hypot(cx - x, cy - y);
         parts.push({
-          x0: x, y0: y, col,
+          x0: x, y0: y, steps,
           rel: clamp((1.45 - rr) / 1.45, 0, 1) * FRONT + Math.random() * 0.22,
           dur: 1.25 + Math.random() * 0.75 + dist / Math.max(W, H) * 0.5,
           swirl: (Math.random() < 0.5 ? -1 : 1) * (0.12 + Math.random() * 0.2),
           drift: [(Math.random() - 0.5) * cellW * 3, (Math.random() - 0.5) * cellH * 3 - cellH],
-          r0: Math.max(cellW, cellH) * (0.62 + Math.random() * 0.2),
+          r0: Math.max(cellW, cellH) * (0.4 + Math.random() * 0.45),
         });
       }
     }
@@ -299,15 +319,13 @@ export function createReveal(el, photo, { device = {}, signal } = {}) {
         g.globalCompositeOperation = 'source-over';
         for (const p of parts) {
           const k = (t - p.rel) / p.dur;
-          if (k < 0 || k > 0.32) continue;
-          const e = k / 0.32;
-          const c = p.col;
-          const mix = smooth(0, 1, e);
+          if (k < 0 || k > 0.24) continue;
+          const e = k / 0.24;
           g.globalAlpha = 1 - e * 0.35;
-          g.fillStyle = `rgb(${(c[0] + (GOLD[0] - c[0]) * mix) | 0},${(c[1] + (GOLD[1] - c[1]) * mix) | 0},${(c[2] + (GOLD[2] - c[2]) * mix) | 0})`;
+          g.fillStyle = p.steps[Math.round(e * 5)];
           const x = p.x0 + p.drift[0] * e * 0.4;
           const y = p.y0 + p.drift[1] * e * 0.4;
-          const r = p.r0 * (1 - e * 0.55);
+          const r = p.r0 * (0.62 - e * 0.32);
           g.beginPath();
           g.arc(x, y, r, 0, Math.PI * 2);
           g.fill();
@@ -327,7 +345,8 @@ export function createReveal(el, photo, { device = {}, signal } = {}) {
           const sw = Math.sin(Math.PI * ease) * p.swirl;
           const x = sx + dx * ease - dy * sw;
           const y = sy + dy * ease + dx * sw;
-          const a = smooth(0.12, 0.3, k) * (1 - smooth(0.82, 1, k)) * 0.55;
+          const a = smooth(0.12, 0.3, k) * (1 - smooth(0.82, 1, k)) * 0.62;
+          if (a < 0.015) continue;
           const s = (p.r0 * 1.6) * (1 - ease * 0.75) + 1.5;
           g.globalAlpha = a;
           g.drawImage(sprite, x - s, y - s, s * 2, s * 2);
@@ -359,6 +378,7 @@ export function createReveal(el, photo, { device = {}, signal } = {}) {
     dissolve,
     get box() { return box; },
     dispose() {
+      disposed = true;
       cancelAnimationFrame(raf);
       tweens.forEach((t) => t && t.kill());
       gsap.killTweensOf([fig, light, hand, point]);
