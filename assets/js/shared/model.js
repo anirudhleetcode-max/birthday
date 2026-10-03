@@ -282,6 +282,9 @@ export function validate(site) {
     ids.add(p.id);
     if (!/^\d+(\.\d+)?:\d+(\.\d+)?$/.test(String(p.ratio))) errors.push({ id: p.id, message: `"${p.label || p.id}" has an invalid shape (${p.ratio}).` });
     for (const k of ['src', 'thumb', 'original']) if (p[k] && !safePath(p[k])) errors.push({ id: p.id, message: `"${p.label || p.id}" has an unsafe file path (${k}).` });
+    if (p.src && !/^(blob:|data:image\/)/.test(p.src) && !/\.(jpe?g|png|webp|avif|gif)$/i.test(p.src)) errors.push({ id: p.id, message: `"${p.label || p.id}" is not a web image (JPEG, PNG, WebP or AVIF).` });
+    const c = p.crop;
+    if (c && !(['x', 'y', 'w', 'h'].every((k) => Number.isFinite(c[k])) && c.x >= -0.001 && c.y >= -0.001 && c.w > 0 && c.h > 0 && c.x + c.w <= 1.001 && c.y + c.h <= 1.001)) errors.push({ id: p.id, message: `"${p.label || p.id}" has an invalid crop. Open it and crop it again.` });
   }
   for (const ch of PHOTO_CHAPTERS) {
     const live = photosFor(site, ch.id).filter((p) => p.src);

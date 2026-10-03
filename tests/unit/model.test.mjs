@@ -167,3 +167,39 @@ test('the unlock moment is midnight in India, whatever the viewer’s time zone'
   assert.equal(Date.parse(s.lock.unlockAt), Date.UTC(2027, 0, 2, 18, 30), '3 Jan 2027 00:00 IST = 2 Jan 2027 18:30 UTC');
   assert.equal(daysAlive(loadSite()), 7305);
 });
+
+test('validation: crops, file types, memories, durations, the headline', () => {
+  const site = loadSite();
+  assert.ok(validate(site).ok, 'the shipped content is valid');
+  const p = site.photos[0];
+  p.crop = { x: 0.6, y: 0, w: 0.6, h: 1 };
+  assert.ok(validate(site).errors.some((e) => /invalid crop/.test(e.message)));
+  p.crop = null;
+  p.src = 'photos/hero.heic';
+  assert.ok(validate(site).errors.some((e) => /not a web image/.test(e.message)));
+  p.src = 'photos/hero.webp';
+  p.duration = -3;
+  assert.ok(validate(site).warnings.some((w) => /invalid duration/.test(w.message)));
+  p.duration = null;
+  site.text.story.memories.push({ id: 'met', kind: 'moment', when: 'October 2026', text: 'x' });
+  assert.ok(validate(site).errors.some((e) => /share the id/.test(e.message)));
+  site.text.story.memories.pop();
+  site.text.story.memories.push({ id: 'm-oct', kind: 'moment', when: 'October 2026', text: '' });
+  assert.ok(validate(site).warnings.some((w) => /October 2026 has no words and no photos/.test(w.message)));
+  site.text.birthday.big = ' ';
+  assert.ok(validate(site).errors.some((e) => /birthday headline/.test(e.message)));
+});
+
+test('the story memories are the owner’s four, and every story photo belongs to one', () => {
+  const m = read(FILES.messages);
+  assert.deepEqual(m.story.memories.map((x) => x.id), ['met', 'daily', 'journeys', 'your-day']);
+  const photos = read(FILES.photos).photos.filter((p) => p.chapter === 'story');
+  assert.ok(photos.length >= 8);
+  for (const p of photos) assert.ok(m.story.memories.some((x) => x.id === p.memory), p.id);
+});
+
+test('only Deepu and Kuchu Puchu: no other nickname anywhere in the content', () => {
+  const all = [FILES.settings, FILES.messages, FILES.photos].map((f) => JSON.stringify(read(f))).join(' ');
+  for (const bad of [/pinky/i, /kuchi/i, /kuchu puchi/i]) assert.ok(!bad.test(all), String(bad));
+  assert.deepEqual(read(FILES.settings).her.nicknames, ['Deepu', 'Kuchu Puchu']);
+});
