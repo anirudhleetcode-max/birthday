@@ -289,7 +289,7 @@ class CakeScene {
     this.colors = {
       candle0: new THREE.Color(0xffa24f), candle1: new THREE.Color(0xffb867), gold: new THREE.Color(0xff9c62),
       rimCool: new THREE.Color(0x9aa8ff), rimGold: new THREE.Color(0xffc86e),
-      keyCool: new THREE.Color(0xeee6ff), keyGold: new THREE.Color(0xffd9a8),
+      keyCool: new THREE.Color(0xeee6ff), keyGold: new THREE.Color(0xffc8a6),
       skyCool: new THREE.Color(0x5162b0), skyGold: new THREE.Color(0x5a4a86),
       groundCool: new THREE.Color(0x1c0e08), groundGold: new THREE.Color(0x6a4010),
       shaftCool: new THREE.Color(0.48, 0.48, 1.0), shaftWarm: new THREE.Color(1.0, 0.7, 0.34),
@@ -1221,12 +1221,14 @@ class CakeScene {
     await this.wait(red ? 0.6 : 1.3);
   }
 
-  // The serving shot: the cake behind, the slice on its plate in front. Pull back
-  // just enough that the sun topper and the plate (with the narration under it)
-  // both fit — on a phone, a tablet or a wide desktop.
+  // The serving shot. Wide screens: a low, close shot — the slice on its plate is
+  // the hero, the cut cake behind it, the sun topper above frame. Tall screens:
+  // the cake behind and the slice in front, pulled back just enough that the
+  // sun topper and the plate (with the narration under it) both fit.
   serveShot() {
     const f = this.fit;
-    const base = f.portrait ? { az: 0.98, el: 0.34, tx: 1.3, tz: 0.4 } : { az: 0.48, el: 0.23, tx: 1.0, tz: 0.33 };
+    if (!f.portrait) return { az: 0.55, el: 0.14, tx: 1.6, tz: 0.5, distK: 0.6, ty: -0.7 };
+    const base = { az: 0.98, el: 0.34, tx: 1.3, tz: 0.4 };
     const cam = new THREE.PerspectiveCamera(f.fov, f.aspect, 0.05, 120);
     const top = new THREE.Vector3(0, 3.62, 0);
     const front = new THREE.Vector3(DIM.plateAt.x, 0.05, DIM.plateAt.z + 0.68);

@@ -245,7 +245,7 @@ export function buildTable({ lowPower = false, quality = 2, anisotropy = 4, shad
   const wood = woodTexture(lowPower ? 512 : 1024);
   wood.anisotropy = anisotropy;
   const mat = quality >= 2
-    ? new THREE.MeshPhysicalMaterial({ map: wood, color: 0x9a6a64, roughness: 0.6, metalness: 0, clearcoat: 0.25, clearcoatRoughness: 0.3 })
+    ? new THREE.MeshPhysicalMaterial({ map: wood, color: 0x9a6a64, roughness: 0.6, metalness: 0, clearcoat: 0.18, clearcoatRoughness: 0.3 })
     : new THREE.MeshStandardMaterial({ map: wood, color: 0x9a6a64, roughness: 0.58, metalness: 0 });
   mat.userData.env = 0.4; // keep the dark wood dark; its sheen comes from the lights
   // Neutral tone mapping strips the blue out of dark warm tones (walnut → olive);

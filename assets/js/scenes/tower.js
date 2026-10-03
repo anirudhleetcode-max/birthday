@@ -64,7 +64,7 @@ export default {
     const Hwall = 1.32 * VH;
     let ts = S * (low ? 1 : device.tier === 'mid' ? Math.min(dpr, 1.6) : dpr);
     ts = Math.min(ts, 1100 / bayW, 2300 / Hwall);
-    const spb = low ? 4 : 6;
+    const spb = low ? 4 : 5;
     const NS = NB * spb;
     const sw = circ / NS;
     const bayAngle = (j) => angleOfU((j + 0.5) * bayW, circ);
@@ -262,7 +262,7 @@ export default {
       const node = document.createElement('div');
       node.className = `tw-art fr${(s.i + (s.small ? 1 : 0)) % 3}${s.small ? ' small' : ''}`;
       node.style.setProperty('--fw', `${s.fw}px`);
-      node.innerHTML = `<div class="tw-art-in"><img class="tw-img" alt="${esc(p.alt)}" decoding="async" style="object-position:${p.objectPosition}"></div>`;
+      node.innerHTML = `<div class="tw-art-in"><img class="tw-img" alt="${esc(p.alt)}" decoding="async" style="object-position:${esc(p.objectPosition)}"></div>`;
       place(node, { a, r, w: s.w, h: s.h, y: s.f * VH });
       const img = node.querySelector('img');
       img.src = p.url;
@@ -480,6 +480,8 @@ export default {
     const degPerPx = () => 45 / (Bw * view.k) * 0.95;
     const down = (e) => {
       if (!look.on) return;
+      look.idleSince = performance.now();
+      if (e.target.closest && e.target.closest('.tw-pan')) return; // a tap on the pan is a tap, not a drag
       look.dragging = true;
       look.lastX = e.clientX;
       look.lastT = performance.now();

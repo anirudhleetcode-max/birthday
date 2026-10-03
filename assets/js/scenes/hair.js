@@ -318,7 +318,7 @@ export default {
     await ui.chapterCard(t.kicker || 'Chapter Two', t.title || 'The Golden Thread');
 
     const lines = t.lines || [];
-    const narration = (async () => {
+    (async () => {
       await ctx.wait(0.6);
       say(lines.slice(0, 1));
       await until(() => !camEnd || cam.x / camEnd > 0.3);
@@ -326,7 +326,6 @@ export default {
       await until(() => !camEnd || cam.x / camEnd > 0.6);
       say(lines.slice(2));
     })().catch(() => {});
-    void narration;
 
     if (heroIndex >= 0) {
       await travelTo(heroCamX, 'power1.inOut');

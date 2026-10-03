@@ -128,6 +128,13 @@ export function createMockCtx({ site, root }) {
     context: null,
   };
 
+  const foundEggs = new Set();
+  const eggs = {
+    found(id, message) { const isNew = !foundEggs.has(id); foundEggs.add(id); log('eggs.found', id, isNew, message); if (isNew) eggs.toast(message || id); return isNew; },
+    has: (id) => foundEggs.has(id),
+    toast(text) { const t = document.createElement('div'); t.className = 'mk-hint egg-toast'; t.style.bottom = 'auto'; t.style.top = '18px'; t.style.whiteSpace = 'normal'; t.style.maxWidth = '88vw'; t.style.textAlign = 'center'; t.textContent = `✦ ${text}`; document.body.appendChild(t); setTimeout(() => t.remove(), 4500); },
+  };
+
   const coarse = matchMedia('(pointer: coarse)').matches;
   const device = {
     mobile: q.has('mobile') || coarse || innerWidth < 760,
@@ -141,7 +148,7 @@ export function createMockCtx({ site, root }) {
   const ctx = {
     site, text: site.text,
     photo: (id) => ({ id, url: '', ratio: 1, ratioStr: '1/1', caption: '', isPlaceholder: true }),
-    gsap: window.gsap, audio, fx, ui,
+    gsap: window.gsap, audio, fx, ui, eggs,
     next(info) { log('ctx.next() — chapter finished', info ? JSON.stringify(info) : ''); window.__nextCalled = true; window.__nextInfo = info || null; },
     handoff(info) { log('ctx.handoff', JSON.stringify(info)); },
     grade(name) { log('ctx.grade', name); },

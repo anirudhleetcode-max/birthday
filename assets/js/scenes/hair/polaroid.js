@@ -10,9 +10,9 @@ export function polaroidHTML(p) {
   const date = String(p.date || '').trim();
   return `
     <div class="hr-pol">
-      <div class="hr-ph" style="aspect-ratio:${(p.ratio || 0.75).toFixed(4)}">
-        <img class="hr-gray" alt="" aria-hidden="true" decoding="async" src="${esc(p.thumbUrl || p.url)}" style="object-position:${p.objectPosition}">
-        <img class="hr-col" alt="${esc(p.alt)}" decoding="async" src="${esc(p.url)}" style="object-position:${p.objectPosition}">
+      <div class="hr-ph" style="aspect-ratio:${Number(p.ratio || 0.75).toFixed(4)}">
+        <img class="hr-gray" alt="" aria-hidden="true" decoding="async" src="${esc(p.thumbUrl || p.url)}" style="object-position:${esc(p.objectPosition)}">
+        <img class="hr-col" alt="${esc(p.alt)}" decoding="async" src="${esc(p.url)}" style="object-position:${esc(p.objectPosition)}">
         <div class="hr-chem"></div>
       </div>
       <div class="hr-cap">${cap ? `<span class="hr-capt">${esc(cap)}</span>` : ''}${date ? `<span class="hr-date">${esc(date)}</span>` : ''}</div>
