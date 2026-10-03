@@ -31,7 +31,10 @@ fs.mkdirSync(out, { recursive: true });
   page.on('console', (m) => { if (['error', 'warning'].includes(m.type())) log.push(`[${m.type()}] ${m.text()}`); });
   page.on('pageerror', (e) => log.push(`[pageerror] ${e.message}`));
   page.on('requestfailed', (r) => log.push(`[requestfailed] ${r.url()} ${r.failure()?.errorText}`));
-  const url = `http://localhost:${port}/index.html?preview${scene ? `&scene=${scene}` : ''}${extra}`;
+  // --scene gate shows the real countdown (no ?preview, so the lock applies)
+  const url = scene === 'gate'
+    ? `http://localhost:${port}/index.html?${extra.slice(1)}`
+    : `http://localhost:${port}/index.html?preview${scene ? `&scene=${scene}` : ''}${extra}`;
   await page.goto(url);
   // SwiftShader frames can take seconds; without this GSAP lag-smoothing freezes tweens in screenshots
   await page.waitForFunction(() => !!window.gsap).then(() => page.evaluate(() => window.gsap.ticker.lagSmoothing(0))).catch(() => {});
