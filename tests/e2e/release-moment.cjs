@@ -48,6 +48,37 @@ const ok = (cond, msg) => { console.log(`  ${cond ? 'ok  ' : 'FAIL'} ${msg}`); i
     ok(!errors.length, `no console errors${errors.length ? `: ${errors[0]}` : ''}`);
     await context.close();
   }
+
+  // edge cases: opening the link at / after the moment, days before it, and refreshing
+  const open = async (at, tz = 'America/New_York') => {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, timezoneId: tz });
+    const page = await context.newPage();
+    await page.clock.install({ time: new Date(at) });
+    await page.goto(`http://localhost:${PORT}/index.html`);
+    await page.clock.resume();
+    await page.waitForSelector('#stage .scene', { timeout: 45000 });
+    await page.waitForTimeout(2500);
+    return { context, page, scene: await page.evaluate(() => document.querySelector('#stage .scene').className) };
+  };
+  console.log('\n▸ edge cases');
+  for (const [label, at] of [['exactly 00:00:00 IST', UNLOCK], ['one second after', UNLOCK + 1000], ['an hour after', UNLOCK + 3600e3], ['a week after', UNLOCK + 7 * 864e5]]) {
+    const { context, scene } = await open(at);
+    ok(/scene-invite/.test(scene), `opened ${label}: no countdown, the invitation (${scene.replace('scene ', '')})`);
+    await context.close();
+  }
+  {
+    const { context, page, scene } = await open(UNLOCK - 3 * 864e5 - 5 * 3600e3 - 30 * 60e3, 'Asia/Kolkata');
+    const label = await page.evaluate(() => (document.querySelector('#stage .scene-gate [aria-label*="to go"]') || {}).getAttribute?.('aria-label') || '');
+    ok(/scene-gate/.test(scene) && /^3 days, 5 hours and (29|30) minutes to go$/.test(label), `3 days 5½ hours before: “${label}”`);
+    await page.reload();
+    await page.waitForSelector('#stage .scene-gate', { timeout: 45000 });
+    await page.waitForTimeout(2000);
+    const after = await page.evaluate(() => (document.querySelector('#stage .scene-gate [aria-label*="to go"]') || {}).getAttribute?.('aria-label') || '');
+    ok(/^3 days, 5 hours and (2[789]|30) minutes/.test(after), `refresh keeps counting from the real time (“${after}”)`);
+    const digits = await page.evaluate(() => document.querySelector('#stage .scene-gate').innerText);
+    ok(!/-\d/.test(digits), 'no negative numbers on the countdown');
+    await context.close();
+  }
   await browser.close();
   console.log(failed ? `\n✗ ${failed} check(s) failed` : '\n✓ the release moment is midnight in India, in every time zone');
   process.exit(failed ? 1 : 0);

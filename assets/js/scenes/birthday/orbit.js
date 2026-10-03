@@ -113,11 +113,14 @@ export function createOrbit(container, photos, { device = {} } = {}) {
   }
 
   /** Bring them back one by one (front ones first). */
-  function show({ stagger = 0.09, duration = 1.6 } = {}) {
+  /** Reveal the photographs in film order. `slowing`: quick at first, the last ones take their time. */
+  function show({ stagger = 0.09, duration = 1.6, slowing = false } = {}) {
     const g = window.gsap;
-    const order = items.slice().sort((a, b) => Math.sin(b.theta) - Math.sin(a.theta));
-    order.forEach((it, k) => g.to(it, { appear: 1, duration: reduced ? 1.2 : duration, delay: k * (reduced ? stagger * 0.5 : stagger), ease: 'power2.out' }));
-    return order.length * stagger + duration;
+    const n = items.length;
+    const span = stagger * Math.max(0, n - 1) * (slowing ? 1.6 : 1);
+    const at = (k) => (reduced ? k * stagger * 0.5 : slowing ? span * (k / Math.max(1, n - 1)) ** 1.6 : k * stagger);
+    items.forEach((it, k) => g.to(it, { appear: 1, duration: reduced ? 1.2 : duration * (slowing ? 1 + k / Math.max(1, n - 1) : 1), delay: at(k), ease: 'power2.out' }));
+    return at(n - 1) + duration * (slowing ? 2 : 1);
   }
 
   function set(o = {}) {

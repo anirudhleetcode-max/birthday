@@ -197,10 +197,15 @@ function build(ctx, el) {
 
   /* ---------------------------------------------------------------- photos */
   const pool = photoPool(ctx);
-  const PL_MAX = Math.min(pool.length, { high: 7, mid: 5, low: 3 }[tier] || 5);
+  // the last photographs: her featured ones circle the title (in film order); the photo-lanterns
+  // that rise before it are other photos, one chapter after another, so nothing repeats back to back
+  const featuredPool = pool.filter((p) => p.featured);
+  const otherPool = pool.filter((p) => !p.featured);
+  const lanternPool = otherPool.length >= 3 ? otherPool : pool;
+  const PL_MAX = Math.min(lanternPool.length, { high: 7, mid: 5, low: 3 }[tier] || 5);
   // a calm last frame: her best photographs (featured and special ones first), not all of them
   const ORBIT_MAX = { high: 14, mid: 12, low: 9 }[tier] || 12;
-  const orbitPhotos = pool.slice(0, ORBIT_MAX);
+  const orbitPhotos = [...featuredPool, ...otherPool.filter((p) => !lanternPool.slice(0, PL_MAX).includes(p))].slice(0, ORBIT_MAX);
   for (const p of orbitPhotos) ctx.preload(p.thumbUrl || p.url); // warm the cache for the last beat
 
   /* ---------------------------------------------------------------- loop */
@@ -522,7 +527,7 @@ function build(ctx, el) {
     const portrait = H > W;
     for (let k = 0; k < PL_MAX; k++) {
       if (disposed) return;
-      const photo = pool[k];
+      const photo = lanternPool[k];
       const pl = createPhotoLantern(photo, { size: 4.4, device });
       let ok = false;
       try {
@@ -793,7 +798,7 @@ function build(ctx, el) {
     updateZones();
     await wait(reduced ? 1.4 : 2.4);
     sfx('shimmer');
-    const d = orbit.show({ stagger: Math.min(0.12, 3 / orbitPhotos.length) });
+    const d = orbit.show({ stagger: Math.min(0.32, 4.2 / orbitPhotos.length), slowing: true }); // each a little later than the last
     await wait(Math.min(d, 4) + (reduced ? 4 : 7));
   }
 

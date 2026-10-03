@@ -274,7 +274,7 @@
       "date": "",
       "alt": "Deepu on a lawn holding roses",
       "enabled": true,
-      "featured": false,
+      "featured": true,
       "heroHair": false,
       "grade": {
         "strength": null,
@@ -442,7 +442,7 @@
       "date": "",
       "alt": "Deepu by a window on a journey",
       "enabled": true,
-      "featured": false,
+      "featured": true,
       "heroHair": false,
       "grade": {
         "strength": null,
