@@ -28,7 +28,7 @@
 }
 .hg-heart.is-holding .hg-shape { animation: hg-beat .62s ease-in-out infinite; }
 @keyframes hg-beat { 0%, 100% { transform: scale(1); } 22% { transform: scale(1.06); } 40% { transform: scale(.99); } 58% { transform: scale(1.04); } }
-.hg-hint { margin: 0; font-family: var(--f-caps); font-size: 12px; letter-spacing: .34em; text-transform: uppercase; color: var(--lilac); text-shadow: 0 2px 10px rgba(0, 0, 0, .7); }
+.hg-hint { margin: 0; max-width: min(86vw, 420px); text-align: center; line-height: 1.7; font-family: var(--f-caps); font-size: 12px; letter-spacing: .34em; text-transform: uppercase; color: var(--lilac); text-shadow: 0 2px 10px rgba(0, 0, 0, .7); }
 .hg-after { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; z-index: 5; padding: 0 6vw; }
 .hg-us { width: min(64vw, 36vh, 320px); padding: 6% 6% 0; rotate: -3deg; }
 .hg-us .ph img { object-fit: cover; }

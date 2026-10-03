@@ -147,11 +147,14 @@ export default {
     gsap.ticker.add(tick);
     this.cleanup.push(() => gsap.ticker.remove(tick));
 
+    let pressedAt = 0;
+    let nudged = false;
     const start = (e) => {
       if (done) return;
       if (e && e.cancelable) e.preventDefault();
       if (!holding) {
         holding = true;
+        pressedAt = performance.now();
         heart.classList.add('is-holding');
         audio.sfx('heartbeat');
         gsap.to(hint, { autoAlpha: 0.35, duration: 0.4 });
@@ -161,6 +164,12 @@ export default {
       if (!holding) return;
       holding = false;
       heart.classList.remove('is-holding');
+      // a quick tap: say (once, playfully) that a hug needs holding
+      if (!done && !nudged && performance.now() - pressedAt < 700) {
+        nudged = true;
+        hint.textContent = ctx.fill(t.holdLonger || 'Longer. It’s a hug, not a high five.');
+        gsap.fromTo(hint, { y: 6 }, { y: 0, duration: 0.5, ease: 'back.out(2)' });
+      }
       if (!done) gsap.to(hint, { autoAlpha: 1, duration: 0.6 });
     };
     heart.addEventListener('pointerdown', start);

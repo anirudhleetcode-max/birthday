@@ -549,10 +549,10 @@ function createChapter(ctx, el) {
       await ctx.wait(0.6);
     }
 
-    // darkness, and silence
+    // darkness, and real silence: the music fades out completely (it comes back after her line)
     secret.hide(reduced ? 0.8 : 1.8);
     audio.setMood('quiet');
-    audio.duck(0.2, 9);
+    audio.duck(0, 26, 1.5); // (capped, in case she leaves early)
     fx.dust({ density: 0, alpha: 0 });
     await tween(veil, { opacity: 1, duration: reduced ? 1.4 : 3, ease: 'sine.inOut' });
     glOn = false;
@@ -564,7 +564,11 @@ function createChapter(ctx, el) {
     await reveal.show();
     await ctx.wait(reduced ? 0.3 : 1.2);
     await reveal.write(ctx.fill(T.handwritten));
-    await ctx.wait(reduced ? 1.2 : 2.6);
+    await ctx.wait(reduced ? 0.8 : 1.6);
+    // …and the music comes back, softly, under her photograph
+    audio.setMood('tender');
+    audio.duck(1, 0);
+    await ctx.wait(reduced ? 0.6 : 1.2);
     await ui.waitContinue('Continue');
 
     // it dissolves into a single golden point at the centre of the black

@@ -17,8 +17,8 @@ import { makeStars } from '../core/sky.js';
 import { createChameleon } from '../core/chameleon.js';
 
 const LINES_FALLBACK = [
-  'Being your friend is roughly sixty percent chaos.',
-  'The other forty percent? Honestly, magic.',
+  'Every good festival is about sixty percent chaos.',
+  'The other forty percent is magic. Same as every good friendship.',
   'Look up. The sky’s starting to notice.',
 ];
 const FABRIC = ['#6b3fa0', '#f4c463', '#8a5cc7', '#f2a7c3', '#3b1a57'];

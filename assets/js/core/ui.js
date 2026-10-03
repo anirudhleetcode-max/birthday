@@ -79,7 +79,8 @@ export function createUI({ audio, reducedMotion }) {
    */
   async function narrate(lines, { hold, gap = 0.45, style = '', position = 'bottom', duck, signal: sig } = {}) {
     const s = sig || signal;
-    const list = (Array.isArray(lines) ? lines : [lines]).filter(Boolean);
+    // lines that need a memory the owner hasn't written yet fill to '' and are skipped
+    const list = (Array.isArray(lines) ? lines : [lines]).filter((l) => l && fill(String(l)));
     const duckTo = duck != null ? duck : /\bbig\b/.test(style) ? 0.7 : null;
     for (const text of list) {
       const line = showLine(text, { style, position });

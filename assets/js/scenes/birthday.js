@@ -17,7 +17,7 @@ import { createLanternField, createPhotoLantern } from '../core/lanternfield.js'
 import { createRibbon, ribbonPaths } from '../core/ribbon.js';
 import { flourishSVG } from '../core/art.js';
 import {
-  clamp, lerp, rnd, easeSine, sstep, lifeSpan, splitCount, fmtCount, timelinePath, heartOutline, photoPool,
+  clamp, lerp, rnd, easeSine, sstep, lifeSpan, splitCount, fmtCount, timelinePath, photoPool,
 } from './birthday/util.js';
 import { createSky, createStarfield, createDays, createStarSprites } from './birthday/world.js';
 import { createOrbit } from './birthday/orbit.js';
@@ -198,7 +198,8 @@ function build(ctx, el) {
   /* ---------------------------------------------------------------- photos */
   const pool = photoPool(ctx);
   const PL_MAX = Math.min(pool.length, { high: 7, mid: 5, low: 3 }[tier] || 5);
-  const ORBIT_MAX = { high: 32, mid: 26, low: 16 }[tier] || 26;
+  // a calm last frame: her best photographs (featured and special ones first), not all of them
+  const ORBIT_MAX = { high: 14, mid: 12, low: 9 }[tier] || 12;
   const orbitPhotos = pool.slice(0, ORBIT_MAX);
   for (const p of orbitPhotos) ctx.preload(p.thumbUrl || p.url); // warm the cache for the last beat
 
@@ -352,37 +353,52 @@ function build(ctx, el) {
     rib.tween('glow', 0.62, 2.4);
     await wait(reduced ? 1.6 : 2.2);
 
-    // months
+    // months: a line of its own only if the owner wrote one; otherwise their lights come in with the days
+    const monthsLine = typeof T.months === 'string' ? T.months.trim() : '';
     days.uniforms.uAppear.value.y = time;
     days.uniforms.uSweep.value.y = reduced ? 1.6 : 2.6;
     rib.flow(true);
-    showCount(T.months, life.months, 'months.');
-    sfx('sparkle');
-    await wait(reduced ? 3 : 3.8);
+    if (monthsLine) {
+      showCount(T.months, life.months, 'months.');
+      sfx('sparkle');
+      await wait(reduced ? 3 : 3.8);
+    }
 
-    // days — one point of light for every one of them
+    // days: first the lights, one for every day of her life, filling the thread…
     days.uniforms.uAppear.value.z = time;
-    days.uniforms.uSweep.value.z = reduced ? 2 : 3.2;
-    showCount(T.days, life.days, 'days.');
+    days.uniforms.uSweep.value.z = reduced ? 2 : 3.6;
     sfx('sparkle');
-    await wait(reduced ? 3.6 : 4.6);
+    if (!monthsLine) await hideCount();
+    await wait(reduced ? 1.6 : 2.8);
+    // …and only then what they are
+    showCount(T.days, life.days, 'days.');
+    await wait(reduced ? 3.2 : 4.2);
     rib.flow(false);
-
     await hideCount();
     await wait(0.4);
+
+    // countless memories: moments catch light along the thread, one after another
+    const mem = say(T.memories || 'Countless memories.');
+    sfx('magic');
+    ignite(0.18, 0.5);
+    ignite(0.52, 1.2);
+    ignite(0.83, 1.9);
+    ignite(0.36, 2.7);
+    rib.tween('glow', 1.0, 1.6);
+    await wait(reduced ? 3 : 3.8);
+    rib.tween('glow', 0.62, 1.6);
+    await mem.out();
+    await wait(0.3);
+
     const a = say(T.somehow || 'And somehow…', 'is-soft');
     await wait(reduced ? 2.2 : 2.8);
     await a.out();
     await wait(0.2);
-    const b = say(T.interesting || 'you’ve managed to make all of them more interesting.');
-    sfx('magic');
-    // moments: little sparks catch along the line, one after another
-    ignite(0.18, 0.35);
-    ignite(0.52, 1.1);
-    ignite(0.83, 1.8);
-    ignite(0.36, 2.6);
-    rib.tween('glow', 1.1, 1.6);
-    await wait(reduced ? 3.6 : 4.6);
+    // the end of the thread brightens: it isn't the end at all
+    const b = say(T.beginning || T.interesting || 'this is only the beginning.');
+    ignite(0.985, 0.6);
+    rib.tween('glow', 1.15, 2.2);
+    await wait(reduced ? 3.4 : 4.4);
     rib.tween('glow', 0.62, 1.6);
     await b.out();
   }
@@ -493,28 +509,8 @@ function build(ctx, el) {
     tw(U.uWarm, { value: reduced ? 0.5 : 1, duration: 22, ease: 'sine.inOut' }); // (with a still camera the horizon stays in view)
     await wait(Math.max(4, cam.t0 + cam.dur - time + 0.3)); // the camera has come to rest
 
-    // the lanterns slowly gather into a faint heart
-    await formHeart();
-  }
-
-  let heartIdx = null;
-  async function formHeart() {
-    const n = { high: 84, mid: 68, low: 46 }[tier] || 68;
-    const hp = heartOutline(n);
-    const Dh = 520;
-    const cy = titleCenterY();
-    const pxW = W < H ? W * 0.8 : Math.min(W * 0.42, (H * 0.62) / hp.aspect);
-    const unit = (pxW * 2 * Dh * tanV) / H; // px → world at that depth
-    const c = screenToWorld(W / 2, cy, Dh);
-    const right = V().setFromMatrixColumn(camera.matrixWorld, 0);
-    const up = V().setFromMatrixColumn(camera.matrixWorld, 1);
-    const pts = hp.map((p) => c.clone().addScaledVector(right, p.x * unit).addScaledVector(up, p.y * unit));
-    const pr = field.formShape(pts, { duration: reduced ? 5 : 7.5, stagger: 0.4 });
-    heartIdx = pr.indices;
-    await wait(reduced ? 3.6 : 5.2);
-    sfx('swell');
-    await pr;
-    await wait(reduced ? 2.4 : 3.6);
+    // (no heart here: the photo heart a chapter ago is the heart of the film; the sky just breathes)
+    await wait(reduced ? 1.6 : 3.2);
   }
 
   /* ---------------- her photographs, rising as photo-lanterns and turning into stars */
@@ -638,17 +634,10 @@ function build(ctx, el) {
     setTimeout(() => !disposed && sfx('sparkle'), 400);
     await wait(reduced ? 2.2 : 3);
 
-    // the constellation becomes lanterns: the heart's lanterns flow into the stars (the rest of
-    // the heart drifts free); if there are too few, new ones ignite right below the stars
+    // the constellation becomes lanterns: the nearest lanterns in the sky drift into the stars;
+    // if there are too few, new ones ignite right below them
     sfx('lanternRise');
-    const alive = (heartIdx || []).filter((i) => field.isAlive(i));
-    const pick = [];
-    if (alive.length) for (let k = 0; k < Math.min(K, alive.length); k++) pick.push(alive[Math.floor((k * alive.length) / Math.min(K, alive.length))]);
-    const rest = alive.filter((i) => !pick.includes(i));
-    field.releaseShape({ indices: rest, speed: [0.9, 1.9] });
-    field.releaseShape({ indices: pick, speed: [0.3, 0.6] }); // (free again from where they are — no jump)
-    heartIdx = null;
-    const formed = field.formShape(worldPts, { indices: pick, duration: reduced ? 3.2 : 4.2, stagger: 0.35, spawn: true });
+    const formed = field.formShape(worldPts, { duration: reduced ? 3.2 : 4.2, stagger: 0.35, spawn: true });
     for (const s of starList) tw(s, { a: 0, size: 12, duration: 2.6, delay: 0.9 + Math.random() * 0.8, ease: 'sine.in' });
     rib20.fade(0, 3);
     const idx20 = await formed;
@@ -657,9 +646,10 @@ function build(ctx, el) {
     rib20 = null;
     await wait(reduced ? 1.4 : 2.4);
 
-    // …and the lanterns rise away to reveal her title
+    // …and the lanterns rise away. A breath of silence, then her title
     field.releaseShape({ indices: idx20, speed: [2.6, 4.4] });
-    await wait(0.5);
+    audio.duck(0, reduced ? 1.6 : 2.6, 1.2);
+    await wait(reduced ? 1.6 : 3);
     await reveal();
   }
 
@@ -812,7 +802,7 @@ function build(ctx, el) {
     const holds = words.map((w) => Math.max(2.6, 1.2 + w.split(/\s+/).length * 0.34));
     const total = holds.reduce((a, b) => a + b + 1.6, 0) + 2;
     audio.duck(0.62, total);
-    if (orbit) tw(orbit.state, { alpha: 0.72, speed: 0.6, duration: 3, ease: 'sine.inOut' });
+    if (orbit) tw(orbit.state, { alpha: 0.58, speed: 0.45, duration: 3, ease: 'sine.inOut' }); // the words lead now
     tw(titleEl, { opacity: 0.8, duration: 3, ease: 'sine.inOut' });
     tw(hushEl, { opacity: 0.8, duration: 3 });
     await wait(1.2);
@@ -834,7 +824,7 @@ function build(ctx, el) {
     closingEl.textContent = closing;
     updateZones();
     tw(titleEl, { opacity: 0.9, duration: 2.5, ease: 'sine.inOut' });
-    if (orbit) tw(orbit.state, { alpha: 0.85, duration: 2.5 });
+    if (orbit) tw(orbit.state, { alpha: 0.7, speed: 0.35, duration: 2.5 });
     gsap.set(closingEl, { '--wipe': '-20%', opacity: 1 });
     sfx('pageTurn');
     await new Promise((r) => tw(closingEl, { '--wipe': '125%', duration: reduced ? 1.6 : Math.min(4.2, 1.2 + closing.length * 0.045), ease: 'none', onComplete: r }));

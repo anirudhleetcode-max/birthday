@@ -18,12 +18,12 @@ import { sunEmblem, esc } from '../core/art.js';
 
 const DOC_FALLBACK = [
   'Here, in the soft light of the golden hour, we observe one of nature’s rarest creatures.',
-  'She is curious. She is radiant. She is, at all times, slightly dramatic.',
+  'She is rare. She is radiant. Tonight, she is turning twenty.',
   'The locals know her simply as {name}.',
   'But our field notes suggest… she goes by other names.',
 ];
 const ITEM_FALLBACK = [
-  { line: 'To the world, she is {name}.', sub: 'A little lamp of a name, for someone who lights up every room she walks into.' },
+  { line: 'To the world, she is {name}.', sub: 'Keeper of the lanterns. Twenty of them, as of tonight.' },
   { line: 'To the chosen few, she is {nick1}.', sub: 'Origin: classified. Usage: constant. Complaints: none on record.' },
   { line: 'And to the very, very lucky…', sub: 'There is no other word for it. There never will be.' },
 ];

@@ -48,6 +48,7 @@
 .lt-p { margin: 0 0 1em; font-family: var(--f-hand); font-size: clamp(21px, 5.6vw, 27px); line-height: 1.32; }
 .lt-sign { margin: 1.4em 0 0; font-family: var(--f-hand); font-size: clamp(21px, 5.6vw, 27px); }
 .lt-from { margin: .1em 0 0; font-family: var(--f-script); font-size: clamp(32px, 8.5vw, 46px); color: #6b2f57; }
+.lt-ps { margin: 1.3em 0 0; font-size: clamp(19px, 5vw, 24px); }
 .lt-w { display: inline-block; white-space: nowrap; }
 .lt-c { display: inline-block; }
 .lt-pin { position: relative; margin: 0; width: 38%; max-width: 210px; padding: 6% 6% 18%; }

@@ -295,7 +295,77 @@ export function validate(site) {
   const at = Date.parse(site.settings && site.settings.lock && site.settings.lock.unlockAt);
   if (site.settings && site.settings.lock && site.settings.lock.enabled && !Number.isFinite(at)) errors.push({ message: 'The unlock date/time is not a valid date.' });
   if (!site.her || !site.her.name) errors.push({ message: 'Her name is empty.' });
+  const gaps = personalGaps(site);
+  const required = gaps.empty.filter((f) => !f.optional);
+  if (required.length) warnings.push({ group: 'personal', message: `Your memories: ${required.map((f) => f.label).join(', ')} ${required.length > 1 ? 'are' : 'is'} still empty. The letter lines that use ${required.length > 1 ? 'them' : 'it'} are left out until you write ${required.length > 1 ? 'them' : 'it'} (Messages → Your memories).` });
+  for (const g of gaps.leftovers) warnings.push({ group: g.group, message: `Messages → ${g.group}: “${g.placeholder}” is still a placeholder. That line is hidden from her until you replace it.` });
   return { errors, warnings, ok: errors.length === 0 };
+}
+
+/**
+ * The owner's own memories (messages.json → "personal"). The letter is built around them.
+ * Nothing here is ever invented: until a box is written, every line that uses it is left out
+ * of her film (Preview shows the [LABEL] instead, so the owner can see where it goes).
+ */
+export const PERSONAL_FIELDS = [
+  { key: 'memory1', label: '[MEMORY 1]' },
+  { key: 'memory2', label: '[MEMORY 2]' },
+  { key: 'tease', label: '[THING I ALWAYS TEASE HER ABOUT]' },
+  { key: 'neverForget', label: '[ONE MOMENT I WILL NEVER FORGET]' },
+  { key: 'admire', label: '[WHAT I ADMIRE ABOUT HER]' },
+  { key: 'wantHerToKnow', label: '[ONE THING I WANT HER TO KNOW]' },
+  { key: 'insideJoke', label: '[INSIDE JOKE]', optional: true },
+];
+const PERSONAL_LABEL = Object.fromEntries(PERSONAL_FIELDS.map((f) => [f.key, f.label]));
+/** A placeholder typed by hand and never replaced, e.g. "[MEMORY 3]" or "[HER FAVOURITE SONG]". */
+export const PLACEHOLDER_RE = /\[[A-Z0-9][A-Z0-9 '’&,.?!/-]{2,}\]/;
+
+/** Trimmed values of the personal memories ('' = not written yet). */
+export function personalValues(site) {
+  const p = (site && site.text && site.text.personal) || {};
+  return Object.fromEntries(PERSONAL_FIELDS.map((f) => [f.key, typeof p[f.key] === 'string' ? p[f.key].trim() : '']));
+}
+
+/**
+ * Replace {tokens} in owner-written text. A line that needs a memory nobody has written yet,
+ * or still holds a hand-typed [PLACEHOLDER], comes back '' so the film leaves it out; in
+ * preview it comes back with the [LABEL] showing instead.
+ */
+export function fillText(str, tokens = {}, personal = {}, { preview = false } = {}) {
+  let missing = false;
+  const out = String(str ?? '').replace(/\{(\w+)\}/g, (m, k) => {
+    if (k in PERSONAL_LABEL) {
+      if (personal[k]) return personal[k];
+      missing = true;
+      return PERSONAL_LABEL[k];
+    }
+    return k in tokens ? tokens[k] : m;
+  });
+  if (!preview && (missing || PLACEHOLDER_RE.test(out))) return '';
+  return out;
+}
+
+/** Every string inside messages, with where it lives (for placeholder checks). */
+function textStrings(text, path = [], out = []) {
+  if (typeof text === 'string') out.push({ path, value: text });
+  else if (Array.isArray(text)) text.forEach((v, i) => textStrings(v, [...path, i], out));
+  else if (text && typeof text === 'object') for (const k of Object.keys(text)) textStrings(text[k], [...path, k], out);
+  return out;
+}
+
+/** Memories the film uses but nobody has written yet, and hand-typed placeholders left in the text. */
+export function personalGaps(site) {
+  const vals = personalValues(site);
+  const strings = textStrings((site && site.text) || {}).filter((s) => s.path[0] !== 'personal');
+  const used = new Set();
+  for (const s of strings) for (const m of s.value.matchAll(/\{(\w+)\}/g)) if (m[1] in PERSONAL_LABEL) used.add(m[1]);
+  const empty = PERSONAL_FIELDS.filter((f) => used.has(f.key) && !vals[f.key]);
+  const leftovers = [];
+  for (const s of [...strings, ...textStrings((site && site.text && site.text.personal) || {}, ['personal'])]) {
+    const m = PLACEHOLDER_RE.exec(s.value);
+    if (m) leftovers.push({ group: s.path[0], placeholder: m[0] });
+  }
+  return { empty, leftovers };
 }
 
 /** A plain relative repo path (no quotes, no '..', no scheme) — or an https/blob/data URL. */

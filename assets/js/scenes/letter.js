@@ -22,7 +22,9 @@ export default {
     const pics = ctx.photos('letter', { limit: 3 });
     await Promise.all(pics.map((p) => ctx.preload(p.url)));
     const voice = ctx.media('voice');
-    const body = (t.body || []).filter(Boolean).map((b) => ctx.fill(b));
+    // paragraphs built on a memory that hasn't been written yet fill to '' and are left out
+    const body = (t.body || []).filter(Boolean).map((b) => ctx.fill(b)).filter(Boolean);
+    const ps = t.ps ? ctx.fill(t.ps) : '';
     const mid = Math.max(1, Math.ceil(body.length / 2));
     const pin = (p, k) => p ? `<figure class="lt-pin lt-pin-${k + 1} polaroid"><i class="lt-tape"></i><div class="ph" style="aspect-ratio:${p.ratio}"><img alt="${esc(p.alt)}" src="${esc(p.url)}" style="object-position:${esc(p.objectPosition)}"></div>${p.caption ? `<figcaption class="cap">${esc(p.caption)}</figcaption>` : ''}</figure>` : '';
 
@@ -54,6 +56,7 @@ export default {
             ${pin(pics[2], 2)}
             <p class="lt-sign">${esc(ctx.fill(t.signoff || from.signoff || ''))}</p>
             <p class="lt-from">${esc(ctx.fill(from.name || ''))}</p>
+            ${ps ? `<p class="lt-p lt-ps">${esc(ps)}</p>` : ''}
             ${voice ? '<button type="button" class="btn-ghost lt-voice" hidden>▶&nbsp; Hear it in my voice</button>' : ''}
             ${pressedFlower()}
           </div>

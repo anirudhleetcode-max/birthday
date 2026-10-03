@@ -1,5 +1,14 @@
 {
   "version": 2,
+  "personal": {
+    "memory1": "",
+    "memory2": "",
+    "tease": "",
+    "neverForget": "",
+    "admire": "",
+    "wantHerToKnow": "",
+    "insideJoke": ""
+  },
   "gate": {
     "kicker": "Not yet, {nick2}.",
     "title": "Twenty lanterns, waiting for midnight",
@@ -49,7 +58,7 @@
     "lines": [
       "Some people keep their memories in a shoebox.",
       "Ours needed something longer. About the length of your hair.",
-      "Every laugh, every rant, every terrible idea — all on one golden thread."
+      "Every laugh, every photo, every “remember when” — all on one golden thread."
     ],
     "heroHairLine": "The original. The golden thread is just doing an impression.",
     "endLine": "Still plenty of thread left. Good — we’re nowhere near done."
@@ -61,8 +70,8 @@
     "subject": "Subject: {name} (extremely rare)",
     "documentary": [
       "Here, in her natural habitat, we observe the rare {name}.",
-      "Most active after midnight. Usually when she should be asleep.",
-      "Approach slowly, with snacks. Never touch the hair.",
+      "Confirmed sightings so far: {photoCount} photographs. We have the evidence.",
+      "Approach slowly, ideally with cake. Never touch the hair.",
       "Do not startle her. She has access to a frying pan.",
       "Remarkably, she answers to several names. Each more legendary than the last."
     ],
@@ -70,13 +79,13 @@
     "items": [
       {
         "name": "Deepu",
-        "line": "Keeper of the Lamp. Bringer of Chaos.",
-        "sub": "Her name literally has a lamp in it. She took that personally."
+        "line": "Keeper of the Lanterns.",
+        "sub": "Twenty of them, as of tonight. She’s going to need a bigger sky."
       },
       {
         "name": "Pinky",
-        "line": "The Softest Menace in the Realm",
-        "sub": "Sounds harmless. Has never once been harmless."
+        "line": "The Softest Name in the Realm",
+        "sub": "Sounds harmless. Legends rarely are."
       },
       {
         "name": "Kuchi Puchi",
@@ -91,8 +100,8 @@
     "kicker": "Chapter Four",
     "title": "Somewhere Between Chaos and Magic",
     "lines": [
-      "Being your friend is roughly sixty percent chaos.",
-      "The other forty percent? Honestly, magic.",
+      "Every good festival is about sixty percent chaos.",
+      "The other forty percent is magic. Same as every good friendship.",
       "Look up. The sky’s starting to notice."
     ],
     "hint": "Swipe to spin"
@@ -108,7 +117,7 @@
     ],
     "tapHint": "Tap the sky to send up a lantern of your own",
     "photoHint": "Some of these lanterns are carrying memories. Tap one.",
-    "after": "Your name has a lamp hidden in it. Tonight, the sky took the hint.",
+    "after": "All this light, and it’s still not the brightest thing in this film.",
     "secret": "Of course you found the pink one, {nick1}. It was looking for you."
   },
   "letter": {
@@ -118,16 +127,20 @@
     "fasterHint": "Reading faster than I can write? Tap to skip ahead.",
     "salutation": "Dear {name},",
     "body": [
-      "Okay. Before you say anything: yes, I know this is a lot. Yes, I made you an entire film instead of just saying all this to your face. That’s how bad I am at saying things out loud. No, I will not be taking questions at this time. Please put the frying pan down.",
-      "Then again, let’s be honest: you’re a lot too. You are chaos with excellent hair. You can turn a completely normal day into a story I’m still telling weeks later. And I mean every word of that as the highest compliment I know how to give.",
-      "So, the serious part, while I can still keep a straight face. Thank you. Not for anything big — for the small stuff. For the late-night talks that were supposed to be ‘just ten minutes’. For the jokes that only make sense to us and would get us thrown out of most rooms. For knowing something’s wrong from a single ‘ok’. For showing up without being asked, every single time.",
-      "Somewhere along the way, you became the first person I want to tell things to. Good news, bad news, completely pointless news. Half my thoughts now come with a little note attached: send this to {name}. Some people make life easier. You make it lighter. That’s different, and so much rarer.",
-      "I don’t think you know what you’re like from the outside. You make rooms easier to be in. You make people feel like they’re not too much (I’d know). And I’ve had a front-row seat to you becoming more and more yourself — braver about some things, softer about others, still completely ridiculous about most. I’m unreasonably proud of you. I don’t say it enough, so I’m writing it down where you can’t argue with it.",
-      "Here’s what I want for your twenties. The things you’re a little scared to want. The good kind of tired — from laughing, from dancing, from building things you’re proud of. Days so good you forget to check your phone (text me after). Hair that keeps growing, and worries that don’t. And on the days that go badly — some will — I hope you remember exactly who to call.",
-      "So here’s my promise, in writing, so you can hold me to it: I’ll pick up. I’ll show up — for the big days and the boring ones, the good news and the 2 a.m. overthinking. I’ll tell you the truth when you need it, and take your side when you need that more. I’ll keep making fun of you, because that’s how you’ll know everything’s fine. Twenty, thirty, eighty: I’m not going anywhere. Pinky promise.",
-      "Happy birthday, {nick2}. Thank you for being my best friend. Of everything I’ve ever been lucky about, you’re right at the top. (You’re allowed to screenshot that part.) Now go back to the film — there’s cake."
+      "Okay. Before you say anything: yes, I know this is a lot. Yes, I made you an entire film instead of just saying this to your face. No, I will not be taking questions. Please put the frying pan down.",
+      "To make it, I went through our photos one by one. Some of them I’d completely forgotten about. Some of them I will never, ever let you forget.",
+      "{memory1}",
+      "{memory2}",
+      "And yes, I’m still going to tease you about {tease}. Forever. Some traditions are sacred.",
+      "If I had to pick one moment, though, it’s this one: {neverForget}",
+      "The thing I admire most about you? {admire}",
+      "Here’s what I want for your twenties. The things you’re a little scared to want. Good days that run late. Hair that keeps growing, and worries that don’t. And on the days that go badly, because some will, I hope you remember exactly who to call.",
+      "So here’s my promise, in writing, so you can hold me to it: I’ll pick up. I’ll show up, for the big days and the boring ones. I’ll tell you the truth when you need it, and take your side when you need that more. I’ll keep making fun of you, because that’s how you’ll know everything’s fine. Twenty, thirty, eighty: I’m not going anywhere. Pinky promise.",
+      "And if you only remember one line from this whole film, make it this one: {wantHerToKnow}",
+      "Happy birthday, {name}. Thank you for being my best friend. (You’re allowed to screenshot that part.) Now go back to the film. There’s cake."
     ],
-    "signoff": "Stuck with me forever. No refunds,"
+    "signoff": "Stuck with me forever. No refunds,",
+    "ps": "P.S. {insideJoke}"
   },
   "cake": {
     "kicker": "Chapter Seven",
@@ -157,10 +170,11 @@
   "birthday": {
     "title": "The Last Lantern",
     "years": "20 years.",
-    "months": "240 months.",
+    "months": "",
     "days": "7,305 days.",
+    "memories": "Countless memories.",
     "somehow": "And somehow…",
-    "interesting": "you’ve managed to make all of them more interesting.",
+    "beginning": "this is only the beginning.",
     "lanterns": [
       "Every one of those days deserved a lantern.",
       "Tonight, they all get one."
@@ -182,6 +196,7 @@
       "Send me a hug."
     ],
     "holdHint": "Press and hold",
+    "holdLonger": "Longer. It’s a hug, not a high five.",
     "done": [
       "Hug received. Excellent technique. Very strong.",
       "Now go send me the real one."
@@ -225,7 +240,7 @@
       ],
       [
         "Filmed on location",
-        "A tower, a lake, and a few thousand late-night conversations"
+        "A tower, a lake, and one very patient chameleon"
       ],
       [
         "Continuity",
@@ -237,7 +252,7 @@
       ],
       [
         "Emergency equipment",
-        "One frying pan. Mostly for pancakes. Mostly."
+        "One frying pan. Purely decorative. Probably."
       ],
       [
         "Certification",

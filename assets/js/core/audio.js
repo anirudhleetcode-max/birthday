@@ -2154,8 +2154,9 @@ export function createAudio(options = {}) {
       mood = m;
       if (eng) eng.setMood(m);
     },
-    duck(amount = 0.35, seconds = 1.2) {
-      if (eng) eng.duck(amount, seconds);
+    /** duck(level, holdSeconds, fadeSeconds?): fadeSeconds slows the fall (up to ~1.5 s), for a fade into silence. */
+    duck(amount = 0.35, seconds = 1.2, fade) {
+      if (eng) eng.duck(amount, seconds, undefined, Number.isFinite(fade) ? fade / 3 : undefined);
     },
     happyBirthday() {
       if (!eng || !unlocked) return Promise.resolve();

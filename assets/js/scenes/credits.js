@@ -25,7 +25,8 @@ export default {
     const real = ctx.realPhotos();
     const reel = (real.length ? real : ctx.allPhotos()).slice();
     const extras = ctx.extras();
-    const roles = (Array.isArray(t.roles) && t.roles.length ? t.roles : t.lines || []).filter((r) => Array.isArray(r));
+    const roles = (Array.isArray(t.roles) && t.roles.length ? t.roles : t.lines || [])
+      .filter((r) => Array.isArray(r) && (!r[1] || ctx.fill(r[1]))); // a credit built on an unwritten memory is left out
     this.timers = [];
     this.cleanup = [];
 

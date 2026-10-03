@@ -5,37 +5,51 @@
  * film's built-in wording until typed), then any other keys already in the file —
  * unknown keys are always kept. Editors: short text, long text, lists, pairs, objects.
  */
-import { FILM_CHAPTERS, daysAlive } from '../../assets/js/shared/model.js';
+import { FILM_CHAPTERS, PERSONAL_FIELDS, daysAlive, personalValues } from '../../assets/js/shared/model.js';
 import { state, change } from '../state.js';
 import { getAt, setAt, deleteAt, deepEqual, clone } from '../util.js';
 import { h, icon, autoGrow, toast, nextId } from '../ui.js';
 import { sectionHead } from './common.js';
 
-const S = (label, hint) => ({ type: 'string', label, hint });
-const T = (label, hint) => ({ type: 'text', label, hint });
+const S = (label, hint, placeholder) => ({ type: 'string', label, hint, placeholder });
+const T = (label, hint, placeholder) => ({ type: 'text', label, hint, placeholder });
+const MEMORY_HINTS = {
+  memory1: ['One real memory of the two of you, in your own words: one to three sentences, the way you’d tell it to her. It becomes its own paragraph in the letter.', 'Remember when…'],
+  memory2: ['Another one. A different kind if you can: if the first is funny, make this one soft (or the other way round).', 'And the time…'],
+  tease: ['A few words that finish the sentence: “And yes, I’m still going to tease you about ___. Forever.”', 'e.g. a habit, a word she says, a famous mistake'],
+  neverForget: ['Finishes: “If I had to pick one moment, though, it’s this one: ___”. Tell it simply: where you were, what happened, why it stuck.', 'In your own words…'],
+  admire: ['Finishes: “The thing I admire most about you? ___”. Something she does, not just what she is.', 'In your own words…'],
+  wantHerToKnow: ['Near the end of the letter: “And if you only remember one line from this whole film, make it this one: ___”', 'In your own words…'],
+  insideJoke: ['Optional. Becomes the P.S. under your signature. Only she needs to get it.', 'P.S. …'],
+};
 const L = (label, hint, add = 'Add a line', long = false) => ({ type: 'list', label, hint, add, long });
 
 export const SCHEMA = {
+  personal: {
+    title: 'Your memories (the letter)',
+    desc: 'The letter is built around these, and nothing in it is made up for you. Until you fill a box, the line that uses it is simply left out of her film (Preview shows it as [MEMORY 1] etc. so you can see where it goes). Write the way you talk to her. You can also rewrite any paragraph of the letter itself under “The letter”.',
+    fields: Object.fromEntries(PERSONAL_FIELDS.map((f) => [f.key, (f.key === 'tease' ? S : T)(f.label, MEMORY_HINTS[f.key][0], MEMORY_HINTS[f.key][1])])),
+  },
   invite: { title: 'Invitation', desc: 'The very first screen.', fields: { greeting: S('Greeting', 'The first words she sees, e.g. “Hey {nick1}.”'), lines: L('Lines', 'Shown one after another.'), button: S('Button'), foot: S('Small print at the bottom') } },
   gate: { title: 'Countdown', desc: 'Before the unlock time.', fields: { kicker: S('Small title'), title: S('Title'), sub: S('Line under the title'), openKicker: S('When it unlocks — small title'), openTitle: S('When it unlocks — title'), openSub: S('When it unlocks — line'), button: S('Button') } },
   prologue: { title: 'Prologue', desc: 'Once upon a time…', fields: { kicker: S('Small title'), title: S('Title'), lines: L('Narration', 'One line at a time.'), titleSub: S('Line under the title'), date: S('Date line') } },
   tower: { title: 'Chapter · The tower', fields: { kicker: S('Small title'), title: S('Title'), lines: L('Narration'), windowLine: S('Line at the tower window'), hint: S('Hint') } },
   hair: { title: 'Chapter · The golden thread', fields: { kicker: S('Small title'), title: S('Title'), lines: L('Narration'), heroHairLine: T('Line for the hero-hair moment', 'Shown with the photo marked “Hero-hair”.'), endLine: S('Closing line') } },
-  names: { title: 'Chapter · Her names', desc: 'The funny one.', fields: { kicker: S('Small title'), title: S('Title'), documentary: L('Documentary narrator', 'The fake-serious narrator, line by line.'), items: { type: 'objects', label: 'Her names', hint: 'One card per name, in order (matches the Names photos).', add: 'Add a name', item: { name: S('Name'), line: S('Line'), sub: S('Small line underneath') } }, aka: S('“Also known as” line'), finale: S('Closing line') } },
+  names: { title: 'Chapter · Her names', desc: 'The funny one.', fields: { kicker: S('Small title'), title: S('Title'), documentary: L('Documentary narrator', 'The fake-serious narrator, line by line.'), items: { type: 'objects', label: 'Her names', hint: 'One card per name, in order (matches the Names photos).', add: 'Add a name', item: { name: S('Name'), line: S('Line'), sub: S('Small line underneath') } }, namesNote: { type: 'note', text: 'If one of her names has a meaning you joke about (for example, if Deepu comes from a name meaning lamp or light), this is the place for it. Otherwise keep it playful and general.' }, aka: S('“Also known as” line'), finale: S('Closing line') } },
   dance: { title: 'Chapter · The festival', fields: { kicker: S('Small title'), title: S('Title'), lines: L('Narration'), hint: S('Hint') } },
-  lanterns: { title: 'Chapter · The night of lanterns', fields: { kicker: S('Small title'), title: S('Title'), lines: L('Narration'), tapHint: S('Hint: tap to send a lantern'), photoHint: S('Hint: tap a photo lantern'), after: S('Line after the lanterns'), secret: S('Secret message') } },
-  letter: { title: 'The letter', desc: 'Your letter to her.', fields: { kicker: S('Small title'), title: S('Title'), salutation: S('Greeting (“My dearest …”)'), body: L('Paragraphs', 'Each box is one paragraph.', 'Add a paragraph', true), signoff: S('Sign-off'), tapSeal: S('Hint: tap the seal'), fasterHint: S('Hint: reading faster') } },
+  lanterns: { title: 'Chapter · The night of lanterns', fields: { kicker: S('Small title'), title: S('Title'), lines: L('Narration'), tapHint: S('Hint: tap to send a lantern'), photoHint: S('Hint: tap a photo lantern'), after: S('Line after the lanterns', 'Shown when the sky is full. If her name’s meaning matters to you two (e.g. lamp / light), you could write that joke here.'), secret: S('Secret message') } },
+  letter: { title: 'The letter', desc: 'Your letter to her.', fields: { kicker: S('Small title'), title: S('Title'), salutation: S('Greeting (“My dearest …”)'), body: L('Paragraphs', 'Each box is one paragraph. Paragraphs with {memory1}, {tease} and so on use “Your memories” above and stay hidden until those are written.', 'Add a paragraph', true), signoff: S('Sign-off'), ps: S('P.S. (under your signature)', 'Uses {insideJoke} from “Your memories”; left out until that is written.'), tapSeal: S('Hint: tap the seal'), fasterHint: S('Hint: reading faster') } },
   cake: { title: 'Twenty candles', fields: { kicker: S('Small title'), title: S('Title'), lines: L('Narration'), blowHint: S('Hint: blow out the candles'), tapFallback: S('Hint: or tap instead'), afterBlow: S('After the wish'), cutHint: S('Hint: cut the cake'), afterCut: S('After the cake is cut'), wish: S('The wish line') } },
   constellation: { title: 'Finale · the constellation', fields: { kicker: S('Small title'), title: S('Title'), lines: L('Narration'), handwritten: T('Handwritten note') } },
-  birthday: { title: 'Finale · 7,305 days', desc: 'The big count and the last lantern.', fields: { years: S('Years line'), months: S('Months line'), days: S('Days line'), somehow: S('“Somehow…” line'), interesting: S('“Interesting…” line'), lanterns: L('Lantern lines'), big: S('Big headline'), name: S('Name line'), loved: L('Things she is loved for', '', 'Add one'), closing: T('Closing line') } },
-  hug: { title: 'The hug', fields: { lines: L('Lines'), holdHint: S('Hint: press and hold'), done: L('After the hug'), message: T('WhatsApp hug message', 'Sent to your number (Settings → WhatsApp).') } },
+  birthday: { title: 'Finale · 7,305 days', desc: 'The build-up to her title: 20 years → 7,305 days → countless memories → and somehow… → this is only the beginning.', fields: { years: S('Years line'), months: S('Months line', 'Leave empty to skip it (the month lights still appear).'), days: S('Days line', 'Appears after the lights, one for every day, have filled the golden thread.'), memories: S('Memories line'), somehow: S('“Somehow…” line'), beginning: S('Last line before the lanterns', 'Finishes “And somehow…”.'), lanterns: L('Lantern lines'), big: S('Big headline'), name: S('Name line'), loved: L('Things she is loved for', '', 'Add one'), closing: T('Closing line') } },
+  hug: { title: 'The hug', fields: { lines: L('Lines'), holdHint: S('Hint: press and hold'), holdLonger: S('If she only taps', 'Shown once if she lets go too soon.'), done: L('After the hug'), message: T('WhatsApp hug message', 'Sent to your number (Settings → WhatsApp).') } },
   credits: { title: 'Credits', fields: { opening: S('Opening line'), roles: { type: 'pairs', label: 'Credits', hint: 'Role → name, like film credits.', labels: ['Role', 'Name'], add: 'Add a credit' }, end: S('Last line'), endSub: S('Line under the last line'), postCredits: L('Post-credits scene'), extrasTitle: S('Extra memories — title'), extrasSub: S('Extra memories — subtitle'), secrets: S('Secrets-found line') } },
   gallery: { title: 'Photo gallery', fields: { allTitle: S('Gallery title'), allKicker: S('Gallery small title') } },
 };
 
-const ORDER = ['invite', 'gate', 'prologue', 'tower', 'hair', 'names', 'dance', 'lanterns', 'letter', 'cake', 'constellation', 'birthday', 'hug', 'credits', 'gallery'];
+const ORDER = ['personal', 'invite', 'gate', 'prologue', 'tower', 'hair', 'names', 'dance', 'lanterns', 'letter', 'cake', 'constellation', 'birthday', 'hug', 'credits', 'gallery'];
 const TOKENS = ['name', 'nick1', 'nick2', 'creator', 'photoCount', 'days', 'age'];
-const open = new Set(['invite']);
+const open = new Set(['personal']);
 
 export function humanize(key) {
   if (typeof key === 'number') return `#${key + 1}`;
@@ -122,6 +136,11 @@ function groupEl(g) {
 }
 
 function summaryOf(g) {
+  if (g === 'personal') {
+    const vals = personalValues(state.site);
+    const done = PERSONAL_FIELDS.filter((f) => vals[f.key]).length;
+    return `${done} of ${PERSONAL_FIELDS.length} written`;
+  }
   const v = getAt(state.site, ['text', g]);
   if (!isObj(v)) return SCHEMA[g]?.desc || '';
   const t = v.title || v.greeting || v.big || v.salutation || (Array.isArray(v.lines) && typeof v.lines[0] === 'string' ? v.lines[0] : '');
@@ -142,7 +161,8 @@ function commit(path, value, { prune = true } = {}) {
 }
 
 function fieldFor(path, spec, key, onAny) {
-  if (spec.type === 'string' || spec.type === 'text') return stringField(path, spec.label, { long: spec.type === 'text', hint: spec.hint, onAny });
+  if (spec.type === 'note') return h('p.field-hint.note', spec.text);
+  if (spec.type === 'string' || spec.type === 'text') return stringField(path, spec.label, { long: spec.type === 'text', hint: spec.hint, onAny, placeholder: spec.placeholder || undefined });
   if (spec.type === 'list') return listField(path, spec, onAny);
   if (spec.type === 'pairs') return pairsField(path, spec, onAny);
   if (spec.type === 'objects') return objectsField(path, spec, onAny);

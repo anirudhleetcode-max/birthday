@@ -6,6 +6,7 @@ import { createFX } from './core/fx.js';
 import { createUI, sleep } from './core/ui.js';
 import { transition } from './core/transitions.js';
 import { createEggs } from './core/eggs.js';
+import { fillText, personalValues } from './shared/model.js';
 
 const params = new URLSearchParams(location.search);
 const PREVIEW = params.has('preview') || params.has('draft');
@@ -175,7 +176,7 @@ function makeCtx(def, ac, incoming) {
     realPhotos: () => store.real(),
     media: (key) => store.mediaUrl(key),
     daysAlive: (when) => store.daysAlive(when),
-    /** Replace {name} {nick1} {nick2} {creator} {photoCount} {days} {age} in owner-written text. */
+    /** Replace {name} {nick1} {nick2} {creator} {photoCount} {days} {age} (+ the owner's memories) in owner-written text; '' = leave the line out. */
     fill: (str) => app.fill(str),
     preload,
     gsap,
@@ -351,7 +352,9 @@ async function boot() {
     days: store.daysAlive().toLocaleString('en-IN'),
     age: String(new Date(site.settings?.lock?.unlockAt || Date.now()).getFullYear() - Number(String(site.her?.birthDate || '2007').slice(0, 4))),
   };
-  app.fill = (str) => String(str ?? '').replace(/\{(\w+)\}/g, (m, k) => (k in tokens ? tokens[k] : m));
+  // a line that needs one of the owner's memories, not written yet, is left out ('' — or the [LABEL] in preview)
+  const personal = personalValues(site);
+  app.fill = (str) => fillText(str, tokens, personal, { preview: PREVIEW });
   app.ui.setFill(app.fill);
   // "Chapter Five" → the real position among the chapters that are switched on
   const NUM = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve'];

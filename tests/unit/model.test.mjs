@@ -127,3 +127,43 @@ test('unsafe file paths are rejected', async () => {
   site.photos[0].src = 'photos/x" onerror="alert(1).jpg';
   assert.ok(validate(site).errors.some((e) => /unsafe file path/.test(e.message)));
 });
+
+test('memories: unwritten lines are left out of her film, shown as [LABEL] in preview', async () => {
+  const { fillText, personalValues, personalGaps, PERSONAL_FIELDS } = await import('../../assets/js/shared/model.js');
+  const personal = { memory1: 'The rain, the bus, the umbrella.', memory2: '' };
+  assert.equal(fillText('{memory1}', {}, personal), 'The rain, the bus, the umbrella.');
+  assert.equal(fillText('Remember? {memory2}', {}, personal), '');
+  assert.equal(fillText('Remember? {memory2}', {}, personal, { preview: true }), 'Remember? [MEMORY 2]');
+  assert.equal(fillText('Hey {name}.', { name: 'Deepu' }, personal), 'Hey Deepu.');
+  // a hand-typed placeholder never reaches her
+  assert.equal(fillText('Her song: [FAVOURITE SONG]', {}, personal), '');
+  assert.equal(fillText('U/A: Unreasonably Adorable', {}, personal), 'U/A: Unreasonably Adorable');
+  // unknown tokens (filled later by a scene) survive
+  assert.equal(fillText('Secrets: {found} of {total}', {}, personal), 'Secrets: {found} of {total}');
+
+  const site = loadSite();
+  assert.deepEqual(Object.keys(personalValues(site)), PERSONAL_FIELDS.map((f) => f.key));
+  const gaps = personalGaps(site);
+  assert.ok(gaps.empty.some((f) => f.key === 'memory1'), 'the letter uses {memory1}');
+  assert.ok(validate(site).warnings.some((w) => w.group === 'personal' && /\[MEMORY 1\]/.test(w.message)));
+  site.text.personal = Object.fromEntries(PERSONAL_FIELDS.map((f) => [f.key, `Written: ${f.key}`]));
+  assert.equal(personalGaps(site).empty.length, 0);
+  assert.ok(!validate(site).warnings.some((w) => w.group === 'personal'));
+  site.text.credits.end = 'The end of [CHAPTER NAME].';
+  assert.ok(validate(site).warnings.some((w) => /\[CHAPTER NAME\]/.test(w.message)));
+});
+
+test('the committed script invents nothing and never assumes what her name means', () => {
+  const m = read(FILES.messages);
+  const all = JSON.stringify(m).toLowerCase();
+  for (const bad of ['lamp', 'late-night', '2 a.m', 'after midnight', 'pancake']) assert.ok(!all.includes(bad), `"${bad}" is gone`);
+  for (const k of ['memory1', 'memory2', 'tease', 'neverForget', 'admire', 'wantHerToKnow']) assert.ok(m.letter.body.some((p) => p.includes(`{${k}}`)), `letter uses {${k}}`);
+  assert.equal(m.letter.ps, 'P.S. {insideJoke}');
+});
+
+test('the unlock moment is midnight in India, whatever the viewer’s time zone', () => {
+  const s = read(FILES.settings).settings;
+  assert.equal(s.lock.enabled, true);
+  assert.equal(Date.parse(s.lock.unlockAt), Date.UTC(2027, 0, 2, 18, 30), '3 Jan 2027 00:00 IST = 2 Jan 2027 18:30 UTC');
+  assert.equal(daysAlive(loadSite()), 7305);
+});
