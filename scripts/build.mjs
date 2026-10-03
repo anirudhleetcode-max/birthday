@@ -18,7 +18,9 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'dist');
 const PUBLIC = ['index.html', 'site.webmanifest', '.nojekyll', 'assets', 'admin', 'data', 'photos', 'media'];
-const SKIP = /(^|\/)(\.DS_Store|Thumbs\.db)$/;
+// photos/originals/ stay in the repository (the admin fetches them through the GitHub API to
+// re-crop without quality loss) but are NOT published: the film only ever shows display copies.
+const SKIP = /(^|\/)(\.DS_Store|Thumbs\.db)$|^photos\/originals\//;
 const problems = [];
 
 // 1 · release checks first (content, 7,305 days, CSP hash, secrets, photo shapes & metadata)
@@ -73,7 +75,10 @@ for (const { rel } of files) {
 // data → files
 const photos = JSON.parse(fs.readFileSync(path.join(OUT, 'data/photos.json'), 'utf8')).photos || [];
 // (paths in the data files are relative to the site root, like index.html's)
-for (const p of photos) for (const k of ['src', 'thumb', 'original']) if (p[k]) check('index.html', p[k]);
+for (const p of photos) {
+  for (const k of ['src', 'thumb']) if (p[k]) check('index.html', p[k]);
+  if (p.original && !fs.existsSync(path.join(ROOT, p.original))) problems.push(`data/photos.json: original ${p.original} is missing from the repository`);
+}
 const settings = JSON.parse(fs.readFileSync(path.join(OUT, 'data/settings.json'), 'utf8'));
 for (const k of ['music', 'video', 'voice']) { const v = settings.media && settings.media[k]; if (typeof v === 'string' && v) check('index.html', v); }
 
@@ -82,7 +87,7 @@ const total = files.reduce((a, f) => a + f.size, 0);
 const kb = (n) => `${(n / 1024).toFixed(0)} KB`;
 const sum = (pre) => files.filter((f) => f.rel.startsWith(pre)).reduce((a, f) => a + f.size, 0);
 console.log(`dist/: ${files.length} files, ${(total / 1048576).toFixed(1)} MB`);
-console.log(`  photos ${kb(sum('photos/') - sum('photos/originals/') - sum('photos/thumbs/'))} display · ${kb(sum('photos/thumbs/'))} thumbs · ${kb(sum('photos/originals/'))} originals (admin only)`);
+console.log(`  photos ${kb(sum('photos/') - sum('photos/thumbs/'))} display · ${kb(sum('photos/thumbs/'))} thumbs · originals not published`);
 console.log(`  code ${kb(sum('assets/js/') + sum('admin/'))} · vendor ${kb(sum('assets/vendor/'))} · fonts ${kb(sum('assets/fonts/'))} · css ${kb(sum('assets/css/'))}`);
 const big = [...files].sort((a, b) => b.size - a.size).slice(0, 5).map((f) => `${f.rel} ${kb(f.size)}`);
 console.log(`  largest: ${big.join(' · ')}`);

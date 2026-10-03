@@ -78,7 +78,7 @@ The 36 photos from your PDF are imported and placed by character. [docs/PHOTOS.m
 
 ### Adding or replacing photos
 **Use the admin.** Don't copy files into folders by hand. The admin:
-- keeps your **original file untouched** in `photos/originals/`,
+- keeps your **original file untouched** in `photos/originals/` (in the repository; the website itself only serves the film copies),
 - makes a cropped, gently colour-graded display copy in `photos/` and a thumbnail in `photos/thumbs/`,
 - records everything in `data/photos.json`.
 

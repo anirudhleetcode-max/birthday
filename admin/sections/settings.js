@@ -124,9 +124,10 @@ function gradingPanel() {
   });
   (async () => {
     const withImg = (state.site.photos || []).filter((p) => p.original || p.src).slice(0, 4);
-    for (const p of withImg) {
+    // the original when it can be fetched (it isn't on the public site), else the display copy
+    for (const path of withImg.flatMap((p) => [p.original, p.src].filter(Boolean))) {
       try {
-        const dec = await I.decodeImage(await getFileBlob(p.original || p.src), { maxSide: 1200 });
+        const dec = await I.decodeImage(await getFileBlob(path), { maxSide: 1200 });
         use(dec.canvas);
         return;
       } catch { /* next */ }

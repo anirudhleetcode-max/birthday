@@ -137,13 +137,35 @@ you just can't publish until you add a new token.
 |---|---|---|
 | Every word in the film, **including your letter** | `data/messages.json` | Readable at `…/birthday/data/messages.json`. |
 | Names, birth date, unlock time, your WhatsApp number (if you add one) | `data/settings.json` | The WhatsApp number is needed for "Send a hug". Leave it empty if you'd rather not publish it. |
-| Every photo: the film copy, a thumbnail **and the full-size original** | `photos/`, `photos/thumbs/`, `photos/originals/` | Originals are kept so photos can be re-cropped and re-graded later. |
+| Every photo: the film copy and a thumbnail | `photos/`, `photos/thumbs/` | These are what the film shows. |
+| The full-size originals | `photos/originals/` in the **repository** | **Not on the website** since the GitHub Actions build (`npm run build` leaves them out), but still in the repository: the admin downloads them through the GitHub API when you re-crop or re-grade. In a public repository, anyone can still view them on github.com. |
 | Music, voice note, video | `media/` | |
 | **Everything you ever published, even after you delete it** | the repository's history | Deleting or replacing a photo removes it from the site, but the old version stays in the repository's history. If the repository is public, anyone can find it there. |
 
 If the GitHub repository is **public** (GitHub Pages on a free account needs that), all of the
-above can also be browsed on github.com. If it's private, the files are still downloadable from
-the website itself.
+above, originals included, can also be browsed on github.com. If it's private, the website files
+are still downloadable from the website itself.
+
+### Where things stand right now (3 October 2026)
+
+- The repository **anirudhleetcode-max/birthday is public.** Her 36 photos (film copies,
+  thumbnails and originals), the letter and every message have been on github.com since they were
+  committed, and they are in the repository's history.
+- **GitHub Pages is not switched on yet** (there's no `main` branch). So there is no live website
+  yet, but the repository itself is browsable by anyone who finds it.
+- The countdown will hide the *film*, not the files. Anyone can open a photo's address directly.
+
+**To keep everything private until her birthday** (it takes one minute, and nobody but you can do
+it, because it needs your GitHub account):
+1. GitHub → the repository → **Settings → General → Danger zone → Change visibility → Private.**
+   From then on, the photos, letter and history are visible only to you. The admin keeps working,
+   because your token reads and writes the private repository.
+2. On **2 January**, switch it back to **Public**, create `main` and turn on Pages (README §2).
+   Free GitHub Pages can't serve a private repository, so the site goes live at that moment.
+
+Making the repository private hides the history too. Deleting the photos from the repository
+instead would *not* help: they would stay in the history. Rewriting the history isn't needed if
+the repository goes private, and the photos are meant to be seen from 3 January anyway.
 
 **So:** only upload photos and words you're happy for anyone to see. Assume the surprise could be
 discovered early by someone who goes looking. To truly erase something you already published,
