@@ -981,7 +981,8 @@ print(json.dumps({"bad": bad, "names": names, "json": data, "sizes": {n: z.getin
   ok(/Photo replaced/.test(listText) && /Deleted/.test(listText) && /Removed background music/.test(listText), 'the publish sheet lists the changes in plain words');
   await page.click('[data-testid="publish-now"]');
   await page.waitForSelector('.sheet-title:has-text("Published!")', { timeout: 60000 });
-  ok(/both sets of changes were kept/.test(await page.textContent('.sheet')), 'the success sheet mentions the merge');
+  // the progress sheet lingers ~240 ms while it fades out, so read the success sheet itself
+  ok(/both sets of changes were kept/.test(await page.textContent('.sheet:has(.sheet-title:has-text("Published!"))')), 'the success sheet mentions the merge');
   const commits = git.calls.filter((c) => c.method === 'POST' && c.path === '/git/commits');
   const patches = git.calls.filter((c) => c.method === 'PATCH');
   ok(patches.length === 2 && commits.length === 2, `409 → re-read, merged, retried once (${commits.length} commits built, ${patches.length} ref updates)`);
