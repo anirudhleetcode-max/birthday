@@ -999,7 +999,8 @@ class CakeScene {
     kn.position.copy(K.pos).addScaledVector(along, -0.38);
     kn.scale.setScalar(Math.max(0.001, K.appear));
     // a star glint riding the blade
-    const tip = new THREE.Vector3(0.62, 0.05, 0.01).applyMatrix4(kn.updateMatrixWorld() && kn.matrixWorld);
+    kn.updateMatrixWorld();
+    const tip = new THREE.Vector3(0.62, 0.05, 0.01).applyMatrix4(kn.matrixWorld);
     this.kGlint.position.copy(tip);
     this.kGlint.material.opacity = K.appear * (0.35 + 0.35 * Math.sin(t * 3.1) + 0.5 * K.press);
     this.kGlint.material.rotation = t * 0.4;

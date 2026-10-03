@@ -118,7 +118,7 @@ export function createStarfield(scene, U, count) {
   pts.renderOrder = -15;
   pts.frustumCulled = false;
   scene.add(pts);
-  return { dispose() { scene.remove(pts); geo.dispose(); mat.dispose(); } };
+  return { object: pts, dispose() { scene.remove(pts); geo.dispose(); mat.dispose(); } };
 }
 
 /* ------------------------------------------------------------------ the days */

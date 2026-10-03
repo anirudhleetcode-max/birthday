@@ -153,17 +153,20 @@ const MOTE_FRAG = /* glsl */ `
 `;
 
 /**
- * Draw every photo (thumbUrl) into one atlas canvas. The photo keeps its aspect
- * (its `ratio`); if the image file differs, a focal-point crop window is used.
- * Resolves { texture, rects[] } (rects[k] = { u0, v0, du, dv, ok }).
+ * Draw every photo (thumbUrl) into one atlas canvas of square cells (`cell` px,
+ * shrunk to fit `maxSize`). The photo keeps its aspect (its `ratio`); if the image
+ * file differs, a focal-point crop window is used.
+ * Resolves { texture, rects[], canvas } (rects[k] = { u0, v0, du, dv, ok }).
  */
-export async function buildAtlas(photos, { size = 2048, preload, timeout = 9 } = {}) {
+export async function buildAtlas(photos, { cell = 320, maxSize = 4096, preload, timeout = 9 } = {}) {
   const n = Math.max(1, photos.length);
   const cols = Math.ceil(Math.sqrt(n));
   const rows = Math.ceil(n / cols);
-  const cw = Math.floor(size / cols);
-  const chh = Math.floor(size / rows);
-  const H = THREE.MathUtils.ceilPowerOfTwo(rows * chh) > size ? size : Math.max(64, rows * chh);
+  const cs = Math.max(64, Math.floor(Math.min(cell, maxSize / cols, maxSize / rows)));
+  const cw = cs;
+  const chh = cs;
+  const size = cols * cs;
+  const H = rows * cs;
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = H;

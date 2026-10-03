@@ -49,7 +49,9 @@ export function buildEnvironment(renderer) {
 export function buildBackdrop() {
   const mat = new THREE.ShaderMaterial({
     uniforms: { uRoom: { value: 1 }, uWarm: { value: 0 } },
-    side: THREE.BackSide, depthWrite: false,
+    // not tone-mapped: Neutral tone mapping subtracts the darkest channel in the
+    // shadows, which would turn this quiet midnight indigo into saturated blue
+    side: THREE.BackSide, depthWrite: false, toneMapped: false,
     vertexShader: /* glsl */`
       varying vec3 vDir;
       void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
@@ -67,7 +69,7 @@ export function buildBackdrop() {
         col += vec3(0.02, 0.012, 0.04) * h * 0.6;
         // …which turns into warm golden light once the candles are out
         col += vec3(0.075, 0.036, 0.008) * pow(h, 1.1) * smoothstep(0.55, -0.05, y) * uWarm;
-        col *= 0.35 + 0.65 * uRoom;
+        col *= 0.12 + 0.88 * uRoom;
         gl_FragColor = vec4(col, 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -84,7 +86,7 @@ export function buildBackdrop() {
 export function buildBokeh({ lowPower = false } = {}) {
   const R = rng(99);
   const items = [];
-  const warm = [1.0, 0.78, 0.45], rose = [1.0, 0.62, 0.72], lav = [0.55, 0.62, 1.0], amber = [1.0, 0.62, 0.3], cream = [1.0, 0.9, 0.75];
+  const warm = [1.0, 0.78, 0.45], rose = [1.0, 0.62, 0.72], lav = [0.66, 0.6, 1.0], amber = [1.0, 0.62, 0.3], cream = [1.0, 0.9, 0.75];
   // draped strings of fairy lights across the back of the room
   const strings = lowPower ? 2 : 3;
   for (let s = 0; s < strings; s++) {
@@ -104,7 +106,7 @@ export function buildBokeh({ lowPower = false } = {}) {
     const z = -6 - R() * 12;
     items.push({
       p: [(R() - 0.5) * (14 - z * 0.9), -0.5 + R() * 6.5, z],
-      size: 0.35 + R() * 1.1, col: [warm, rose, lav, cream, amber, warm][Math.floor(R() * 6)], a: 0.14 + R() * 0.32, kind: 0,
+      size: 0.3 + R() * 0.75, col: [warm, rose, lav, cream, amber, warm][Math.floor(R() * 6)], a: 0.1 + R() * 0.24, kind: 0,
     });
   }
   // distant lanterns drifting up

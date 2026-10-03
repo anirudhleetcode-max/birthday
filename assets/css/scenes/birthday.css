@@ -1,1 +1,115 @@
-/* birthday chapter styles */
+/* birthday — "7,305 Days → The Last Lantern" (the climax) */
+.scene-birthday { background: #000; }
+.scene-birthday .bd-gl { z-index: 0; }
+
+/* the golden ribbon (2D) and the single point of light it starts from */
+.bd-rib { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.bd-seed {
+  position: absolute; left: 50%; top: 50%; z-index: 3; pointer-events: none;
+  width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%;
+  background: radial-gradient(circle, #fffbea 0%, #ffe3a3 45%, rgba(244, 196, 99, 0) 72%);
+  box-shadow: 0 0 10px 3px rgba(255, 214, 140, .6), 0 0 38px 12px rgba(255, 186, 96, .2);
+  animation: bd-breathe 2.6s ease-in-out infinite;
+}
+@keyframes bd-breathe {
+  0%, 100% { box-shadow: 0 0 10px 3px rgba(255, 214, 140, .6), 0 0 38px 12px rgba(255, 186, 96, .2); }
+  50% { box-shadow: 0 0 14px 5px rgba(255, 220, 150, .75), 0 0 52px 18px rgba(255, 186, 96, .26); }
+}
+
+/* words above the timeline (numbers, narration) */
+.bd-slot {
+  position: absolute; left: 0; right: 0; z-index: 5; pointer-events: none;
+  bottom: calc(100% - var(--line-y, 58vh) + clamp(34px, 6.4vh, 70px));
+  display: grid; justify-items: center; align-items: end; padding: 0 7vw; text-align: center;
+}
+.bd-slot > * { grid-area: 1 / 1; }
+.bd-count { display: flex; flex-direction: column; align-items: center; gap: .15em; }
+.bd-num {
+  font-family: var(--f-display); font-weight: 400; line-height: 1.02;
+  font-size: clamp(66px, 19vw, 148px); letter-spacing: .05em; margin-right: -.05em; padding: 0 .1em;
+  background: var(--gold-text); background-size: 220% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 20px rgba(244, 196, 99, .32));
+  animation: goldshift 7s ease-in-out infinite alternate;
+}
+.bd-unit, .bd-line {
+  font-family: var(--f-serif); font-style: italic; font-weight: 400; color: var(--cream);
+  text-shadow: 0 0 18px rgba(255, 210, 140, .4), 0 2px 12px rgba(0, 0, 0, .85);
+}
+.bd-unit { font-size: clamp(23px, 6.2vw, 40px); letter-spacing: .02em; line-height: 1.2; }
+.bd-line {
+  margin: 0; max-width: 21em; font-size: clamp(24px, 6.4vw, 44px); line-height: 1.3;
+  text-wrap: balance;
+}
+.bd-line.is-soft { color: var(--gold-hi); }
+.bd-line .w, .bd-word-line .w { display: inline-block; white-space: pre; }
+
+/* a soft dark hush behind the title so it reads over a thousand lanterns */
+.bd-hush {
+  position: absolute; left: 50%; top: var(--title-y, 42%); z-index: 3; pointer-events: none; opacity: 0;
+  width: max(150vw, 1100px); height: min(78vh, 760px); transform: translate(-50%, -50%);
+  background: radial-gradient(closest-side, rgba(7, 4, 18, .62), rgba(7, 4, 18, .34) 48%, rgba(7, 4, 18, 0));
+}
+
+/* her photographs, orbiting */
+.bd-orbit { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
+.bd-ph {
+  position: absolute; left: 0; top: 0; margin: 0; overflow: hidden; border-radius: 5px;
+  opacity: 0; visibility: hidden; will-change: transform, opacity; background: #1b0f2a;
+  box-shadow: 0 0 0 1px rgba(255, 227, 163, .32), 0 0 24px rgba(255, 176, 86, .26), 0 12px 28px rgba(0, 0, 0, .5);
+}
+.bd-ph img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* the title */
+.bd-title {
+  position: absolute; left: 50%; top: var(--title-y, 42%); z-index: 6; pointer-events: none;
+  width: max-content; max-width: 94vw; visibility: hidden;
+  transform: translate(-50%, -50%) scale(var(--fit, 1));
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.bd-big {
+  margin: 0; font-family: var(--f-display); font-weight: 400;
+  font-size: clamp(28px, 8.6vw, 72px); line-height: 1.24; letter-spacing: .17em; margin-right: -.17em;
+  color: #fff0cf; text-wrap: balance;
+  text-shadow: 0 0 2px rgba(255, 244, 220, .7), 0 0 22px rgba(255, 196, 110, .5), 0 3px 18px rgba(0, 0, 0, .75);
+}
+.bd-word { display: inline-block; white-space: nowrap; }
+.bd-big .ch { display: inline-block; }
+.bd-orn { margin-top: .2em; line-height: 0; }
+.bd-orn svg { width: min(290px, 60vw); height: 24px; overflow: visible; }
+.bd-name {
+  font-family: var(--f-script); font-weight: 400; line-height: 1.12; margin-top: -.04em;
+  font-size: clamp(78px, 25vw, 188px);
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--wipe, 130%) - 30%), transparent var(--wipe, 130%));
+  mask-image: linear-gradient(90deg, #000 calc(var(--wipe, 130%) - 30%), transparent var(--wipe, 130%));
+}
+.bd-name-in {
+  display: inline-block; padding: .14em .36em .24em;
+  background: linear-gradient(100deg, #d39a39 0%, #f4c463 20%, #fff3d2 42%, #ffd98a 58%, #e2a645 80%, #ffe3a3 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 2px rgba(255, 236, 200, .55)) drop-shadow(0 0 20px rgba(255, 186, 96, .5));
+  animation: goldshift 7s ease-in-out infinite alternate;
+}
+
+/* the last words */
+.bd-words {
+  position: absolute; left: 0; right: 0; z-index: 7; pointer-events: none;
+  bottom: calc(max(var(--lb), 0px) + 9vh + var(--safe-b));
+  display: grid; justify-items: center; padding: 0 7vw; text-align: center;
+}
+.bd-word-line {
+  grid-area: 1 / 1; margin: 0; max-width: 23em;
+  font-family: var(--f-serif); font-style: italic; font-weight: 400; line-height: 1.32;
+  font-size: clamp(22px, 5.9vw, 40px); color: var(--cream); text-wrap: balance;
+  text-shadow: 0 0 18px rgba(255, 210, 140, .4), 0 2px 12px rgba(0, 0, 0, .9);
+}
+.bd-closing {
+  position: absolute; left: 50%; z-index: 7; pointer-events: none; opacity: 0;
+  bottom: calc(3.4vh + 76px + var(--safe-b));
+  transform: translateX(-50%); width: max-content; max-width: 88vw; text-align: center; text-wrap: balance;
+  font-family: var(--f-hand); font-weight: 400; font-size: clamp(28px, 7.6vw, 50px); line-height: 1.12; color: #fff0d4;
+  text-shadow: 0 0 16px rgba(255, 200, 120, .45), 0 2px 10px rgba(0, 0, 0, .85);
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--wipe, 130%) - 18%), transparent var(--wipe, 130%));
+  mask-image: linear-gradient(90deg, #000 calc(var(--wipe, 130%) - 18%), transparent var(--wipe, 130%));
+}
