@@ -135,7 +135,7 @@ export function createFlames(bases, { reduced = false } = {}) {
         float fl = 0.85 + 0.3 * vnoise(vec2(uTime * 8.0, aSeed * 9.0));
         vFl = fl;
         float lit = aLit;
-        float size = max(0.44 * lit * uHalo * fl, aEmber * 0.05);
+        float size = max(0.3 * lit * uHalo * fl, aEmber * 0.05);
         vec3 c = aBase + vec3(0.0, 0.05 * lit, 0.0) + lean * 0.1 * lit;
         vec4 mv = viewMatrix * vec4(c, 1.0);
         mv.xy += position.xy * size;
@@ -147,7 +147,7 @@ export function createFlames(bases, { reduced = false } = {}) {
       varying vec2 vUv; varying float vLit; varying float vEmber; varying float vFl;
       void main(){
         float d = length(vUv - 0.5) * 2.0;
-        float halo = exp(-d * d * 6.0) * 0.2 + exp(-d * d * 30.0) * 0.32;
+        float halo = exp(-d * d * 5.0) * 0.16 + exp(-d * d * 28.0) * 0.36;
         vec3 col = vec3(1.0, 0.58, 0.24) * halo * vLit * vFl;
         float ember = exp(-d * d * 9.0) * vEmber * (1.0 - vLit);
         col += vec3(1.0, 0.36, 0.08) * ember * 2.2;

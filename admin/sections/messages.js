@@ -181,13 +181,40 @@ function rowTools(n, i, { move, remove, label }) {
     h('button.icon-btn.sm.danger', { type: 'button', 'aria-label': `Remove ${label} ${i + 1}`, onclick: () => remove(i) }, icon('trash')));
 }
 
+/**
+ * Shared plumbing for list / pairs / objects editors. Every structural change rebuilds the
+ * editor; `focus(fresh)` then puts the keyboard focus back on the matching control INSIDE the
+ * rebuilt editor (never on a same-named field of another group).
+ */
 function arrayShell(path, label, hint, onAny, build) {
   const wrap = h('div.array-field');
-  const rerender = () => { const fresh = build(); wrap.replaceWith(fresh); onAny(); };
+  const rerender = (focus) => {
+    const fresh = build();
+    wrap.replaceWith(fresh);
+    onAny();
+    if (focus) requestAnimationFrame(() => { const el = focus(fresh); if (el) el.focus(); });
+    return fresh;
+  };
   const arr = () => getAt(state.site, path) || [];
   const write = (a) => commit(path, a);
-  const move = (i, d) => { const a = clone(arr()); const j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; write(a); rerender(); };
-  const remove = (i) => { const a = clone(arr()); a.splice(i, 1); write(a); rerender(); };
+  const rows = (fresh) => [...fresh.querySelectorAll(':scope > .str-list > li.str-row, :scope > .pair-list > .pair-row, :scope > .obj-list > .obj-card')];
+  const move = (i, d) => {
+    const a = clone(arr()); const j = i + d;
+    if (j < 0 || j >= a.length) return;
+    [a[i], a[j]] = [a[j], a[i]];
+    write(a);
+    rerender((fresh) => {
+      const row = rows(fresh)[j];
+      const btn = row && row.querySelectorAll('.row-tools .icon-btn')[d < 0 ? 0 : 1];
+      return btn && !btn.disabled ? btn : row && row.querySelector('textarea, input');
+    });
+  };
+  const remove = (i) => {
+    const a = clone(arr());
+    a.splice(i, 1);
+    write(a);
+    rerender((fresh) => { const r = rows(fresh); const row = r[Math.min(i, r.length - 1)]; return (row && row.querySelector('textarea, input')) || fresh.querySelector('.add-btn'); });
+  };
   const changed = !deepEqual(getAt(state.site, path), getAt(state.base, path));
   wrap.append(h('div.field-top', h('span.field-label', label), changed ? h('span.changed-dot.on', { title: 'Changed' }) : null));
   if (hint) wrap.append(h('p.field-hint', hint));
@@ -205,7 +232,7 @@ function listField(path, spec, onAny) {
       list.append(h('li.str-row', h('span.row-num', { 'aria-hidden': 'true' }, String(i + 1)), ta, rowTools(items.length, i, { move, remove, label: 'line' })));
     });
     if (!items.length) list.append(h('li.str-empty', getAt(state.base, path) === undefined ? 'Empty — the film uses its own lines.' : 'No lines.'));
-    wrap.append(list, h('button.btn.quiet.sm.add-btn', { type: 'button', onclick: () => { write([...arr(), '']); rerender(); requestAnimationFrame(() => { const all = document.querySelectorAll(`[aria-label^="${CSS.escape(spec.label)} "]`); all[all.length - 1]?.focus(); }); } }, icon('plus'), spec.add || 'Add a line'));
+    wrap.append(list, h('button.btn.quiet.sm.add-btn', { type: 'button', onclick: () => { write([...arr(), '']); rerender((fresh) => { const r = fresh.querySelectorAll(':scope > .str-list textarea'); return r[r.length - 1]; }); } }, icon('plus'), spec.add || 'Add a line'));
     return wrap;
   };
   return build();
@@ -225,7 +252,7 @@ function pairsField(path, spec, onAny) {
       b.addEventListener('input', up);
       list.append(h('div.pair-row', h('div.pair-inputs', a, b), rowTools(items.length, i, { move, remove, label: 'row' })));
     });
-    wrap.append(list, h('button.btn.quiet.sm.add-btn', { type: 'button', onclick: () => { write([...arr(), ['', '']]); rerender(); } }, icon('plus'), spec.add || 'Add a row'));
+    wrap.append(list, h('button.btn.quiet.sm.add-btn', { type: 'button', onclick: () => { write([...arr(), ['', '']]); rerender((fresh) => { const r = fresh.querySelectorAll(':scope > .pair-list .pair-row'); return r.length ? r[r.length - 1].querySelector('input') : null; }); } }, icon('plus'), spec.add || 'Add a row'));
     return wrap;
   };
   return build();
@@ -255,7 +282,7 @@ function objectsField(path, spec, onAny) {
         const blank = (v) => (typeof v === 'string' ? '' : Array.isArray(v) ? [] : isObj(v) ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, blank(x)])) : v);
         a.push(blank(tmpl));
         write(a);
-        rerender();
+        rerender((fresh) => { const r = fresh.querySelectorAll(':scope > .obj-list > .obj-card'); return r.length ? r[r.length - 1].querySelector('input, textarea') : null; });
       },
     }, icon('plus'), spec.add || 'Add one more'));
     return wrap;

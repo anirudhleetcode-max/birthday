@@ -33,14 +33,21 @@ export function renderSettings() {
   /* ---- lock ---- */
   const lock = site.settings.lock;
   const whenPretty = h('p.lock-pretty', { 'aria-live': 'polite' }, `Opens ${prettyIst(lock.unlockAt)}`);
+  const whenError = h('p.form-error', { role: 'alert', hidden: true }, 'Please pick both a date and a time — the previous time is kept until then.');
   const when = textField({
     label: 'Unlocks at (India time, IST)', type: 'datetime-local', value: isoToIstInput(lock.unlockAt), attrs: { step: '60', 'data-testid': 'unlock-at' },
     hint: 'Stored as Indian Standard Time (+05:30), so it opens at the same moment wherever she is.',
-    onchange: (v) => { const iso = istInputToIso(v); if (!iso) return; set((s) => { s.settings.lock.unlockAt = iso; }); whenPretty.textContent = `Opens ${prettyIst(iso)}`; },
+    onchange: (v) => {
+      const iso = istInputToIso(v);
+      whenError.hidden = !!iso;
+      if (!iso) return;
+      set((s) => { s.settings.lock.unlockAt = iso; });
+      whenPretty.textContent = `Opens ${prettyIst(iso)}`;
+    },
   });
   const lockPanel = panel('Countdown lock', { icon: 'lock', hint: 'Until this moment, anyone opening the site sees a gentle countdown instead of the film. Your Preview always skips it.' },
     switchField({ label: 'Keep the film locked until her birthday', checked: !!lock.enabled, onchange: (v) => set((s) => { s.settings.lock.enabled = v; }) }),
-    when, whenPretty,
+    when, whenError, whenPretty,
     h('button.btn.sm.quiet', { type: 'button', onclick: () => change((s) => { s.settings.lock.unlockAt = DEFAULT_UNLOCK; }) }, icon('undo'), 'Reset to 3 Jan 2027, midnight IST'));
 
   /* ---- WhatsApp ---- */

@@ -108,8 +108,10 @@ export function planPublish({ base, site, files, remote, existing }) {
   const prev = remote.legacy ? null : split(remote.site);
   const json = {};
   for (const k of Object.keys(FILES)) {
-    // only files whose CONTENT changed (formatting-only differences are left alone)
-    if (!(prev && deepEqual(next[k], prev[k]))) json[FILES[k]] = next[k];
+    // only files whose CONTENT changed (formatting-only differences are left alone) — and any of
+    // the three that is missing from the repo, because the film needs all three to load
+    const missingInRepo = existing && !existing.has(FILES[k]);
+    if (missingInRepo || !(prev && deepEqual(next[k], prev[k]))) json[FILES[k]] = next[k];
   }
   return { site: combine(next), json, files: upload, deletes };
 }

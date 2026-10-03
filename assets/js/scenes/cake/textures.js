@@ -298,27 +298,80 @@ export function goldLeafSideTextures({ W: CW = 1536, H: CH = 256, seed = 11 } = 
   return { map, mr };
 }
 
-// Spiral-striped candle wax: cream + rose-pink + a gold pinstripe.
+// Twisted taper-candle wax: warm ivory with a fine gold pinstripe spiralling up
+// it. Instance colours tint some candles blush / lavender. Returns {map, bump};
+// the bump gives the twist a real relief so it catches the candlelight.
 export function candleTexture() {
   const W = 64, H = 256;
   const c = cnv(W, H), g = c.getContext('2d');
-  const img = g.createImageData(W, H);
-  const turns = 3.2;
-  const cream = [252, 243, 229], rose = [236, 150, 178], gold = [232, 190, 98];
+  const b = cnv(W, H), gb = b.getContext('2d');
+  const img = g.createImageData(W, H), bi = gb.createImageData(W, H);
+  const turns = 2.6;
+  const ivory = [252, 246, 236], gold = [214, 168, 84];
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       let p = (x / W + (y / H) * turns) % 1;
       if (p < 0) p += 1;
-      let col = cream;
-      const soft = (a, b, w = 0.02) => Math.min(1, Math.max(0, (p - a) / w)) * Math.min(1, Math.max(0, (b - p) / w));
-      const kr = soft(0.08, 0.46), kg = soft(0.6, 0.67, 0.012);
-      col = [0, 1, 2].map((i) => cream[i] * (1 - kr - kg) + rose[i] * kr + gold[i] * kg);
+      // the twist: two soft grooves per turn
+      const groove = 0.5 + 0.5 * Math.cos(p * Math.PI * 4);
+      const shade = 0.9 + 0.1 * groove;
+      const kg = Math.max(0, 1 - Math.abs(p - 0.25) / 0.018); // a fine gold line in one groove
       const i4 = (y * W + x) * 4;
-      img.data[i4] = col[0]; img.data[i4 + 1] = col[1]; img.data[i4 + 2] = col[2]; img.data[i4 + 3] = 255;
+      for (let k = 0; k < 3; k++) img.data[i4 + k] = (ivory[k] * shade) * (1 - kg) + gold[k] * kg;
+      img.data[i4 + 3] = 255;
+      const h = Math.round(255 * (0.25 + 0.75 * groove));
+      bi.data[i4] = bi.data[i4 + 1] = bi.data[i4 + 2] = h; bi.data[i4 + 3] = 255;
     }
   }
   g.putImageData(img, 0, 0);
-  return toTex(c, { wrap: true });
+  gb.putImageData(bi, 0, 0);
+  return { map: toTex(c, { wrap: true }), bump: toTex(b, { srgb: false, wrap: true }) };
+}
+
+// Frosting relief (bump map, linear): the faint horizontal drag of a bench
+// scraper on buttercream under the fondant, slow undulations and a fine
+// sugar grain. Very subtle — it only shows where light rakes across the side.
+export function frostingBumpTexture({ W = 1024, H = 256, seed = 41 } = {}) {
+  const c = cnv(W, H), g = c.getContext('2d');
+  const R = rng(seed);
+  g.fillStyle = 'rgb(128,128,128)'; g.fillRect(0, 0, W, H);
+  // long, soft scraper streaks (wrap seamlessly in u)
+  for (let i = 0; i < 140; i++) {
+    const y = R() * H, th = 0.6 + R() * 2.4, a = 0.05 + R() * 0.12;
+    const x0 = R() * W, len = W * (0.2 + R() * 0.8);
+    const col = R() < 0.5 ? `rgba(255,255,255,${a})` : `rgba(0,0,0,${a})`;
+    g.strokeStyle = col; g.lineWidth = th; g.lineCap = 'round';
+    for (const off of [0, -W]) {
+      g.beginPath();
+      for (let k = 0; k <= 24; k++) {
+        const x = x0 + off + (len * k) / 24;
+        const yy = y + Math.sin((x / W) * Math.PI * 2 * 3 + i) * 1.2;
+        k ? g.lineTo(x, yy) : g.moveTo(x, yy);
+      }
+      g.stroke();
+    }
+  }
+  // soft undulation blobs
+  for (let i = 0; i < 90; i++) {
+    const x = R() * W, y = R() * H, r = 12 + R() * 40;
+    for (const off of [0, -W, W]) {
+      const rg = g.createRadialGradient(x + off, y, 0, x + off, y, r);
+      const a = 0.05 + R() * 0.06;
+      rg.addColorStop(0, R() < 0.5 ? `rgba(255,255,255,${a})` : `rgba(0,0,0,${a})`);
+      rg.addColorStop(1, 'rgba(128,128,128,0)');
+      g.fillStyle = rg; g.fillRect(x + off - r, y - r, r * 2, r * 2);
+    }
+  }
+  // fine sugar grain
+  const img = g.getImageData(0, 0, W, H);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const n = (R() - 0.5) * 18;
+    img.data[i] += n; img.data[i + 1] += n; img.data[i + 2] += n;
+  }
+  g.putImageData(img, 0, 0);
+  const t = toTex(c, { srgb: false, wrap: true, aniso: 8 });
+  t.wrapT = THREE.ClampToEdgeWrapping;
+  return t;
 }
 
 // Emissive gradient for the candle wax glow (bright at the top, like a lit candle).
@@ -420,6 +473,13 @@ export function woodTexture(size = 1024, seed = 21) {
     g.fillStyle = `rgba(10,4,2,${0.15 + R() * 0.25})`;
     g.fillRect(R() * S, R() * S, 1 + R() * 10, 1);
   }
+  // the table melts into the dark room (the top cap maps the disc to the canvas circle)
+  const fall = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  fall.addColorStop(0, 'rgba(4,2,6,0)');
+  fall.addColorStop(0.36, 'rgba(4,2,6,0)');
+  fall.addColorStop(0.7, 'rgba(4,2,6,0.62)');
+  fall.addColorStop(1, 'rgba(4,2,6,0.96)');
+  g.fillStyle = fall; g.fillRect(0, 0, S, S);
   return toTex(c, { aniso: 8 });
 }
 

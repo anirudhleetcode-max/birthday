@@ -245,6 +245,9 @@ export async function openEditor(id) {
   async function save() {
     const regen = !!p.src && !srcError && (!deepEqual(orig.crop, p.crop) || orig.cropMode !== p.cropMode || !deepEqual(normGrade(orig.grade), normGrade(p.grade)));
     if (!Number.isFinite(p.grade.strength)) p.grade.strength = null;
+    // nothing really changed → no new "updatedAt", no phantom draft change
+    const comparable = (x) => ({ ...x, grade: normGrade(x.grade), updatedAt: null });
+    if (!regen && deepEqual(comparable(p), comparable(orig))) { s.close('unchanged'); return; }
     let patch = {};
     if (regen) {
       saveBtn.disabled = true;

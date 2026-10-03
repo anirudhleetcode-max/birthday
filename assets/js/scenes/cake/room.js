@@ -234,7 +234,7 @@ export function buildDust({ count = 90 } = {}) {
 }
 
 // Round walnut table with a clear-coat sheen + fake contact shadows.
-export function buildTable({ lowPower = false, quality = 2, anisotropy = 4 } = {}) {
+export function buildTable({ lowPower = false, quality = 2, anisotropy = 4, shadows = false } = {}) {
   const group = new THREE.Group();
   const wood = woodTexture(lowPower ? 512 : 1024);
   wood.anisotropy = anisotropy;
@@ -244,6 +244,7 @@ export function buildTable({ lowPower = false, quality = 2, anisotropy = 4 } = {
   mat.userData.env = 0.4; // keep the dark wood dark; its sheen comes from the lights
   const top = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.5, 0.12, 160, 1), mat);
   top.position.y = -0.06;
+  top.receiveShadow = shadows;
   group.add(top);
   // soft shadow decals
   const shadowTex = radialTexture({ size: 256, inner: 'rgba(0,0,0,0.9)', mid: 'rgba(0,0,0,0.55)', outer: 'rgba(0,0,0,0)', midStop: 0.45 });
@@ -264,4 +265,54 @@ export function buildTable({ lowPower = false, quality = 2, anisotropy = 4 } = {
   group.add(pool);
   shadowMat.dispose();
   return { group, mat, wood, shadowTex, glowTex, standShadow, mkShadow, pool };
+}
+
+// Soft volumetric-looking light: a faint shaft of haze falling on the cake from
+// high above (cool while the room is dim, warm gold for the celebration) and a
+// warm "aura" of candle-glow hanging in the air over the flames.
+export function buildAtmosphere({ glowTex }) {
+  const H = 8.5;
+  const geo = new THREE.CylinderGeometry(0.55, 2.6, H, 64, 16, true);
+  geo.translate(0, H / 2, 0);
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(0.55, 0.6, 1.0) }, uIntensity: { value: 0 } },
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    vertexShader: /* glsl */`
+      varying vec3 vN; varying vec3 vW; varying float vH;
+      void main(){
+        vec4 w = modelMatrix * vec4(position, 1.0);
+        vW = w.xyz; vH = position.y / ${H.toFixed(1)};
+        vN = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * viewMatrix * w;
+      }`,
+    fragmentShader: /* glsl */`
+      uniform float uTime; uniform vec3 uColor; uniform float uIntensity;
+      varying vec3 vN; varying vec3 vW; varying float vH;
+      void main(){
+        vec3 v = normalize(cameraPosition - vW);
+        float facing = abs(dot(normalize(vN), v));
+        float body = pow(facing, 2.2);                       // soft edges, denser through the middle
+        float vert = smoothstep(0.0, 0.3, vH) * (1.0 - smoothstep(0.55, 1.0, vH));
+        float a = atan(vW.z, vW.x);
+        float streak = 0.72 + 0.28 * sin(a * 7.0 + vH * 3.0 + uTime * 0.12) * sin(a * 3.0 - uTime * 0.07 + 1.3);
+        gl_FragColor = vec4(uColor * body * vert * streak * uIntensity, 1.0);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
+  });
+  const shaft = new THREE.Mesh(geo, mat);
+  shaft.position.set(0.15, 0.0, -0.75);
+  shaft.rotation.z = -0.06;
+  shaft.renderOrder = 4;
+  shaft.frustumCulled = false;
+
+  const aura = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: glowTex, color: 0xffa860, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0, fog: false,
+  }));
+  aura.scale.set(3.4, 2.6, 1);
+  aura.renderOrder = 9;
+  return {
+    shaft, aura, uniforms: mat.uniforms,
+    dispose() { geo.dispose(); mat.dispose(); aura.material.dispose(); },
+  };
 }

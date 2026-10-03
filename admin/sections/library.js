@@ -38,7 +38,8 @@ function chapterStatus(ch, c) {
 export function renderLibrary() {
   const site = state.site;
   const c = counts(site);
-  const filter = state.ui.filter || 'all';
+  const filter = validFilter(state.ui.filter);
+  state.ui.filter = filter;
   const v = validate(site);
 
   const head = sectionHead('Photo library', 'Every photo in the film',
@@ -231,9 +232,13 @@ function enableDrag(grid, chapter) {
   grid.addEventListener('pointercancel', end);
 }
 
+const SPECIAL_FILTERS = ['all', 'missing', 'featured', 'disabled'];
+/** A filter this version knows (a remembered one from an older version may not exist any more). */
+export const validFilter = (f) => (SPECIAL_FILTERS.includes(f) || PHOTO_CHAPTERS.some((x) => x.id === f) ? f : 'all');
+
 export function restoreFilter() {
   try {
     const f = localStorage.getItem(FILTER_KEY);
-    if (f) state.ui.filter = f;
+    if (f) state.ui.filter = validFilter(f);
   } catch { /* ignore */ }
 }

@@ -174,21 +174,27 @@ export function flushSave() {
     const rev = state.rev;
     state.saving = true;
     hooks.chrome();
+    // Taken BEFORE the await: a file staged while this save is running sets filesDirty again,
+    // so the next save writes it (resetting the flag afterwards would silently drop it).
+    const filesDirty = state.filesDirty;
+    state.filesDirty = false;
     try {
       if (!changes().count && !state.files.size) {
         await clearDraft();
         state.filesDirty = true;
       } else {
-        await saveDraft(state.site, state.filesDirty ? state.files : undefined, {
+        await saveDraft(state.site, filesDirty ? state.files : undefined, {
           deleted: deletedPaths(state.base, state.site),
           base: state.base,
         });
-        state.filesDirty = false;
       }
       state.savedRev = rev;
       state.savedAt = new Date().toISOString();
       state.saveError = null;
       return true;
+    } catch (err) {
+      if (filesDirty) state.filesDirty = true; // the files were not written — try again next time
+      throw err;
     } finally {
       state.saving = false;
       hooks.chrome();

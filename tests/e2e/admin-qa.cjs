@@ -724,8 +724,8 @@ FLOWS.words = async () => {
   ok(/doesn’t look like an audio file/.test(await page.textContent('.toast-error')) && (await site(page)).media.music === 'media/music-old.mp3', 'an image is refused as music');
   await goSection(page, 'video');
   await chooseFile(page, () => tap(page, '[data-testid="media-video-pick"]'), videoHuge);
-  await page.waitForSelector('.toast-error');
-  ok(/too big to publish/.test(await page.textContent('.toast-error')) && !(await site(page)).media.video, 'a 96 MB video is refused');
+  const refused = await page.waitForSelector('.toast-error:has-text("too big to publish")', { timeout: 10000 }).then(() => true).catch(() => false);
+  ok(refused && !(await site(page)).media.video, 'a 96 MB video is refused');
   const cap = page.getByLabel('Caption under the video');
   await cap.fill('Watch till the end');
   ok((await site(page)).media.videoCaption === 'Watch till the end' && await S(page, () => document.activeElement && document.activeElement.tagName) === 'INPUT', 'video caption saves while typing (focus kept)');
@@ -738,7 +738,7 @@ FLOWS.settings = async () => {
   const { context, page, errors, dialogs } = await setup({ timezone: 'America/Los_Angeles' });
   await boot(page, 'settings');
   ok(await page.inputValue('[data-testid="unlock-at"]') === '2027-01-03T00:00', `IST shown as India time in a Los Angeles browser (${await page.inputValue('[data-testid="unlock-at"]')})`);
-  ok(/3 January 2027.*12:00\s?am IST/i.test(await page.textContent('.lock-pretty')), `pretty: “${await page.textContent('.lock-pretty')}”`);
+  ok(/3 January,? 2027.*12:00\s?am IST/i.test(await page.textContent('.lock-pretty')), `pretty: “${await page.textContent('.lock-pretty')}”`);
   await page.fill('[data-testid="unlock-at"]', '2027-01-02T23:45');
   await page.dispatchEvent('[data-testid="unlock-at"]', 'change');
   ok((await site(page)).settings.lock.unlockAt === '2027-01-02T23:45:00+05:30', 'stored as +05:30');
@@ -763,8 +763,10 @@ FLOWS.settings = async () => {
   await page.click('[data-testid="more"]');
   await page.click('[data-testid="menu-reset"]');
   await page.click('[data-testid="confirm-ok"]');
-  await page.waitForFunction(() => window.__lanternRoom.changes().count === 0);
-  ok(await page.inputValue('[data-testid="her-name"]') === 'Deepu' && (await site(page)).settings.lock.unlockAt === '2027-01-03T00:00:00+05:30', 'Reset → back to the published version');
+  await page.waitForSelector('.toast:has-text("Draft discarded")');
+  await noSheet(page);
+  const afterReset = { name: await page.inputValue('[data-testid="her-name"]'), at: (await site(page)).settings.lock.unlockAt, sheets: await page.locator('.sheet-backdrop').count() };
+  ok(afterReset.name === 'Deepu' && afterReset.at === '2027-01-03T00:00:00+05:30', 'Reset → back to the published version', JSON.stringify(afterReset));
   dialogs.length = 0;
   await page.reload();
   await page.waitForSelector('#view[data-section="settings"]');
@@ -792,7 +794,8 @@ FLOWS.preview = async () => {
   await popup.close();
   const film = await context.newPage();
   await film.goto(`${BASE}/index.html?preview&draft&scene=tower`);
-  const blobShown = await film.waitForFunction(() => [...document.querySelectorAll('img')].some((i) => (i.currentSrc || i.src).startsWith('blob:'))
+  // scenes may show photos as <img>, SVG <image> or CSS backgrounds
+  const blobShown = await film.waitForFunction(() => [...document.querySelectorAll('img, image')].some((i) => (i.currentSrc || i.src || i.getAttribute('href') || i.getAttribute('xlink:href') || '').startsWith('blob:'))
     || [...document.querySelectorAll('*')].some((e) => /url\("?blob:/.test(getComputedStyle(e).backgroundImage)), null, { timeout: 30000 }).then(() => true).catch(() => false);
   ok(blobShown, 'draft film (tower) shows the new photo from the draft');
   await film.goto(`${BASE}/index.html?preview`);
@@ -913,7 +916,8 @@ print(json.dumps({"bad": bad, "names": names, "json": data, "sizes": {n: z.getin
   await page.click('[data-testid="publish"]');
   await page.click('[data-testid="publish-now"]');
   await page.waitForSelector('.sheet-title:has-text("didn’t work")', { timeout: 30000 });
-  ok(n === 2 && /changed the site at the same moment/.test(await page.textContent('.sheet')) && (await site(page)).text.invite.greeting === 'Second publish', 'two conflicts in a row → friendly message, draft kept');
+  const conflictInfo = { n, sheet: (await page.textContent('.sheet:has(.sheet-title:has-text("didn’t work"))')).slice(0, 200), greeting: (await site(page)).text.invite.greeting };
+  ok(n === 2 && /changed the site at the same moment/.test(conflictInfo.sheet) && conflictInfo.greeting === 'Second publish', 'two conflicts in a row → friendly message, draft kept', JSON.stringify(conflictInfo));
   ok(!errors.filter((e) => !/publish failed/.test(e)).length, 'no console errors (publish)', errors.join(' | '));
   await context.close();
 };

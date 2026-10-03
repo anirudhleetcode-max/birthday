@@ -187,7 +187,9 @@ export async function replacePhoto(id, { file = null } = {}) {
     if (!f) f = (await pickFiles({ accept: 'image/jpeg,image/png,image/webp,image/*' }))[0];
     if (!f) return false;
     const dec = await openFile(f);
-    if (!dec) { f = null; continue; }
+    // an unreadable file (HEIC…) ends here with a friendly message — re-opening the picker by
+    // itself would hide that message and surprise the owner
+    if (!dec) return false;
     const est = I.estimateFocal(dec.canvas);
     const focalSrc = est.confidence > 0.15 ? est : I.DEFAULT_FOCAL;
     let crop = null;
@@ -300,9 +302,15 @@ export async function addPhotos({ chapter = 'album' } = {}) {
   if (!files.length) return 0;
   let added = 0;
   let quick = false;
+  const failed = []; // the cropper clears toasts, so unreadable files are reported once, at the end
   for (let i = 0; i < files.length; i++) {
-    const dec = await openFile(files[i]);
-    if (!dec) continue;
+    let dec;
+    try {
+      dec = await withBusy('Opening photo…', () => I.decodeImage(files[i]));
+    } catch (err) {
+      failed.push({ name: files[i].name || 'photo', err });
+      continue;
+    }
     const est = I.estimateFocal(dec.canvas);
     const focalSrc = est.confidence > 0.15 ? est : I.DEFAULT_FOCAL;
     const res = await openCropper({
@@ -329,11 +337,25 @@ export async function addPhotos({ chapter = 'album' } = {}) {
       added++;
     } catch (err) {
       console.error(err);
-      toast(`Couldn’t prepare this photo: ${err.message || err}`, { type: 'error' });
+      failed.push({ name: files[i].name || 'photo', err });
     }
   }
-  if (added) toast(`${plural(added, 'photo')} added to ${chapterInfo(ch).short}. Saved in your draft — preview, then publish.`, { type: 'success' });
+  const done = added ? `${plural(added, 'photo')} added to ${chapterInfo(ch).short}.` : '';
+  if (failed.length) reportFailed(failed, done);
+  else if (added) toast(`${done} Saved in your draft — preview, then publish.`, { type: 'success' });
   return added;
+}
+
+/** One message for every photo that couldn't be used (names + the HEIC tip when it applies). */
+export function reportFailed(failed, prefix = '') {
+  const names = failed.slice(0, 3).map((f) => `“${f.name}”`).join(', ') + (failed.length > 3 ? ` and ${failed.length - 3} more` : '');
+  const heic = failed.some((f) => f.err && f.err.code === 'heic');
+  const why = heic ? ` ${I.HEIC_MESSAGE}` : failed.length === 1 && failed[0].err && failed[0].err.message ? ` ${failed[0].err.message}` : ' Try exporting them as JPEG and adding them again.';
+  const msg = `${prefix ? `${prefix} ` : ''}${failed.length === 1 ? `${names} couldn’t be added.` : `${plural(failed.length, 'photo')} couldn’t be added: ${names}.`}${why}`;
+  toast(msg, {
+    type: 'error', duration: 14000,
+    action: heic ? { label: 'How?', run: () => { const s = openSheet({ kicker: 'iPhone photos', title: 'Share as “Most Compatible”', size: 'sm', content: h('p.sheet-text', I.HEIC_HELP), actions: [h('button.btn.gold', { type: 'button', onclick: () => s.close() }, 'Got it')] }); } } : null,
+  });
 }
 
 /** Details for a new photo → {label, caption, date, alt, quick?} | null */
@@ -378,18 +400,22 @@ export function deletePhoto(id) {
   });
 }
 
-export function movePhoto(id, chapter) {
+export function movePhoto(id, chapter, { undoable = true, at = null } = {}) {
   const p = photoById(id);
   if (!p || p.chapter === chapter) return;
   const from = p.chapter;
+  const fromIds = photosFor(state.site, from, { includeDisabled: true }).map((x) => x.id);
   change((site) => {
     const q = site.photos.find((x) => x.id === id);
     q.chapter = chapter;
     q.order = nextOrder(site, chapter) + 0.5;
     reorder(site, from, []);
-    reorder(site, chapter, []);
+    if (at) reorder(site, chapter, at);
+    else reorder(site, chapter, []);
   });
-  toast(`Moved to ${chapterInfo(chapter).short}.`, { type: 'success', action: { label: 'Undo', run: () => movePhoto(id, from) } });
+  if (!undoable) return;
+  // Undo puts it back exactly where it was (not at the end of its old chapter)
+  toast(`Moved to ${chapterInfo(chapter).short}.`, { type: 'success', action: { label: 'Undo', run: () => movePhoto(id, from, { undoable: false, at: fromIds }) } });
 }
 
 /** Ask where to move a photo. */

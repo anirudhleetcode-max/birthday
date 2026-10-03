@@ -276,8 +276,8 @@ export function createRibbon(container, opts = {}) {
   let springing = false;
   let omega = 10;
 
-  // render scratch (visible portion, up to N + 2 samples)
-  const R = N + 2;
+  // render scratch (visible portion; extra room for on-screen subdivision under camera zoom)
+  const R = N * 4 + 4;
   const rx = new Float32Array(R);
   const ry = new Float32Array(R);
   const rnx = new Float32Array(R);
@@ -547,19 +547,66 @@ export function createRibbon(container, opts = {}) {
     const push = (f) => {
       const i = Math.min(N - 2, Math.floor(f));
       const t = f - i;
-      rx[M] = lerp(px[i], px[i + 1], t);
-      ry[M] = lerp(py[i], py[i + 1], t);
-      let a = lerp(nx[i], nx[i + 1], t);
-      let b = lerp(ny[i], ny[i + 1], t);
+      if (t < 1e-6) {
+        rx[M] = px[i];
+        ry[M] = py[i];
+      } else {
+        // uniform Catmull-Rom between arc-length samples: stays round when the camera magnifies it
+        const i0 = i > 0 ? i - 1 : 0;
+        const i3 = i + 2 < N ? i + 2 : N - 1;
+        const t2 = t * t;
+        const t3 = t2 * t;
+        const a0 = -0.5 * t3 + t2 - 0.5 * t;
+        const a1 = 1.5 * t3 - 2.5 * t2 + 1;
+        const a2 = -1.5 * t3 + 2 * t2 + 0.5 * t;
+        const a3 = 0.5 * t3 - 0.5 * t2;
+        rx[M] = a0 * px[i0] + a1 * px[i] + a2 * px[i + 1] + a3 * px[i3];
+        ry[M] = a0 * py[i0] + a1 * py[i] + a2 * py[i + 1] + a3 * py[i3];
+      }
+      const a = lerp(nx[i], nx[i + 1], t);
+      const b = lerp(ny[i], ny[i + 1], t);
       const l = Math.hypot(a, b) || 1;
       rnx[M] = a / l;
       rny[M] = b / l;
       rs[M] = lerp(cum[i], cum[i + 1], t);
       M++;
     };
+    // under camera zoom one sample can span 100+ screen px: subdivide the segments that are
+    // long on screen and near the viewport (strand offsets are analytic, so they stay silky)
+    const sc = view.scale;
+    const zoomed = sc > 1.6;
+    const cs = Math.cos(view.rotate) * sc;
+    const sn = Math.sin(view.rotate) * sc;
+    const vax = view.ax ?? view.x;
+    const vay = view.ay ?? view.y;
+    const pad = Math.max(cw, ch) * 0.3;
+    const near = (f) => {
+      const p = rawAt(f / (N - 1));
+      const dx = p.x - view.x;
+      const dy = p.y - view.y;
+      const x = vax + cs * dx - sn * dy;
+      const y = vay + sn * dx + cs * dy;
+      return x > -pad && x < cw + pad && y > -pad && y < ch + pad;
+    };
+    const seg = 9;
+    let prev = lo;
+    const step = (f) => {
+      if (zoomed) {
+        const d = (Math.abs(f - prev) * (cum[N - 1] / (N - 1))) * sc;
+        if (d > seg) {
+          let n = Math.min(Math.ceil(d / seg) - 1, 10);
+          if (M + n + (hi - f) + 4 >= R) n = 0;
+          if (n > 0 && (near(prev) || near(f) || near((prev + f) / 2))) {
+            for (let j = 1; j <= n; j++) push(prev + ((f - prev) * j) / (n + 1));
+          }
+        }
+      }
+      push(f);
+      prev = f;
+    };
     push(lo);
-    for (let i = Math.floor(lo) + 1; i < hi; i++) push(i);
-    push(hi);
+    for (let i = Math.floor(lo) + 1; i < hi; i++) step(i);
+    step(hi);
     visLen = rs[M - 1] - rs[0];
   }
 

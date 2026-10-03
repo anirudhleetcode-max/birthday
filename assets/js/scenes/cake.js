@@ -1,10 +1,14 @@
 // Chapter: "Twenty Candles" — an interactive, candle-lit 3D birthday cake.
-// A golden strand of light lights the twenty candles; she blows into the mic
-// (or taps / swipes the flames) to put them out; then swipes to cut the first
-// slice, which is served onto a little gold-rimmed plate.
+// The cake emerges from the dark; four quiet lines; a golden strand of light
+// (the film's hair-inspired motif) spirals up and lights the twenty candles one
+// by one; she blows into the mic (or taps / swipes the flames, or holds Space)
+// to put them out; smoke, a beat of darkness, then warm golden light and the
+// celebration; finally she cuts the first slice with a knife that follows her
+// finger, and it's served onto a little gold-rimmed plate.
+// Styles: assets/css/scenes/cake.css. Pieces: ./cake/*.js.
 import * as THREE from 'three';
 import { buildCake, DIM } from './cake/model.js';
-import { buildEnvironment, buildBackdrop, buildBokeh, buildDust, buildTable } from './cake/room.js';
+import { buildEnvironment, buildBackdrop, buildBokeh, buildDust, buildTable, buildAtmosphere } from './cake/room.js';
 import { createFlames } from './cake/flames.js';
 import { createSmoke } from './cake/smoke.js';
 import { createStrand, PathSampler } from './cake/strand.js';
@@ -14,50 +18,23 @@ import { BlowDetector } from './cake/blow.js';
 import { radialTexture, starTexture } from './cake/textures.js';
 
 const DEFAULT_TEXT = {
-  kicker: 'Chapter Seven',
+  kicker: 'Chapter Eight',
   title: 'Twenty Candles',
   lines: ['Okay… one last thing.', 'Make a wish, {name}.', 'But first…', 'Twenty candles.'],
-  blowHint: 'Now blow — really blow into your phone',
+  blowHint: 'Wish first. Then blow into your phone. All twenty.',
   tapFallback: 'Blow them out',
-  afterBlow: 'Whatever you wished for — I hope the universe is already wrapping it.',
-  cutHint: 'Now cut it — swipe across the cake',
-  afterCut: "First slice is yours. Obviously. It's always yours.",
+  afterBlow: 'Whatever you wished for — I’m already on its side.',
+  cutHint: 'Now swipe across the cake to cut it',
+  afterCut: 'First slice is yours. Obviously.',
+  wish: '',
 };
-
-const CSS = /* css */`
-.ck-root{position:absolute;inset:0;overflow:hidden;background:#04050d;contain:strict;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
-.ck-gl{position:absolute;inset:0;width:100%;height:100%;display:block;outline:none}
-.ck-trail{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.ck-vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 92% at 50% 42%,rgba(3,4,12,0) 30%,rgba(3,4,12,.6) 66%,rgba(2,2,8,.97) 100%);opacity:.5}
-.ck-black{position:absolute;inset:0;pointer-events:none;background:#020208;opacity:1}
-.ck-ui{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 104px);display:flex;flex-direction:column;align-items:center;gap:12px;pointer-events:none;padding:0 16px}
-.ck-btn{pointer-events:auto;appearance:none;-webkit-appearance:none;cursor:pointer;font:500 19px/1.1 "Cormorant Garamond",Georgia,serif;letter-spacing:.02em;color:#fff4dc;padding:15px 28px 15px 26px;border-radius:999px;border:1px solid rgba(244,196,99,.6);background:linear-gradient(180deg,rgba(40,46,104,.8),rgba(16,18,48,.88));box-shadow:0 0 0 1px rgba(255,230,170,.08) inset,0 10px 30px rgba(2,3,12,.6),0 0 28px rgba(244,196,99,.22);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:0;transform:translateY(12px) scale(.98);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1),box-shadow .3s ease,background .3s ease,padding .4s ease,font-size .4s ease,border-color .4s ease;display:inline-flex;align-items:center;gap:10px;max-width:100%;text-align:center;touch-action:manipulation}
-.ck-btn.on{opacity:1;transform:none}
-.ck-btn:hover{box-shadow:0 0 0 1px rgba(255,230,170,.16) inset,0 10px 30px rgba(2,3,12,.6),0 0 38px rgba(244,196,99,.38)}
-.ck-btn:active{transform:scale(.97)}
-.ck-btn .ck-ico{font-size:18px}
-.ck-btn.primary.on{animation:ck-breathe 3.2s ease-in-out infinite}
-.ck-btn.alt{font:italic 400 17px/1.1 "Cormorant Garamond",Georgia,serif;color:rgba(240,228,255,.9);padding:9px 16px;background:transparent;border-color:rgba(244,196,99,0);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;text-decoration:underline;text-decoration-color:rgba(244,196,99,.45);text-underline-offset:5px}
-.ck-btn.alt .ck-ico{display:none}
-.ck-btn.alt.surfaced{font:500 19px/1.1 "Cormorant Garamond",Georgia,serif;color:#fff4dc;padding:15px 28px;text-decoration:none;border-color:rgba(244,196,99,.6);background:linear-gradient(180deg,rgba(40,46,104,.8),rgba(16,18,48,.88));box-shadow:0 0 0 1px rgba(255,230,170,.08) inset,0 10px 30px rgba(2,3,12,.6),0 0 28px rgba(244,196,99,.26)}
-.ck-btn.alt.surfaced .ck-ico{display:inline}
-.ck-btn:not(.on){pointer-events:none}
-.ck-btn.busy.on{opacity:.7;pointer-events:none}
-.ck-chip{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 18px);transform:translate(-50%,-8px);display:flex;align-items:center;gap:9px;padding:7px 14px 7px 12px;border-radius:999px;background:rgba(10,12,34,.6);border:1px solid rgba(244,196,99,.35);color:#f6e6c4;font:500 13px/1 "Cinzel",Georgia,serif;letter-spacing:.14em;text-transform:uppercase;pointer-events:none;opacity:0;transition:opacity .5s ease,transform .5s ease;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.ck-chip.on{opacity:1;transform:translate(-50%,0)}
-.ck-dot{width:7px;height:7px;border-radius:50%;background:#ff7a8a;box-shadow:0 0 10px #ff7a8a;animation:ck-pulse 1.4s ease-in-out infinite}
-.ck-bars{display:flex;align-items:flex-end;gap:2px;height:14px}
-.ck-bars i{display:block;width:3px;height:3px;border-radius:2px;background:#f4c463;transition:height .08s linear}
-@keyframes ck-breathe{0%,100%{box-shadow:0 0 0 1px rgba(255,230,170,.08) inset,0 10px 30px rgba(2,3,12,.6),0 0 22px rgba(244,196,99,.18)}50%{box-shadow:0 0 0 1px rgba(255,230,170,.16) inset,0 10px 30px rgba(2,3,12,.6),0 0 40px rgba(244,196,99,.42)}}
-@keyframes ck-pulse{0%,100%{opacity:.45}50%{opacity:1}}
-@media (prefers-reduced-motion: reduce){.ck-btn.primary.on,.ck-dot{animation:none}}
-`;
 
 const TAU = Math.PI * 2;
 const DEG = Math.PI / 180;
 const UP = new THREE.Vector3(0, 1, 0);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const angLerp = (a, b, k) => { let d = (b - a) % TAU; if (d > Math.PI) d -= TAU; if (d < -Math.PI) d += TAU; return a + d * k; };
 const isAbort = (e) => e && (e.name === 'AbortError' || e === 'abort');
 const abortErr = () => new DOMException('Scene exited', 'AbortError');
 
@@ -94,12 +71,15 @@ class CakeScene {
     const t = ctx.text?.cake || {};
     this.T = { ...DEFAULT_TEXT };
     for (const k of Object.keys(DEFAULT_TEXT)) if (t[k] != null && t[k] !== '') this.T[k] = t[k];
-    if (!Array.isArray(this.T.lines) || !this.T.lines.length) this.T.lines = DEFAULT_TEXT.lines;
+    if (!Array.isArray(this.T.lines) || !this.T.lines.filter(Boolean).length) this.T.lines = DEFAULT_TEXT.lines;
     this.gsap = ctx.gsap || window.gsap;
     const dev = ctx.device || {};
+    this.tier = dev.tier || (dev.lowPower ? 'low' : dev.mobile ? 'mid' : 'high');
+    this.low = this.tier === 'low' || !!dev.lowPower;
     this.mobile = !!dev.mobile;
-    this.low = !!dev.lowPower;
     this.reduced = !!dev.reducedMotion;
+    this.quality = this.low ? 0 : this.tier === 'mid' ? 1 : 2; // 0 low · 1 mid · 2 high
+    this.shadowSize = this.quality === 2 ? 1024 : this.quality === 1 ? 512 : 0;
     this.dead = false;
     this.ac = new AbortController();
     this.tweens = new Set();
@@ -115,6 +95,7 @@ class CakeScene {
     this.head = null; // golden strand head
     this.headOn = 0;
     this.headPos = new THREE.Vector3();
+    this.cutIdle = 0;
     this.tick = this.tick.bind(this);
     if (window.__CAKE_DEV__) window.__cake = this;
   }
@@ -139,7 +120,9 @@ class CakeScene {
   sfx(name) { try { this.ctx.audio?.sfx?.(name); } catch (e) { /* ignore */ } }
   mood(m) { try { this.ctx.audio?.setMood?.(m); } catch (e) { /* ignore */ } }
   fx(name, ...args) { try { this.ctx.fx?.[name]?.(...args); } catch (e) { /* ignore */ } }
-  fill(str) { try { return this.ctx.fill ? this.ctx.fill(str) : String(str).replace(/\{name\}/g, this.ctx.site?.her?.name || 'Deepu'); } catch (e) { return str; } }
+  fillText(str) {
+    try { return this.ctx.fill ? this.ctx.fill(str) : String(str ?? '').replace(/\{name\}/g, this.ctx.site?.her?.name || 'Deepu'); } catch (e) { return String(str ?? ''); }
+  }
   async narrate(lines, opts) {
     if (this.ctx.ui?.narrate) await this.ctx.ui.narrate(lines, opts);
     this.guard();
@@ -151,14 +134,18 @@ class CakeScene {
     this.handles.add(wrap);
     return wrap;
   }
+  setCanvasMode(mode) {
+    const cl = this.canvas.classList;
+    cl.toggle('ck-live', mode === 'blow' || mode === 'cut');
+    cl.toggle('ck-tap', mode === 'blow' || mode === 'egg');
+    cl.toggle('ck-knife', mode === 'cut');
+  }
 
   // ---------------------------------------------------------------- setup
   async setup() {
     const { el } = this;
     const root = document.createElement('div');
     root.className = 'ck-root';
-    const style = document.createElement('style');
-    style.textContent = CSS;
     const canvas = document.createElement('canvas');
     canvas.className = 'ck-gl';
     canvas.setAttribute('aria-label', 'A birthday cake with twenty candles');
@@ -168,8 +155,9 @@ class CakeScene {
     const black = document.createElement('div'); black.className = 'ck-black';
     const ui = document.createElement('div'); ui.className = 'ck-ui';
     const chip = document.createElement('div'); chip.className = 'ck-chip';
+    chip.setAttribute('aria-hidden', 'true');
     chip.innerHTML = '<span class="ck-dot"></span><span>listening</span><span class="ck-bars"><i></i><i></i><i></i><i></i><i></i></span>';
-    root.append(style, canvas, trail, vig, black, chip, ui);
+    root.append(canvas, trail, vig, black, chip, ui);
     el.appendChild(root);
     Object.assign(this, { root, canvas, trailCanvas: trail, vigEl: vig, blackEl: black, uiEl: ui, chipEl: chip });
     this.trailCtx = trail.getContext('2d');
@@ -192,7 +180,11 @@ class CakeScene {
     renderer.toneMapping = THREE.NeutralToneMapping; // keeps lavender & gold true to colour
     renderer.toneMappingExposure = 1.0;
     renderer.setClearColor(0x03040b, 1);
-    const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+    if (this.shadowSize) {
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    }
+    const aniso = Math.min(this.quality === 2 ? 8 : 4, renderer.capabilities.getMaxAnisotropy());
 
     const scene = new THREE.Scene();
     this.scene = scene;
@@ -204,33 +196,36 @@ class CakeScene {
     scene.environment = this.envRT.texture;
 
     // room
-    this.quality = this.low ? 0 : this.mobile ? 1 : 2;
+    const shadows = !!this.shadowSize;
     this.backdrop = buildBackdrop();
     scene.add(this.backdrop);
     this.bokeh = buildBokeh({ lowPower: this.low });
     scene.add(this.bokeh.mesh);
-    this.dust = buildDust({ count: this.low ? 50 : 90 });
+    this.dust = buildDust({ count: [40, 70, 100][this.quality] });
     scene.add(this.dust.mesh);
-    this.table = buildTable({ lowPower: this.low, quality: this.quality, anisotropy: aniso });
+    this.table = buildTable({ lowPower: this.low, quality: this.quality, anisotropy: aniso, shadows });
     scene.add(this.table.group);
 
     // the cake
     const name = this.ctx.site?.her?.name || 'Deepu';
-    this.cake = buildCake({ lowPower: this.low, quality: this.quality, name, anisotropy: aniso });
+    this.cake = buildCake({ lowPower: this.low, quality: this.quality, name, anisotropy: aniso, shadows });
     scene.add(this.cake.root);
     this.plateShadow = this.table.mkShadow(0.62, DIM.plateAt.x, DIM.plateAt.z, 0.6);
+    const t2y = this.cake.t2.group.position.y;
+    this.cutTop = t2y + DIM.t2.H;
 
-    // a slim cake knife (appears only for the cut)
+    // a slim cake knife: hovers & follows her finger during the cut
     const kg = knifeGeometry();
-    const steel = new THREE.MeshStandardMaterial({ color: 0xe9e7f2, metalness: 1, roughness: 0.16 });
-    steel.userData.env = 2.2;
+    const steel = new THREE.MeshStandardMaterial({ color: 0xeceaf4, metalness: 1, roughness: 0.14 });
+    steel.userData.env = 2.4;
     this.knife = new THREE.Group();
-    this.knife.add(new THREE.Mesh(kg.blade, steel), new THREE.Mesh(kg.handle, this.cake.mats.gold));
+    const blade = new THREE.Mesh(kg.blade, steel), handle = new THREE.Mesh(kg.handle, this.cake.mats.gold);
+    blade.castShadow = handle.castShadow = shadows;
+    this.knife.add(blade, handle);
     this.knife.visible = false;
     scene.add(this.knife);
 
     // candles → world flame bases
-    const t2y = this.cake.t2.group.position.y;
     this.candles = this.cake.candleInfo.map((c) => ({
       ...c,
       tip: c.tipLocal.clone().add(new THREE.Vector3(0, t2y, 0)),
@@ -239,13 +234,13 @@ class CakeScene {
     }));
     this.flames = createFlames(this.candles.map((c) => c.tip), { reduced: this.reduced });
     scene.add(this.flames.flames, this.flames.halos);
-    this.smoke = createSmoke(this.low ? 260 : 520);
+    this.smoke = createSmoke([240, 420, 520][this.quality]);
     scene.add(this.smoke.mesh);
-    this.glitter = createGlitter(this.low ? 140 : 320);
+    this.glitter = createGlitter([140, 260, 340][this.quality]);
     scene.add(this.glitter.mesh);
-    this.crumbs = createCrumbs(this.low ? 24 : 64);
+    this.crumbs = createCrumbs([28, 56, 72][this.quality]);
     scene.add(this.crumbs.mesh);
-    this.strand = createStrand({ segments: this.low ? 90 : 150 });
+    this.strand = createStrand({ segments: [90, 130, 160][this.quality] });
     scene.add(this.strand.mesh);
     this.buildStrandPaths();
 
@@ -262,30 +257,45 @@ class CakeScene {
       });
     });
 
-    // lights: ≤ 2 point lights. They are the candles' warm glow while lit, and
-    // become the golden after-glow (behind / below the cake) once they're out.
+    // lights: ≤ 2 point lights. They are the candles' warm glow while lit (hung
+    // well above the flames so the fondant top isn't blown out), and become the
+    // golden after-glow (behind / below the cake) once they're out.
+    const topY = this.cutTop;
     this.pl = [new THREE.PointLight(0xffa24f, 0, 0, 2), new THREE.PointLight(0xffb867, 0, 0, 2)];
-    this.plCandle = [new THREE.Vector3(-0.2, t2y + DIM.t2.H + 0.36, 0.34), new THREE.Vector3(0.3, t2y + DIM.t2.H + 0.34, -0.08)];
+    this.plCandle = [new THREE.Vector3(-0.25, topY + 0.72, 0.42), new THREE.Vector3(0.32, topY + 0.66, -0.12)];
     this.plGold = [new THREE.Vector3(0.0, 2.3, -2.3), new THREE.Vector3(0.35, 0.75, 1.55)];
     this.pl[0].position.copy(this.plCandle[0]);
     this.pl[1].position.copy(this.plCandle[1]);
     this.hemi = new THREE.HemisphereLight(0x5162b0, 0x1c0e08, 0.2);
-    this.key = new THREE.SpotLight(0xeee6ff, 0, 0, 0.55, 1, 0);
+    // the key: a soft, high spot from the front-left — the only shadow caster
+    this.key = new THREE.SpotLight(0xeee6ff, 0, 0, 0.42, 0.9, 0);
     this.key.position.set(-3.2, 7.5, 5.5);
     this.key.target.position.set(0, 1.2, 0);
+    if (shadows) {
+      const k = this.key;
+      k.castShadow = true;
+      k.shadow.mapSize.set(this.shadowSize, this.shadowSize);
+      k.shadow.camera.near = 5;
+      k.shadow.camera.far = 16;
+      k.shadow.bias = -0.0004;
+      k.shadow.normalBias = 0.025;
+      k.shadow.radius = 3;
+    }
     this.rim = new THREE.DirectionalLight(0x9aa8ff, 0.6);
     this.rim.position.set(1.5, 7, -7);
-    this.fill = new THREE.DirectionalLight(0xffc9a0, 0);
-    this.fill.position.set(3, 2, 6);
-    scene.add(...this.pl, this.hemi, this.key, this.key.target, this.rim, this.fill);
+    this.fillLight = new THREE.DirectionalLight(0xffc9a0, 0);
+    this.fillLight.position.set(3, 2, 6);
+    scene.add(...this.pl, this.hemi, this.key, this.key.target, this.rim, this.fillLight);
     this.colors = {
       candle0: new THREE.Color(0xffa24f), candle1: new THREE.Color(0xffb867), gold: new THREE.Color(0xffa95e),
       rimCool: new THREE.Color(0x9aa8ff), rimGold: new THREE.Color(0xffc86e),
       groundCool: new THREE.Color(0x1c0e08), groundGold: new THREE.Color(0x6a4010),
+      shaftCool: new THREE.Color(0.52, 0.58, 1.0), shaftWarm: new THREE.Color(1.0, 0.7, 0.34),
     };
 
-    // sprites: strand head & topper glints
+    // sprites: strand head, topper & knife glints; the candle aura & light shaft
     this.glowTex = radialTexture({ size: 128, inner: 'rgba(255,255,255,1)', mid: 'rgba(255,214,140,0.45)', outer: 'rgba(255,170,80,0)', midStop: 0.22 });
+    this.auraTex = radialTexture({ size: 128, inner: 'rgba(255,255,255,1)', mid: 'rgba(255,255,255,0.26)', outer: 'rgba(255,255,255,0)', midStop: 0.32 });
     this.starTex = starTexture();
     const sprite = (map, color, size) => {
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map, color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 }));
@@ -295,9 +305,13 @@ class CakeScene {
     this.spark = sprite(this.glowTex, 0xffe2a0, 0.2);
     this.glint = sprite(this.starTex, 0xfff1d0, 0.34);
     this.glint2 = sprite(this.starTex, 0xffe7b0, 0.22);
+    this.kGlint = sprite(this.starTex, 0xfff6e2, 0.2);
+    this.atmo = buildAtmosphere({ glowTex: this.auraTex });
+    this.atmo.aura.position.set(0, topY + 0.3, 0.05);
+    scene.add(this.atmo.shaft, this.atmo.aura);
 
-    // bloom only on capable desktops (half-res, subtle; only HDR flames/strand bloom)
-    if (!this.mobile && !this.low) {
+    // bloom only on the high tier (half-res, subtle; only HDR flames/strand bloom)
+    if (this.quality === 2) {
       try {
         const [{ EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }] = await Promise.all([
           import('three/addons/postprocessing/EffectComposer.js'),
@@ -314,10 +328,13 @@ class CakeScene {
         composer.addPass(new OutputPass());
         this.composer = composer;
       } catch (e) {
-        if (isAbort(e)) throw e;
+        if (isAbort(e) || this.dead) throw abortErr();
         this.composer = null;
       }
     }
+
+    this.ray = new THREE.Raycaster();
+    this.ndc = new THREE.Vector2();
 
     // sizing
     this.resize();
@@ -396,7 +413,8 @@ class CakeScene {
 
   pixelRatio() {
     const devPr = window.__CAKE_DEV__ && +new URLSearchParams(location.search).get('pr');
-    return devPr || Math.min(window.devicePixelRatio || 1, this.low ? 1.25 : 2);
+    const cap = this.low ? 1.25 : this.quality === 1 ? 1.75 : 2;
+    return devPr || Math.min(window.devicePixelRatio || 1, cap);
   }
 
   resize() {
@@ -407,12 +425,16 @@ class CakeScene {
     this.renderer.setSize(w, h, false);
     if (this.composer) { this.composer.setPixelRatio(pr); this.composer.setSize(w, h); }
     const aspect = w / h;
-    const fov = aspect < 0.8 ? 40 : aspect < 1.25 ? 35 : 30;
+    const portrait = aspect < 0.8;
+    const fov = portrait ? 40 : aspect < 1.25 ? 35 : 30;
     const t = Math.tan((fov / 2) * DEG);
-    const W = aspect < 0.8 ? 3.25 : 3.4, H = 3.9;
+    // fit the whole cake (stand → sun topper) with air above the topper and
+    // room below for the subtitles; tall screens keep it a little above centre
+    const W = portrait ? 3.3 : 3.6, H = 4.5;
     const dist = Math.max(H / 2 / t, W / 2 / (t * aspect)) * 1.02;
     const vh = 2 * dist * t;
-    this.fit = { fov, dist, ty: 1.72 - vh * (aspect < 0.8 ? 0.065 : 0.03), aspect, w, h };
+    const ty = Math.max(1.75 - vh * 0.07, 3.62 + 0.06 * vh - vh / 2);
+    this.fit = { fov, dist, ty, aspect, w, h, portrait };
     this.camera.fov = fov;
     this.camera.aspect = aspect;
     this.camera.updateProjectionMatrix();
@@ -456,7 +478,8 @@ class CakeScene {
       while (B.budget >= 1 && this.litCount() > 0) { B.budget -= 1; this.extinguishNext(blowing); }
     } else B.budget = Math.min(B.budget, 0.6);
     if (this.det && this.chipEl.classList.contains('on')) this.updateBars(Math.max(micLevel, mic));
-    if (this.det && this.phase === 'blow' && this.det.state === 'listening' && !this.fallbackShown && this.det.listenT > 12 && this.det.lastHeard === 0) this.surfaceFallback();
+    // nothing heard for ~12 s (or never) → gently bring the one-tap option forward
+    if (this.det && this.phase === 'blow' && this.det.state === 'listening' && !this.fallbackShown && this.det.listenT - this.det.lastHeard > 12) this.surfaceFallback();
 
     // --- golden strand ---
     if (this.head) this.updateStrand(dt, t);
@@ -485,7 +508,7 @@ class CakeScene {
     const L = this.L, C = this.colors;
     const flick = 1 + 0.07 * Math.sin(t * 13.3) + 0.05 * Math.sin(t * 7.1 + 1.3) + 0.04 * Math.sin(t * 23.7) + disturb * 0.22 * Math.sin(t * 31.0);
     const g = L.gold, kick = L.kick;
-    const cl = 1.6 * frac * flick;
+    const cl = 2.5 * frac * flick;
     if (g > 0.001) {
       this.pl[0].position.copy(this.plGold[0]); this.pl[1].position.copy(this.plGold[1]);
       this.pl[0].color.copy(C.gold); this.pl[1].color.copy(C.gold);
@@ -504,25 +527,33 @@ class CakeScene {
     const hush = L.hush;
     this.hemi.intensity = (0.32 * L.room + 0.14 * L.party) * (1 - 0.35 * hush);
     this.hemi.groundColor.copy(C.groundCool).lerp(C.groundGold, g);
-    this.key.intensity = (1.0 + 1.2 * frac) * L.room * (1 - 0.45 * L.party) + 0.85 * L.party + 0.4 * kick;
+    this.key.intensity = (1.0 + 1.0 * frac) * L.room * (1 - 0.45 * L.party) + 0.85 * L.party + 0.4 * kick;
     this.rim.intensity = 0.75 * L.room + 0.7 * g;
     this.rim.color.copy(C.rimCool).lerp(C.rimGold, g);
-    this.fill.intensity = 0.35 * frac * L.room + 0.28 * L.party;
+    this.fillLight.intensity = 0.35 * frac * L.room + 0.28 * L.party;
     const envLevel = 0.06 + 0.22 * L.room * (1 - 0.4 * L.party) + 0.5 * frac * (0.9 + 0.1 * flick) + 0.32 * g + 0.15 * L.party + 0.2 * kick;
     for (const [m, k] of this.envMats) m.envMapIntensity = envLevel * k;
     this.bokeh.uniforms.uTime.value = t;
     this.bokeh.uniforms.uBright.value = (0.1 + 0.75 * L.room + 0.45 * L.party + 0.25 * g) * (1 - 0.6 * hush);
     this.dust.uniforms.uTime.value = t;
-    this.dust.uniforms.uBright.value = 0.15 + 0.8 * frac + 0.6 * g;
+    this.dust.uniforms.uBright.value = 0.18 + 0.8 * frac + 0.6 * g;
     this.backdrop.material.uniforms.uRoom.value = (0.25 + 0.6 * L.room + 0.4 * L.party) * (1 - 0.55 * hush);
     this.backdrop.material.uniforms.uWarm.value = g * (1 + 0.5 * kick);
     this.table.pool.material.opacity = 0.32 * frac * flick + 0.16 * g;
+    // the haze: candle aura over the flames, a faint shaft of light from above
+    const A = this.atmo;
+    A.uniforms.uTime.value = t;
+    A.aura.material.opacity = clamp(0.2 * frac * flick * (1 - 0.4 * g) + 0.08 * this.headOn, 0, 1);
+    const cool = 0.07 * clamp(L.room / 0.45, 0, 1.5) * (1 - 0.65 * hush);
+    const warm = 0.12 * g * (0.55 + 0.45 * L.party) + 0.1 * kick;
+    A.uniforms.uIntensity.value = cool * (1 - g) + warm;
+    A.uniforms.uColor.value.copy(C.shaftCool).lerp(C.shaftWarm, g);
     if (this.bloom) this.bloom.strength = 0.35 + 0.45 * kick;
     this.renderer.toneMappingExposure = L.exposure + 0.06 * kick;
     this.blackEl.style.opacity = L.black.toFixed(3);
     this.vigEl.style.opacity = clamp(L.vignette + 0.5 * hush, 0, 1).toFixed(3);
 
-    // glints on the sun topper (the last light in the darkness beat)
+    // glints on the sun topper (the last light in the darkness beat; later an invitation)
     const tp = this.cake.topper;
     tp.updateWorldMatrix(true, false);
     this.glint.position.set(-0.21, 0.22, 0.05).applyMatrix4(tp.matrixWorld);
@@ -531,6 +562,13 @@ class CakeScene {
     this.glint.material.rotation = t * 0.25;
     this.glint2.material.opacity = L.glint * (0.5 + 0.5 * Math.sin(t * 1.7 + 2)) * 0.8;
     this.glint2.material.rotation = -t * 0.3;
+
+    // the knife
+    if (this.kn && this.kn.on) this.updateKnife(dt, t);
+    if (this.phase === 'cut' && !this.cutting) {
+      this.cutIdle += rawDt;
+      if (this.cutIdle > 20) this.autoCut();
+    }
 
     // particles
     this.smoke.update(dt, t);
@@ -565,35 +603,53 @@ class CakeScene {
     return { x: r.left + (p.x * 0.5 + 0.5) * r.width, y: r.top + (-p.y * 0.5 + 0.5) * r.height, z: p.z };
   }
 
+  // client coordinates → a ray from the camera
+  aim(x, y) {
+    const r = this.canvas.getBoundingClientRect();
+    this.ndc.set(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1);
+    this.ray.setFromCamera(this.ndc, this.camera);
+    return this.ray;
+  }
+
   // ---------------------------------------------------------------- flow
   async run() {
     const jump = window.__CAKE_DEV__ && new URLSearchParams(location.search).get('jump');
     if (jump) return this.devJump(jump);
     const { ctx, T } = this;
-    if (ctx.ui?.chapterCard) await ctx.ui.chapterCard(T.kicker, T.title);
+    // the title card; the cake begins to emerge from the dark as the card fades
+    const card = ctx.ui?.chapterCard ? Promise.resolve(ctx.ui.chapterCard(T.kicker, T.title)) : Promise.resolve();
+    card.catch(() => {});
+    const early = this.wait(this.reduced ? 2.4 : 3.6).then(() => this.reveal());
+    early.catch(() => {});
+    await card;
     this.guard();
-    this.mood('tender');
-    this.reveal();
-    await this.wait(this.reduced ? 1.2 : 2.0);
+    await early;
+    await this.wait(this.reduced ? 1.0 : 1.8);
     await this.openingLines();
     await this.blowPhase();
     await this.afterglow();
     await this.cutPhase();
+    this.phase = 'served';
+    this.setCanvasMode('egg');
+    // the sun topper keeps a soft twinkle — tap it for a secret
+    this.to(this.L, { glint: 0.5, duration: 1.5, ease: 'sine.inOut' });
     await this.narrate([T.afterCut]);
+    this.phase = 'done';
     if (ctx.ui?.waitContinue) await ctx.ui.waitContinue('Continue');
     this.guard();
-    this.phase = 'done';
-    // the next transition's light comes from the first slice
+    // the next chapter condenses out of golden dust rising from the first slice
     const W = this.cake.t2.wedge;
     W.updateWorldMatrix(true, false);
     const p = this.toScreen(new THREE.Vector3().setFromMatrixPosition(W.matrixWorld).add(new THREE.Vector3(0, 0.35, 0)));
-    ctx.next?.({ x: Math.round(p.x), y: Math.round(p.y), color: '#ffd98a', kind: 'ember' });
+    const { w, h } = this.size;
+    ctx.next?.({ x: Math.round(clamp(p.x, 0, w)), y: Math.round(clamp(p.y, 0, h)), color: '#ffd98a', kind: 'dust' });
   }
 
   reveal() {
+    if (this.dead) return;
     this.phase = 'reveal';
     const dur = this.reduced ? 2.2 : 5.6;
-    this.to(this.L, { black: 0, duration: this.reduced ? 1.6 : 2.8, ease: 'power2.inOut' });
+    this.to(this.L, { black: 0, duration: this.reduced ? 1.6 : 3.0, ease: 'power2.inOut' });
     this.to(this.L, { room: 0.45, duration: dur, ease: 'sine.inOut' });
     if (this.reduced) Object.assign(this.cam, { az: 0, el: 0.27, distK: 1.0 });
     else this.to(this.cam, { az: 0, el: 0.27, distK: 1.0, duration: dur, ease: 'power3.inOut' });
@@ -603,20 +659,22 @@ class CakeScene {
   // cake line by line (the cake stays lit); the last line sets the strand off.
   async openingLines() {
     this.phase = 'wish';
-    const lines = this.T.lines.filter(Boolean);
+    this.mood('hush');
+    const lines = this.T.lines.filter(Boolean).map(String);
     const n = lines.length;
-    const holds = [2.3, 2.2, 2.0, 2.6];
+    const holds = [2.3, 2.2, 2.0];
     let ignition = null;
     for (let i = 0; i < n; i++) {
       const last = i === n - 1;
       this.to(this.L, { hush: Math.min(0.75, 0.2 + (0.55 * (i + 1)) / n), duration: 2.6, ease: 'sine.inOut' });
-      if (!this.reduced) this.to(this.cam, { distK: 1.0 - 0.02 * (i + 1), duration: 3.2, ease: 'sine.inOut' });
+      // a slow push toward the candles, line by line
+      if (!this.reduced) this.to(this.cam, { distK: 1.0 - (0.05 * (i + 1)) / n, ty: (0.06 * (i + 1)) / n, duration: 3.2, ease: 'sine.inOut' });
       if (last) {
-        ignition = this.wait(0.7).then(() => this.ignite());
+        ignition = this.wait(0.8).then(() => this.ignite());
         ignition.catch(() => {}); // still awaited below; avoid an unhandled rejection if we exit mid-line
       }
-      await this.narrate([lines[i]], { hold: holds[Math.min(i, holds.length - 1)] + (lines[i].length > 18 ? 0.2 : 0), gap: last ? 0.6 : 0.8 });
-      if (!last) await this.wait(0.3);
+      const hold = last ? 2.6 : holds[Math.min(i, holds.length - 1)];
+      await this.narrate([lines[i]], { hold, gap: last ? 0.6 : 0.75 });
     }
     if (!ignition) ignition = this.ignite();
     await ignition;
@@ -644,7 +702,7 @@ class CakeScene {
     // make sure every wick is lit
     this.candles.forEach((c, i) => { if (!c.target) this.lightCandle(i); });
     if (!red) {
-      // the strand has closed into a halo around the top tier — hold, then dust
+      // the strand has closed into a halo around the top tier — hold ~1 s, then dust
       this.sfx('shimmer');
       this.to(this.strand.uniforms.uRing, { value: 1, duration: 0.45 });
       this.to(this.spark.material, { opacity: 0, duration: 0.45 });
@@ -664,6 +722,7 @@ class CakeScene {
     // …and all twenty flames swell together
     this.candles.forEach((c, i) => { c.target = 1; this.flames.lit[i] = Math.max(this.flames.lit[i], red ? 1.25 : 1.6); });
     this.sfx('sparkle');
+    this.mood('tender');
     this.to(this.L, { hush: 0.6, duration: 2.2, ease: 'sine.inOut' });
     await this.wait(red ? 0.8 : 1.5);
   }
@@ -688,7 +747,7 @@ class CakeScene {
     this.headS.forEach((sc, i) => { if (!this.candles[i].target && h.s >= sc) this.lightCandle(i, i); });
     // a few sparkles shed from the head
     if (this.headOn > 0.2 && h.s < path.length - 0.01) {
-      h.emitAcc += dt * (this.low ? 22 : 45);
+      h.emitAcc += dt * [18, 32, 45][this.quality];
       while (h.emitAcc >= 1) {
         h.emitAcc -= 1;
         this.glitter.emit(this.headPos, { spread: 0.18, up: -0.02, life: 0.9, size: 0.022, drag: 2.0, gravity: 0.05 });
@@ -710,7 +769,7 @@ class CakeScene {
   // --------------------------------------------------------- blowing
   async blowPhase() {
     this.phase = 'blow';
-    this.canvas.style.touchAction = 'none';
+    this.setCanvasMode('blow');
     const done = new Promise((res) => { this.onAllOut = res; });
     this.buildBlowUI();
     await done;
@@ -729,16 +788,25 @@ class CakeScene {
     alt.type = 'button';
     alt.className = 'ck-btn alt';
     alt.innerHTML = '<span class="ck-ico" aria-hidden="true">🌬️</span><span></span>';
-    alt.lastChild.textContent = this.fill(this.T.tapFallback);
+    alt.lastChild.textContent = this.fillText(this.T.tapFallback);
     this.micBtn = primary; this.altBtn = alt;
     if (supported) ui.append(primary);
     ui.append(alt);
+    // desktop: holding Space blows too
+    let key = null;
+    if (!this.mobile) {
+      key = document.createElement('div');
+      key.className = 'ck-key';
+      key.innerHTML = 'or hold <kbd>Space</kbd>';
+      ui.append(key);
+    }
     this.on(primary, 'click', (e) => { e.stopPropagation(); this.startMic(); });
     this.on(alt, 'click', (e) => { e.stopPropagation(); this.startWave(); });
     requestAnimationFrame(() => {
-      if (this.dead) return;
+      if (this.dead || this.phase !== 'blow') return;
       primary.classList.add('on');
       alt.classList.add('on');
+      key?.classList.add('on');
       if (!supported) this.surfaceFallback(true);
     });
   }
@@ -763,10 +831,10 @@ class CakeScene {
       return;
     }
     this.clearLater(slow);
-    if (this.dead || this.phase !== 'blow') { det.stop(); return; }
-    this.mood('hush');
+    if (this.dead || this.phase !== 'blow') { det.stop(); if (this.det === det) this.det = null; return; }
     this.micBtn.classList.remove('on', 'busy');
     if (!this.fallbackShown) this.altBtn.classList.remove('on');
+    this.uiEl.querySelector('.ck-key')?.classList.remove('on');
     this.chipEl.classList.add('on');
     this.blowHintH?.remove();
     this.blowHintH = this.hint(this.T.blowHint);
@@ -786,6 +854,7 @@ class CakeScene {
     this.blow.wave = { t: 0, dur: this.reduced ? 1.6 : 2.2 };
     this.altBtn.classList.remove('on');
     this.micBtn?.classList.remove('on');
+    this.uiEl.querySelector('.ck-key')?.classList.remove('on');
   }
 
   extinguishNext(strength) {
@@ -816,7 +885,7 @@ class CakeScene {
   allOut() {
     if (this.phase !== 'blow') return;
     this.phase = 'dark';
-    this.canvas.style.touchAction = '';
+    this.setCanvasMode(null);
     this.blowHintH?.remove();
     this.blowHintH = null;
     if (this.det) { this.det.stop(); this.det = null; }
@@ -845,13 +914,13 @@ class CakeScene {
     try { this.ctx.audio?.duck?.(0.35, 2.5); } catch (e) { /* ignore */ }
     this.to(this.L, { room: 0.03, hush: 0.9, duration: 0.9, ease: 'power2.out' });
     this.to(this.L, { glint: 1, duration: 0.8, delay: 0.3 });
-    await this.wait(red ? 0.9 : 1.5);
+    await this.wait(red ? 0.9 : 1.6);
     // warm golden light rises from behind & below; the cake turns softly golden
     try { this.ctx.grade?.('golden'); } catch (e) { /* ignore */ }
     this.to(this.L, { gold: 1, duration: red ? 1.0 : 2.2, ease: 'sine.inOut' });
     this.to(this.L, { room: 0.35, hush: 0.55, duration: red ? 1.0 : 2.0, ease: 'sine.inOut' });
     await this.wait(red ? 0.6 : 1.1);
-    this.fx('flash', { color: '#ffe3a3', duration: 0.6 });
+    this.fx('flash', { color: '#ffe3a3', duration: 0.7, peak: 0.55 });
     this.phase = 'party';
     this.to(this.L, { party: 1, room: 0.75, hush: 0.12, glint: 0, duration: red ? 0.6 : 1.4, ease: 'power2.out' });
     this.mood('festive');
@@ -859,36 +928,99 @@ class CakeScene {
     this.fx('cannons');
     const top = this.toScreen(new THREE.Vector3(0, 2.3, 0));
     const { w, h } = this.size;
-    const size = Math.min(w, h) * 0.42;
+    const spread = Math.min(w * 0.3, 260);
     const bursts = [
-      [-0.28, -0.06, ['#f2a7c3', '#ffd1e1', '#f4c463']],
-      [0.3, -0.1, ['#f4c463', '#ffe3a3', '#fff4dc']],
-      [0.0, -0.22, ['#c7b2ec', '#f4c463', '#f2a7c3']],
+      [-1, 0.0, ['#f2a7c3', '#ffd1e1', '#f4c463']],
+      [1, -0.04, ['#f4c463', '#ffe3a3', '#fff4e0']],
+      [0, -0.16, ['#b9a3e3', '#f4c463', '#f2a7c3']],
     ];
-    bursts.forEach(([dx, dy, colors], k) => this.later(0.15 + k * (red ? 0.15 : 0.32), () => {
-      this.fx('colorBurst', { x: top.x + dx * w, y: top.y + dy * h, colors, size });
+    bursts.forEach(([dx, dy, colors], k) => this.later(0.15 + k * (red ? 0.15 : 0.34), () => {
+      this.fx('colorBurst', { x: top.x + dx * spread, y: clamp(top.y + dy * h, h * 0.12, h * 0.6), colors, size: k === 2 ? 0.8 : 0.95 });
     }));
     const sparkleAt = (v, n) => { const p = this.toScreen(v); this.fx('sparkle', p.x, p.y, n); };
-    this.later(0.4, () => sparkleAt(new THREE.Vector3(0, 2.9, 0.05), red ? 10 : 24));
-    this.later(0.9, () => sparkleAt(new THREE.Vector3(-0.6, 2.2, 0.4), 14));
-    this.later(1.3, () => sparkleAt(new THREE.Vector3(0.6, 2.1, 0.4), 14));
+    this.later(0.4, () => sparkleAt(new THREE.Vector3(0, 2.9, 0.05), red ? 10 : 22));
+    this.later(0.9, () => sparkleAt(new THREE.Vector3(-0.6, 2.2, 0.4), 12));
+    this.later(1.3, () => sparkleAt(new THREE.Vector3(0.6, 2.1, 0.4), 12));
     this.sfx('swell');
     await this.wait(red ? 0.8 : 1.4);
-    // afterBlow, then the owner's optional second line (messages.json cake.wish)
-    await this.narrate([T.afterBlow, this.ctx.text?.cake?.wish].filter(Boolean));
+    await this.narrate([T.afterBlow]);
   }
 
   // --------------------------------------------------------- cutting
   async cutPhase() {
     this.phase = 'cut';
-    this.canvas.style.touchAction = 'none';
+    this.setCanvasMode('cut');
+    this.cutIdle = 0;
     const h = this.hint(this.T.cutHint);
     const done = new Promise((res) => { this.onCut = res; });
-    this.autoCutTimer = this.later(20, () => this.autoCut());
-    if (!this.reduced) this.to(this.cam, { distK: 0.92, el: 0.3, duration: 2.5, ease: 'sine.inOut' });
+    if (!this.reduced) this.to(this.cam, { distK: 0.92, el: 0.3, ty: 0.02, duration: 2.5, ease: 'sine.inOut' });
+    this.showKnife();
     await done;
     h.remove();
     this.guard();
+  }
+
+  // the knife appears, hovering above the cake, and follows her pointer/finger
+  showKnife() {
+    const top = this.cutTop;
+    const start = new THREE.Vector3(0.55, top, 0.95);
+    this.kn = { on: true, pos: start.clone(), target: start.clone(), yaw: Math.PI - 0.25, press: 0, appear: 0, crumbAt: 0, lastAim: -1 };
+    this.knife.visible = true;
+    this.knife.scale.setScalar(0.001);
+    this.to(this.kn, { appear: 1, duration: this.reduced ? 0.4 : 0.8, ease: 'back.out(1.5)' });
+    this.sfx('shimmer');
+  }
+
+  updateKnife(dt, t) {
+    const K = this.kn, top = this.cutTop;
+    const prev = K.pos.clone();
+    K.press += ((this.pDown ? 1 : 0) - K.press) * Math.min(1, dt * 12);
+    // idle: drift lazily in front of the cake until she reaches for it
+    if (t - K.lastAim > 3 && !this.pDown && !K.auto) K.target.set(0.55 + Math.sin(t * 0.5) * 0.12, top, 0.95 + Math.cos(t * 0.4) * 0.05);
+    const k = 1 - Math.exp(-dt * (this.pDown || K.auto ? 20 : 9));
+    K.pos.x += (K.target.x - K.pos.x) * k;
+    K.pos.z += (K.target.z - K.pos.z) * k;
+    const bob = this.reduced ? 0 : Math.sin(t * 1.7) * 0.018 * (1 - K.press);
+    const onTop = Math.hypot(K.pos.x, K.pos.z) < DIM.t2.R - 0.04;
+    const hy = (onTop ? top + 0.02 : top + 0.1) + (1 - K.press) * 0.3 + bob;
+    K.pos.y += (hy - K.pos.y) * Math.min(1, dt * 10);
+    // blade along the direction of travel — always held from her right
+    const dx = K.pos.x - prev.x, dz = K.pos.z - prev.z;
+    if (Math.hypot(dx, dz) / Math.max(dt, 1e-3) > 0.35) {
+      let yaw = Math.atan2(-dz, dx);
+      if (Math.cos(yaw - Math.PI) < 0) yaw += Math.PI;
+      K.yaw = angLerp(K.yaw, yaw, Math.min(1, dt * 7));
+    }
+    const kn = this.knife;
+    kn.rotation.set(0, 0, 0);
+    kn.quaternion.setFromEuler(new THREE.Euler(-0.32 * (1 - K.press), K.yaw, -0.1 + 0.08 * K.press, 'YXZ'));
+    // K.pos is the middle of the blade's edge; the knife's origin is the heel
+    const along = new THREE.Vector3(1, 0, 0).applyQuaternion(kn.quaternion);
+    kn.position.copy(K.pos).addScaledVector(along, -0.38);
+    kn.scale.setScalar(Math.max(0.001, K.appear));
+    // a star glint riding the blade
+    const tip = new THREE.Vector3(0.62, 0.05, 0.01).applyMatrix4(kn.updateMatrixWorld() && kn.matrixWorld);
+    this.kGlint.position.copy(tip);
+    this.kGlint.material.opacity = K.appear * (0.35 + 0.35 * Math.sin(t * 3.1) + 0.5 * K.press);
+    this.kGlint.material.rotation = t * 0.4;
+    // pressing into the frosting sheds a few crumbs along the line
+    if (K.press > 0.6 && onTop && t - K.crumbAt > 0.07) {
+      K.crumbAt = t;
+      this.crumbs.burst(new THREE.Vector3(K.pos.x, top + 0.005, K.pos.z), top, this.low ? 1 : 2, along.clone().cross(UP));
+    }
+  }
+
+  aimKnife(x, y) {
+    const K = this.kn;
+    if (!K || !K.on) return;
+    const ray = this.aim(x, y);
+    const plane = new THREE.Plane(UP, -(this.cutTop + 0.16));
+    const p = new THREE.Vector3();
+    if (!ray.ray.intersectPlane(plane, p)) return;
+    const r = Math.hypot(p.x, p.z);
+    if (r > 1.9) p.multiplyScalar(1.9 / r);
+    K.target.set(p.x, K.target.y, p.z);
+    K.lastAim = this.time;
   }
 
   cakeRect() {
@@ -918,53 +1050,90 @@ class CakeScene {
     return Math.hypot(dx, dy) * Math.max(0, t1 - t0);
   }
 
+  // nobody swiped (or she pressed Enter/Space): the knife glides across by itself
   autoCut() {
-    if (this.phase !== 'cut' || this.cutting) return;
-    // nobody swiped: the knife does it for her, gently
-    const r = this.cakeRect();
-    const y = r.y0 + (r.y1 - r.y0) * 0.38;
-    const a = { x: r.x0 - 30, y: y - 20 }, b = { x: r.x1 + 30, y: y + 26 };
-    const proxy = { t: 0 };
+    if (this.phase !== 'cut' || this.cutting || !this.kn || this.kn.auto) return;
+    const K = this.kn, top = this.cutTop;
+    K.auto = true;
+    const a = new THREE.Vector3(-1.05, top, 0.5), b = new THREE.Vector3(1.05, top, 0.15);
+    const proxy = { t: 0, p: 0 };
     this.trail = [];
-    this.to(proxy, {
-      t: 1, duration: 0.5, ease: 'power2.inOut',
-      onUpdate: () => this.trail.push({ x: a.x + (b.x - a.x) * proxy.t, y: a.y + (b.y - a.y) * proxy.t, t: performance.now() }),
-      onComplete: () => this.cut(),
-    });
+    this.timeline()
+      .to(proxy, { t: 0.0001, duration: 0.01, onComplete: () => K.target.copy(a) })
+      .to(proxy, { p: 1, duration: 0.45, ease: 'power2.out' })
+      .to(proxy, {
+        t: 1, duration: 0.7, ease: 'power2.inOut',
+        onStart: () => { this.pDown = true; },
+        onUpdate: () => {
+          K.target.lerpVectors(a, b, proxy.t);
+          const s = this.toScreen(K.pos.clone().setY(top + 0.02));
+          this.trail.push({ x: s.x, y: s.y, t: performance.now() });
+        },
+        onComplete: () => { this.pDown = false; this.cut(); },
+      });
   }
 
   cut() {
     if (this.cutting || this.phase !== 'cut') return;
     this.cutting = true;
     this.phase = 'serving';
-    this.clearLater(this.autoCutTimer);
-    this.canvas.style.touchAction = '';
+    this.setCanvasMode(null);
+    if (this.kn) { this.kn.on = false; }
+    this.swipe = null;
     this.sfx('whoosh');
     this.serve().then(() => { const r = this.onCut; this.onCut = null; r && r(); }).catch((e) => { if (!isAbort(e) && !this.dead) console.error('[cake]', e); });
   }
 
-  // place the knife with its blade in the vertical plane of the cut at angle phi
-  placeKnife(phi, edgeY) {
+  // the knife's pose with its blade in the vertical plane of the cut at angle phi
+  knifePose(phi, edgeY, outPos = new THREE.Vector3(), outQ = new THREE.Quaternion()) {
     const d = new THREE.Vector3(Math.sin(phi), 0, Math.cos(phi));
     const x = d.clone().negate();
     const z = new THREE.Vector3().crossVectors(x, UP);
-    this.knife.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, UP, z));
-    this.knife.position.copy(d.multiplyScalar(0.98)).setY(edgeY);
+    outQ.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, UP, z));
+    outPos.copy(d.multiplyScalar(0.98)).setY(edgeY);
+    return [outPos, outQ];
+  }
+
+  placeKnife(phi, edgeY) {
+    this.knifePose(phi, edgeY, this.knife.position, this.knife.quaternion);
+  }
+
+  // glide from wherever her knife is to the first cut
+  async knifeTo(phi, edgeY, duration) {
+    const kn = this.knife;
+    const p0 = kn.position.clone(), q0 = kn.quaternion.clone(), s0 = kn.scale.x;
+    const [p1, q1] = this.knifePose(phi, edgeY);
+    const k = { t: 0 };
+    this.kGlint.material.opacity = 0;
+    await this.to(k, {
+      t: 1, duration, ease: 'power2.inOut',
+      onUpdate: () => {
+        kn.position.lerpVectors(p0, p1, k.t);
+        kn.quaternion.slerpQuaternions(q0, q1, k.t);
+        kn.scale.setScalar(s0 + (1 - s0) * k.t);
+      },
+    });
+    this.guard();
   }
 
   async slice(phi, top, depth) {
     const red = this.reduced;
+    const tier = this.cake.t2;
     const p = { y: top + 0.45 };
     this.placeKnife(phi, p.y);
     let crumbed = false;
     const side = new THREE.Vector3(Math.cos(phi), 0, -Math.sin(phi));
     await this.to(p, {
-      y: top - depth, duration: red ? 0.2 : 0.3, ease: 'power2.in',
+      y: top - depth, duration: red ? 0.2 : 0.32, ease: 'power2.in',
       onUpdate: () => {
         this.placeKnife(phi, p.y);
         if (!crumbed && p.y < top + 0.01) {
           crumbed = true;
-          // crumbs & frosting flecks hop off along the cut line
+          // the frosting gives a little under the blade…
+          this.timeline()
+            .to(tier.group.scale, { y: 0.988, duration: 0.08, ease: 'power2.out' })
+            .to(tier.group.scale, { y: 1, duration: red ? 0.3 : 0.6, ease: red ? 'power2.out' : 'elastic.out(1, 0.5)' });
+          // …and crumbs & frosting flecks hop off along the cut line
           for (let r = 0.18; r <= DIM.t2.R; r += this.low ? 0.2 : 0.11) {
             const at = new THREE.Vector3(Math.sin(phi) * r, top + 0.01, Math.cos(phi) * r);
             this.crumbs.burst(at, top, this.low ? 1 : 2, side);
@@ -974,8 +1143,8 @@ class CakeScene {
       },
     });
     this.guard();
-    await this.wait(red ? 0.04 : 0.08);
-    await this.to(p, { y: top + 0.45, duration: red ? 0.18 : 0.26, ease: 'power2.out', onUpdate: () => this.placeKnife(phi, p.y) });
+    await this.wait(red ? 0.04 : 0.1);
+    await this.to(p, { y: top + 0.45, duration: red ? 0.18 : 0.28, ease: 'power2.out', onUpdate: () => this.placeKnife(phi, p.y) });
     this.guard();
   }
 
@@ -983,7 +1152,7 @@ class CakeScene {
     const tier = this.cake.t2;
     const W = tier.wedge;
     const red = this.reduced;
-    const top = tier.group.position.y + DIM.t2.H;
+    const top = this.cutTop;
     const wA = DIM.wedgeCentre - DIM.wedgeAngle / 2, wB = DIM.wedgeCentre + DIM.wedgeAngle / 2;
     // a subtle push-in as the knife goes in
     if (!red) this.to(this.cam, { distK: this.cam.distK - 0.06, duration: 1.2, ease: 'sine.inOut' });
@@ -994,8 +1163,7 @@ class CakeScene {
       this.hideCandle(c.index);
     });
     // two clean cuts with a real knife
-    this.knife.visible = true;
-    this.knife.scale.setScalar(1);
+    await this.knifeTo(wA, top + 0.45, red ? 0.2 : 0.35);
     await this.slice(wA, top, DIM.t2.H * 0.85);
     this.sfx('whoosh');
     await this.slice(wB, top, DIM.t2.H * 0.85);
@@ -1005,20 +1173,22 @@ class CakeScene {
     tier.cutFaces.forEach((m) => { m.visible = true; });
     const bis = new THREE.Vector3(Math.sin(DIM.wedgeCentre), 0, Math.cos(DIM.wedgeCentre));
     // 1. ease the slice out — it has weight
-    await this.to(W.position, { x: bis.x * 0.16, y: 0.012, z: bis.z * 0.16, duration: red ? 0.45 : 0.75, ease: 'power2.out' });
+    await this.to(W.position, { x: bis.x * 0.16, y: 0.012, z: bis.z * 0.16, duration: red ? 0.45 : 0.8, ease: 'power2.out' });
     this.guard();
-    // 2. lift & carry it to the plate, turning the layers toward her
+    // 2. lift & carry it to the plate, turning its layers toward her
+    const portrait = this.fit.portrait;
+    const camAz = portrait ? 0.98 : 0.46;
+    const rotY = camAz + Math.PI / 2 - wA - 0.55;
     const plateLocal = DIM.plateAt.clone().add(new THREE.Vector3(0, 0.03, 0)).sub(tier.group.position);
-    const rotY = 1.2;
     const bisAfter = new THREE.Vector3(Math.sin(DIM.wedgeCentre + rotY), 0, Math.cos(DIM.wedgeCentre + rotY));
     const dest = plateLocal.clone().sub(bisAfter.multiplyScalar(DIM.t2.R * 0.62));
     const from = W.position.clone();
     const proxy = { t: 0 };
-    const portrait = this.fit.aspect < 0.8;
-    this.to(this.cam, { az: 0.46, el: 0.3, distK: portrait ? 0.98 : 0.78, tx: portrait ? 1.1 : 1.25, ty: portrait ? -0.75 : -0.62, tz: 0.45, duration: red ? 1.4 : 2.6, ease: 'power2.inOut' });
+    if (portrait) this.to(this.cam, { az: camAz, el: 0.36, distK: 0.66, tx: 1.45, ty: -0.62, tz: 0.38, duration: red ? 1.4 : 2.6, ease: 'power2.inOut' });
+    else this.to(this.cam, { az: camAz, el: 0.3, distK: 0.78, tx: 1.25, ty: -0.62, tz: 0.45, duration: red ? 1.4 : 2.6, ease: 'power2.inOut' });
     const ease = this.gsap.parseEase('power1.inOut');
     await this.to(proxy, {
-      t: 1, duration: red ? 1.0 : 1.75, ease: 'power2.inOut',
+      t: 1, duration: red ? 1.0 : 1.8, ease: 'power2.inOut',
       onUpdate: () => {
         const k = proxy.t;
         W.position.lerpVectors(from, dest, k);
@@ -1036,10 +1206,10 @@ class CakeScene {
       .to(W.scale, { y: 0.955, x: 1.022, z: 1.022, duration: 0.09, ease: 'power2.out' })
       .to(W.scale, { y: 1, x: 1, z: 1, duration: red ? 0.3 : 0.75, ease: red ? 'power2.out' : 'elastic.out(1, 0.42)' });
     this.to(this.L, { kick: 1, duration: 0.18, ease: 'power2.out' });
-    this.to(this.L, { kick: 0, duration: 1.6, delay: 0.2, ease: 'sine.inOut' });
+    this.to(this.L, { kick: 0, duration: 1.8, delay: 0.25, ease: 'sine.inOut' });
     W.updateWorldMatrix(true, false);
     const p = this.toScreen(new THREE.Vector3().setFromMatrixPosition(W.matrixWorld).add(new THREE.Vector3(0, 0.45, 0)));
-    this.fx('sparkle', p.x, p.y, 26);
+    this.fx('sparkle', p.x, p.y, red ? 12 : 24);
     this.sfx('chime');
     await this.wait(red ? 0.6 : 1.3);
   }
@@ -1052,16 +1222,32 @@ class CakeScene {
     const p2 = new THREE.Vector3(), q2 = new THREE.Quaternion(), s2 = new THREE.Vector3();
     m2.decompose(p2, q2, s2);
     const proxy = { k: 1 };
+    const tmp = new THREE.Matrix4();
     this.to(proxy, {
       k: 0, duration: 0.35, ease: 'back.in(2)',
       onUpdate: () => {
         const k = Math.max(0.0001, proxy.k);
-        im.setMatrixAt(i, new THREE.Matrix4().compose(pos.clone().add(new THREE.Vector3(0, (1 - k) * 0.15, 0)), q, new THREE.Vector3(k, sc.y * k, k)));
-        wk.setMatrixAt(i, new THREE.Matrix4().compose(p2.clone().add(new THREE.Vector3(0, (1 - k) * 0.3, 0)), q2, new THREE.Vector3(k, s2.y * k, k)));
+        im.setMatrixAt(i, tmp.compose(pos.clone().add(new THREE.Vector3(0, (1 - k) * 0.15, 0)), q, new THREE.Vector3(k, sc.y * k, k)));
+        wk.setMatrixAt(i, tmp.compose(p2.clone().add(new THREE.Vector3(0, (1 - k) * 0.3, 0)), q2, new THREE.Vector3(k, s2.y * k, k)));
         im.instanceMatrix.needsUpdate = true; wk.instanceMatrix.needsUpdate = true;
       },
     });
     this.flames.ember[i] = 0;
+  }
+
+  // the secret: after the cut, tapping the sun topper (or its plaque) finds an extra wish
+  tryWish(x, y) {
+    const hits = this.aim(x, y).intersectObject(this.cake.topper, true);
+    if (!hits.length) return false;
+    const p = this.toScreen(hits[0].point);
+    this.fx('sparkle', p.x, p.y, 18, { spread: 50 });
+    this.glitter.emit(hits[0].point, { n: this.low ? 6 : 14, spread: 0.35, up: 0.15, life: 1.2, size: 0.03 });
+    this.to(this.L, { glint: 1.2, duration: 0.2, yoyo: true, repeat: 1 });
+    const wish = this.ctx.text?.cake?.wish;
+    let isNew = false;
+    try { isNew = !!this.ctx.eggs?.found?.('cake-wish', wish ? this.fillText(wish) : undefined); } catch (e) { /* ignore */ }
+    if (!isNew) this.sfx('chime');
+    return true;
   }
 
   // --------------------------------------------------------- input
@@ -1072,12 +1258,18 @@ class CakeScene {
     this.on(cv, 'pointerup', (e) => this.onUp(e));
     this.on(cv, 'pointercancel', (e) => this.onUp(e));
     this.on(cv, 'contextmenu', (e) => { if (this.phase === 'blow' || this.phase === 'cut') e.preventDefault(); });
-    // desktop: hold the spacebar to blow
+    // desktop: hold the spacebar to blow; Enter/Space cuts for keyboard users
     this.on(window, 'keydown', (e) => {
-      if ((e.code === 'Space' || e.key === ' ') && this.phase === 'blow') {
+      const space = e.code === 'Space' || e.key === ' ';
+      if (space && this.phase === 'blow') {
         e.preventDefault();
+        if (e.repeat) return;
+        if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur?.();
         if (!this.blow.keyDown) this.sfx('blow');
         this.blow.keyDown = true;
+      } else if ((space || e.key === 'Enter') && this.phase === 'cut' && !this.cutting) {
+        e.preventDefault();
+        this.autoCut();
       }
     });
     this.on(window, 'keyup', (e) => { if (e.code === 'Space' || e.key === ' ') this.blow.keyDown = false; });
@@ -1090,13 +1282,21 @@ class CakeScene {
     if (this.phase === 'blow') {
       this.blow.gustUntil = this.time + 0.25;
       this.tapCandles(e.clientX, e.clientY);
-    } else if (this.phase === 'cut') {
+    } else if (this.phase === 'cut' && !this.cutting && !this.kn?.auto) {
+      this.cutIdle = 0;
+      this.aimKnife(e.clientX, e.clientY);
       this.trail = [{ x: e.clientX, y: e.clientY, t: performance.now() }];
       this.swipe = { inside: 0, rect: this.cakeRect(), last: { x: e.clientX, y: e.clientY } };
+    } else if (this.phase === 'served' || this.phase === 'done') {
+      this.tryWish(e.clientX, e.clientY);
     }
   }
 
   onMove(e) {
+    if (this.phase === 'cut' && !this.cutting && !this.kn?.auto) {
+      this.cutIdle = 0;
+      this.aimKnife(e.clientX, e.clientY);
+    }
     if (!this.pDown) return;
     if (this.phase === 'blow') this.tapCandles(e.clientX, e.clientY);
     else if (this.phase === 'cut' && this.swipe) {
@@ -1106,13 +1306,14 @@ class CakeScene {
       s.last = p;
       const now = performance.now();
       this.trail.push({ ...p, t: now });
-      if (now - (s.lastSpark || 0) > 90) { s.lastSpark = now; this.fx('sparkle', p.x, p.y, 3); }
+      if (now - (s.lastSpark || 0) > 110) { s.lastSpark = now; this.fx('sparkle', p.x, p.y, 2, { spread: 24 }); }
       const need = Math.max(70, (s.rect.x1 - s.rect.x0) * 0.38);
       if (s.inside >= need) { this.swipe = null; this.cut(); }
     }
   }
 
   onUp() {
+    if (this.kn?.auto) return;
     this.pDown = false;
     this.swipe = null;
   }
@@ -1120,7 +1321,7 @@ class CakeScene {
   // tap / swipe over the flames to blow them out (always available while blowing)
   tapCandles(x, y) {
     if (this.phase !== 'blow') return;
-    const rad = Math.max(22, Math.min(this.size.w, this.size.h) * 0.03);
+    const rad = Math.max(24, Math.min(this.size.w, this.size.h) * 0.032);
     const hits = [];
     this.candles.forEach((c, i) => {
       if (c.out) return;
@@ -1155,8 +1356,8 @@ class CakeScene {
         const a = pts[i - 1], b = pts[i];
         const k = 1 - (now - b.t) / life;
         const w = i / pts.length;
-        g.strokeStyle = pass === 0 ? `rgba(244,196,99,${0.42 * k})` : `rgba(255,252,240,${0.95 * k})`;
-        g.lineWidth = pass === 0 ? 18 * w * k + 2 : 4.2 * w * k + 0.8;
+        g.strokeStyle = pass === 0 ? `rgba(244,196,99,${0.38 * k})` : `rgba(255,252,240,${0.9 * k})`;
+        g.lineWidth = pass === 0 ? 14 * w * k + 2 : 3.4 * w * k + 0.8;
         g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
       }
     }
@@ -1175,9 +1376,12 @@ class CakeScene {
     const L = this.L;
     Object.assign(L, { black: 0, room: 0.45, vignette: 0.42, hush: 0.6, glint: 0 });
     Object.assign(this.cam, { az: 0, el: 0.27, distK: 1.0 });
-    if (state === 'ignite') { L.hush = 0.8; return this.ignite(); }
+    if (state === 'reveal') { Object.assign(L, { black: 1, room: 0.32 }); Object.assign(this.cam, { az: -0.24, el: 0.44, distK: 1.55 }); this.reveal(); return; }
+    if (state === 'wish') { L.hush = 0.75; Object.assign(this.cam, { distK: 0.95, ty: 0.06 }); return; }
+    if (state === 'ignite') { L.hush = 0.75; return this.ignite(); }
     if (state === 'unlit') { L.hush = 0.8; return; }
     this.candles.forEach((c, i) => { c.target = 1; this.flames.lit[i] = 1; });
+    if (state === 'lit') { this.phase = 'blow'; this.setCanvasMode('blow'); this.buildBlowUI(); return; }
     if (state === 'blow') this.blow.keyDown = true;
     const out = () => this.candles.forEach((c, i) => { c.target = 0; c.out = true; this.flames.lit[i] = 0; });
     if (state === 'smoke') { this.phase = 'blow'; this.candles.forEach((c, i) => this.later(i * 0.05, () => this.extinguish(i, 0.8))); return; }
@@ -1185,8 +1389,11 @@ class CakeScene {
     if (state === 'dark') Object.assign(L, { room: 0.03, hush: 0.9, glint: 1 });
     if (state === 'gold') Object.assign(L, { room: 0.35, hush: 0.55, gold: 1 });
     if (['party', 'cut', 'served'].includes(state)) Object.assign(L, { party: 1, room: 0.75, hush: 0.12, gold: 1 });
-    if (state === 'cut') { Object.assign(this.cam, { distK: 0.92, el: 0.3 }); this.phase = 'cut'; this.canvas.style.touchAction = 'none'; this.onCut = () => {}; }
-    if (state === 'served') { this.phase = 'cut'; this.cut(); }
+    if (state === 'cut' || state === 'served') {
+      Object.assign(this.cam, { distK: 0.92, el: 0.3, ty: 0.02 });
+      this.phase = 'cut'; this.setCanvasMode('cut'); this.onCut = () => { this.phase = 'served'; this.setCanvasMode('egg'); }; this.showKnife();
+    }
+    if (state === 'served') this.later(0.6, () => this.autoCut());
   }
 
   // --------------------------------------------------------- teardown
@@ -1203,6 +1410,7 @@ class CakeScene {
     this.handles.forEach((h) => h.remove());
     this.handles.clear();
     if (this.det) { this.det.stop(); this.det = null; }
+    this.onAllOut = this.onCut = null;
     // GPU resources
     const seen = new Set();
     const dispTex = (t) => { if (t && t.isTexture && !seen.has(t)) { seen.add(t); t.dispose(); } };
@@ -1212,20 +1420,22 @@ class CakeScene {
       for (const m of mats) {
         if (seen.has(m)) continue;
         seen.add(m);
-        for (const k of ['map', 'emissiveMap', 'roughnessMap', 'metalnessMap', 'normalMap', 'alphaMap']) dispTex(m[k]);
+        for (const k of ['map', 'emissiveMap', 'roughnessMap', 'metalnessMap', 'normalMap', 'bumpMap', 'alphaMap']) dispTex(m[k]);
         if (m.uniforms) Object.values(m.uniforms).forEach((u) => dispTex(u && u.value));
         m.dispose();
       }
       if (o.isInstancedMesh) o.dispose?.();
+      if (o.isLight && o.shadow?.map) o.shadow.dispose?.();
     });
     this.cake?.textures.forEach(dispTex);
-    [this.table?.wood, this.table?.shadowTex, this.table?.glowTex, this.glowTex, this.starTex].forEach(dispTex);
+    [this.table?.wood, this.table?.shadowTex, this.table?.glowTex, this.glowTex, this.auraTex, this.starTex].forEach(dispTex);
     this.flames?.dispose(); this.smoke?.dispose(); this.bokeh?.dispose(); this.dust?.dispose();
-    this.strand?.dispose(); this.glitter?.dispose(); this.crumbs?.dispose();
+    this.strand?.dispose(); this.glitter?.dispose(); this.crumbs?.dispose(); this.atmo?.dispose();
     this.envRT?.dispose();
     if (this.composer) {
       this.composer.passes.forEach((p) => p.dispose?.());
       this.composer.renderTarget1?.dispose(); this.composer.renderTarget2?.dispose();
+      this.composer.dispose?.();
       this.composer = null;
     }
     if (this.scene) { this.scene.environment = null; this.scene.clear(); }
@@ -1237,6 +1447,7 @@ class CakeScene {
     }
     this.root?.remove();
     this.trailCtx = null;
+    this.trail = null;
     if (window.__cake === this) delete window.__cake;
   }
 }

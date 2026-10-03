@@ -7,7 +7,7 @@ import {
 } from './geometry.js';
 import {
   spongeTexture, paintedSideTexture, goldLeafSideTextures, candleTexture, candleGlowTexture,
-  plaqueTexture, rng,
+  plaqueTexture, frostingBumpTexture, rng,
 } from './textures.js';
 
 const TAU = Math.PI * 2;
@@ -35,7 +35,7 @@ export const DIM = {
   plateAt: new THREE.Vector3(2.25, 0, 0.45),
 };
 
-export function buildCake({ lowPower = false, quality = 2, name = 'Deepu', anisotropy = 4 } = {}) {
+export function buildCake({ lowPower = false, quality = 2, name = 'Deepu', anisotropy = 4, shadows = false } = {}) {
   const hi = quality >= 2, mid = quality >= 1;
   const root = new THREE.Group();
   root.name = 'cake-root';
@@ -51,8 +51,12 @@ export function buildCake({ lowPower = false, quality = 2, name = 'Deepu', aniso
   const painted = paintedSideTexture({ W: lowPower ? 1024 : 2048, H: lowPower ? 128 : 256 });
   const leaf = goldLeafSideTextures({ W: lowPower ? 768 : 1536, H: lowPower ? 128 : 256 });
   painted.anisotropy = leaf.map.anisotropy = leaf.mr.anisotropy = anisotropy;
+  // the faint scraped-buttercream relief under the fondant (skipped on low tier)
+  const bump = lowPower ? null : frostingBumpTexture({ W: mid ? 1024 : 512, H: 256 });
+  if (bump) { bump.repeat.set(3, 1); bump.anisotropy = anisotropy; }
   const fondantCommon = {
     color: 0xffffff, roughness: 0.6, metalness: 0,
+    ...(bump ? { bumpMap: bump, bumpScale: 0.9 } : {}),
     sheen: 0.55, sheenColor: new THREE.Color(0xf3e9ff), sheenRoughness: 0.45,
     clearcoat: 0.08, clearcoatRoughness: 0.5,
     emissive: new THREE.Color(0x2a1545), emissiveIntensity: 0.0,
@@ -214,12 +218,13 @@ export function buildCake({ lowPower = false, quality = 2, name = 'Deepu', aniso
   }
 
   // ---------- candles ----------
-  const candleTex = candleTexture();
-  candleTex.repeat.set(1, 1);
+  const { map: candleTex, bump: candleBump } = candleTexture();
   const glowTex = candleGlowTexture();
   const candleMat = new THREE.MeshStandardMaterial({
-    map: candleTex, roughness: 0.55, metalness: 0, emissive: 0xffffff, emissiveMap: glowTex, emissiveIntensity: 1,
+    map: candleTex, bumpMap: candleBump, bumpScale: 1.4, roughness: 0.42, metalness: 0,
+    emissive: 0xffffff, emissiveMap: glowTex, emissiveIntensity: 1,
   });
+  candleMat.userData.env = 0.9;
   // per-instance wax glow (lit candles glow warm near the top)
   candleMat.onBeforeCompile = (sh) => {
     sh.vertexShader = sh.vertexShader
@@ -236,6 +241,8 @@ export function buildCake({ lowPower = false, quality = 2, name = 'Deepu', aniso
   const glowAttr = new THREE.InstancedBufferAttribute(new Float32Array(N), 1);
   candleGeo.setAttribute('aGlow', glowAttr);
   const candles = new THREE.InstancedMesh(candleGeo, candleMat, N);
+  // ivory tapers, every other one a soft blush (a lavender one now and then)
+  const tints = [new THREE.Color(1, 1, 1), new THREE.Color(1.0, 0.82, 0.87), new THREE.Color(1, 1, 1), new THREE.Color(0.9, 0.86, 1.0)];
   const wickGeo = new THREE.CylinderGeometry(0.0035, 0.004, 1, 6);
   wickGeo.translate(0, 0.5, 0);
   const wickMat = new THREE.MeshStandardMaterial({ color: 0x2a1a12, roughness: 0.9 });
@@ -254,6 +261,7 @@ export function buildCake({ lowPower = false, quality = 2, name = 'Deepu', aniso
     const spin = new THREE.Quaternion().setFromAxisAngle(UP, R() * TAU);
     m.compose(new THREE.Vector3(x, topY - 0.015, z), q.clone().multiply(spin), new THREE.Vector3(1, h, 1));
     candles.setMatrixAt(i, m);
+    candles.setColorAt(i, tints[i % tints.length]);
     const wickH = 0.028;
     const tipLocal = new THREE.Vector3(0, h + wickH - 0.015, 0).applyQuaternion(q).add(new THREE.Vector3(x, topY, z));
     m.compose(new THREE.Vector3(0, h - 0.016, 0).applyQuaternion(q).add(new THREE.Vector3(x, topY - 0.015, z)), q, new THREE.Vector3(1, wickH + 0.004, 1));
@@ -261,6 +269,7 @@ export function buildCake({ lowPower = false, quality = 2, name = 'Deepu', aniso
     candleInfo.push({ index: i, phi, height: h, tipLocal, inWedge: t2.inWedge(phi), seed: R() });
   }
   candles.instanceMatrix.needsUpdate = true;
+  if (candles.instanceColor) candles.instanceColor.needsUpdate = true;
   wicks.instanceMatrix.needsUpdate = true;
   t2.group.add(candles, wicks);
 
@@ -325,8 +334,19 @@ export function buildCake({ lowPower = false, quality = 2, name = 'Deepu', aniso
   plateGroup.add(fork);
   root.add(plateGroup);
 
+  // soft shadows from the key light (mid/high tiers): every opaque surface casts
+  // and receives; the tiny beads & pearls only cast (no self-shadow acne)
+  if (shadows) {
+    root.traverse((o) => {
+      if (!o.isMesh) return;
+      o.castShadow = true;
+      o.receiveShadow = !(o.isInstancedMesh && o.geometry.type === 'SphereGeometry');
+    });
+    wicks.castShadow = false;
+  }
+
   return {
     root, mats, tiers, t1, t2, candles, wicks, glowAttr, candleInfo, topper, plaque, plateGroup,
-    textures: [sponge, painted, leaf.map, leaf.mr, candleTex, glowTex, plaqueTex],
+    textures: [sponge, painted, leaf.map, leaf.mr, candleTex, candleBump, glowTex, plaqueTex, bump].filter(Boolean),
   };
 }

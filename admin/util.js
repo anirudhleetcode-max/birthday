@@ -381,9 +381,18 @@ export function isoToIstInput(iso) {
   return new Date(t + IST_MS).toISOString().slice(0, 16);
 }
 
-/** "yyyy-mm-ddThh:mm" (India time) → "yyyy-mm-ddThh:mm:00+05:30", or null. */
+/**
+ * "yyyy-mm-ddThh:mm" (India time) → "yyyy-mm-ddThh:mm:00+05:30", or null.
+ * Some browsers report seconds (and even milliseconds) in datetime-local values
+ * ("…T00:05:30" / "…T00:05:30.000") — those are accepted too.
+ */
 export function istInputToIso(v) {
-  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(String(v || '')) ? `${v}:00+05:30` : null;
+  const m = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?$/.exec(String(v || '').trim());
+  if (!m) return null;
+  const [, day, hh, mm, ss = '00'] = m;
+  if (Number(hh) > 23 || Number(mm) > 59 || Number(ss) > 59) return null;
+  const iso = `${day}T${hh}:${mm}:${ss}+05:30`;
+  return Number.isFinite(Date.parse(iso)) ? iso : null;
 }
 
 export function prettyIst(iso) {
