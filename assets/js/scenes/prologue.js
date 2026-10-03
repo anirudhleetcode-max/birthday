@@ -199,7 +199,7 @@ export default {
     const beat = beats(lines);
     const kicker = words(ctx, t.kicker, 'Prologue');
     const title = words(ctx, t.title, ctx.title || `Once Upon a ${name}`);
-    const [tA, tName, tB] = splitTitle(title, [name, ...(her.nicknames || [])]);
+    const [tA, tName, tB] = splitTitle(title, [name, ...(her.nicknames || []).filter(Boolean)]);
     const titleSub = words(ctx, t.titleSub, '');
     const date = words(ctx, t.date, birthLabel(her.birthDate));
     const hero = ctx.role('hero');

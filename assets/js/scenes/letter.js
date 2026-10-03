@@ -26,7 +26,7 @@ export default {
     const body = (t.body || []).filter(Boolean).map((b) => ctx.fill(b)).filter(Boolean);
     const ps = t.ps ? ctx.fill(t.ps) : '';
     const mid = Math.max(1, Math.ceil(body.length / 2));
-    const pin = (p, k) => p ? `<figure class="lt-pin lt-pin-${k + 1} polaroid"><i class="lt-tape"></i><div class="ph" style="aspect-ratio:${p.ratio}"><img alt="${esc(p.alt)}" src="${esc(p.url)}" style="object-position:${esc(p.objectPosition)}"></div>${p.caption ? `<figcaption class="cap">${esc(p.caption)}</figcaption>` : ''}</figure>` : '';
+    const pin = (p, k) => p ? `<figure class="lt-pin lt-pin-${k + 1} polaroid"><i class="lt-tape"></i><div class="ph" style="aspect-ratio:${p.ratio}"><img alt="${esc(p.alt)}"${p.srcset ? ` srcset="${esc(p.srcset)}" sizes="(max-width: 700px) 42vw, 240px"` : ''} src="${esc(p.url)}" style="object-position:${esc(p.objectPosition)}"></div>${p.caption ? `<figcaption class="cap">${esc(p.caption)}</figcaption>` : ''}</figure>` : '';
 
     el.innerHTML = `
       <div class="lt-bg"></div>

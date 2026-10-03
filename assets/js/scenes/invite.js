@@ -253,7 +253,7 @@ export default {
       'I made you something.',
       'Find a quiet corner. Lights low. Headphones on.',
     ]).map((l) => words(ctx, l)).filter(Boolean);
-    const greeting = words(ctx, t.greeting, 'Hey {nick1}.');
+    const greeting = words(ctx, t.greeting, 'Hey {name}.');
     const label = words(ctx, t.button, 'Light the lantern');
     const foot = words(ctx, t.foot, 'headphones on · lights low');
 

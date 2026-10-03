@@ -16,7 +16,10 @@ export default {
     const t = ctx.text.hug || {};
     const reduced = device.reducedMotion;
     const holdFor = reduced ? 1.2 : HOLD;
-    const us = ctx.role('together');
+    // the two of you, if there's a photo marked "together"; otherwise one of her featured photos, captioned honestly
+    const together = ctx.role('together');
+    const us = together || [...ctx.featured()].reverse().find((p) => !p.role && !p.heroHair) || ctx.role('reveal');
+    const usCaption = together ? (t.togetherCaption || '{name} & me') : (t.photoCaption || '{name}');
     const phone = String(ctx.site.settings?.whatsapp || '').replace(/[^\d]/g, '');
     this.cleanup = [];
 
@@ -43,8 +46,8 @@ export default {
       </div>
       <div class="hg-after" hidden>
         <figure class="polaroid hg-us">
-          <div class="ph" style="aspect-ratio:${us.ratio}"><img alt="${esc(us.alt)}" src="${esc(us.url)}" style="object-position:${esc(us.objectPosition)}"></div>
-          <figcaption class="cap">${esc(ctx.fill(`{name} & me`))}</figcaption>
+          <div class="ph" style="aspect-ratio:${us.ratio}"><img alt="${esc(us.alt)}" src="${esc(us.url)}"${us.srcset ? ` srcset="${esc(us.srcset)}" sizes="(max-width: 700px) 62vw, 320px"` : ''} style="object-position:${esc(us.objectPosition)}"></div>
+          <figcaption class="cap">${esc(ctx.fill(usCaption))}</figcaption>
         </figure>
         ${phone ? `<a class="btn-ghost hg-send" target="_blank" rel="noopener" href="https://wa.me/${phone}?text=${encodeURIComponent(ctx.fill(t.message || ''))}">Send it to me</a>` : ''}
       </div>`;

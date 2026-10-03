@@ -59,7 +59,7 @@ function createStore(site, files) {
   };
 
   const herName = (site.her && site.her.name) || 'her';
-  const chapterRank = ['prologue', 'tower', 'hair', 'names', 'dance', 'lanterns', 'letter', 'finale', 'album'];
+  const chapterRank = ['prologue', 'tower', 'story', 'hair', 'names', 'dance', 'lanterns', 'letter', 'finale', 'album'];
   const indexOf = new Map(site.photos.map((p, i) => [p.id, i]));
 
   const toPhoto = (p) => {
@@ -87,10 +87,21 @@ function createStore(site, files) {
       effect: p.effect || null,
       duration: p.duration || null,
       isPlaceholder: placeholder,
+      memory: p.memory || null,
       url: url || purl,
       thumbUrl: resolve(p.thumb) || url || purl,
+      srcset: srcsetOf(p, url),
     };
   };
+  /** "thumb 480w, display 960w" when the display size is known — small slots then load the thumbnail. */
+  function srcsetOf(p, url) {
+    const w = Number(p.w);
+    const h = Number(p.h);
+    const thumb = resolve(p.thumb);
+    if (!url || !thumb || !(w > 0 && h > 0)) return '';
+    const tw = Math.round(w * Math.min(1, 640 / Math.max(w, h)));
+    return tw < w ? `${thumb} ${tw}w, ${url} ${Math.round(w)}w` : '';
+  }
 
   const enabledChapter = new Map((site.chapters || []).map((c) => [c.id, c.enabled !== false]));
   const byId = new Map(site.photos.map((p) => [p.id, p]));
@@ -114,6 +125,7 @@ function createStore(site, files) {
     role(role) {
       const p = site.photos.find((x) => x.role === role && x.enabled !== false);
       if (p) return toPhoto(p);
+      if (role === 'together') return null; // never pretend a solo photo shows the two of them
       const fallback = { hero: 'prologue', reveal: 'finale', together: 'finale' }[role];
       const list = this.photos(fallback);
       return list[role === 'together' ? 1 : 0] || list[0] || this.photo(role);

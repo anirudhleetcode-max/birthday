@@ -27,9 +27,9 @@ test('7,305 days / 240 months / 20 years at the unlock moment', () => {
   assert.equal(months, 240);
 });
 
-test('every special role has a photo', () => {
+test('every required special role has a photo (“together” is optional)', () => {
   const site = loadSite();
-  for (const role of ['hero', 'reveal', 'together']) assert.ok(site.photos.some((p) => p.role === role), role);
+  for (const role of ['hero', 'reveal']) assert.ok(site.photos.some((p) => p.role === role), role);
 });
 
 test('split/combine round-trips without loss', () => {

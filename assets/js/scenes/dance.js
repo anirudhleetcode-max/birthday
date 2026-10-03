@@ -193,6 +193,7 @@ export default {
           <div class="dn-face back"><svg viewBox="0 0 100 100"><use href="#dn-sun" width="100" height="100"/></svg></div>
         </div></div>`;
       const img = c.querySelector('img');
+      if (p.srcset) { img.sizes = '(max-width: 700px) 34vw, 220px'; img.srcset = p.srcset; }
       img.src = p.url;
       img.alt = p.alt || '';
       img.style.objectPosition = p.objectPosition;

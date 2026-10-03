@@ -214,7 +214,7 @@ export default {
     const reduced = device.reducedMotion;
     const t = ctx.text.names || {};
     const fill = (s) => ctx.fill(s);
-    const nick = (ctx.site.her && ctx.site.her.nicknames) || [];
+    const nick = ((ctx.site.her && ctx.site.her.nicknames) || []).map((n) => String(n || '').trim()).filter(Boolean);
     const herName = (ctx.site.her && ctx.site.her.name) || nick[0] || 'Deepu';
     const items = Array.isArray(t.items) ? t.items : [];
     const count = Math.max(1, Math.min(5, Math.max(nick.length, items.length) || 3));
@@ -235,7 +235,7 @@ export default {
 
     // optional chapter words (with fallbacks)
     const aka = fill(t.aka || 'also known as…');
-    const finaleLine = fill(t.finale || 'Three names. One legend. Every one of them, completely her.');
+    const finaleLine = fill(t.finale || 'One legend. Every one of her names, completely her.');
     const scratchNote = fill(t.scratch || 'okay. some names are too cute for the scary font.');
     const fieldKicker = fill(t.fieldKicker || 'Field notes');
     const subjectLine = fill(t.subject || `Subject: ${beats[0].name}`);

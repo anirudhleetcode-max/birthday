@@ -25,7 +25,7 @@ admin/                     "The Lantern Room" CMS
 | id | title (shown via messages.<id>.title) | via (transition in) | grade | music mood |
 |---|---|---|---|---|
 | gate | countdown (only before unlock) | — | night | none (no sound before a tap) |
-| invite | "Hey Pinky." + Enter | fade | night | — (first tap starts sound → hush) |
+| invite | "Hey Deepu." + Enter | fade | night | — (first tap starts sound → hush) |
 | prologue | Once Upon a Deepu | lantern | dawn | hush → tender → wonder |
 | tower | A Tower Full of You | sun | day | tender |
 | hair | The Golden Thread | ribbon | sunset | wonder |
@@ -106,7 +106,7 @@ Optional per-photo hints (null = the chapter decides): `animation` ∈ kenburns-
 
 `data/messages.json` → every word on screen, grouped by chapter id (see §4). `data/settings.json` → `her {name, nicknames[], birthDate}`, `from {name, signoff}`, `settings {lock {enabled, unlockAt}, grading {strength}, whatsapp, github {owner, repo, branch}, theme {grain, particles, ribbon}}`, `media {music, musicTitle, video, videoCaption, voice}`, `chapters [{id, enabled}]`.
 
-Nicknames: **Deepu**, **Pinky**, **Kuchi Puchi** (owner-editable; use `{nick1}`/`{nick2}` or `ctx.site.her.nicknames`). Don't overuse them.
+Names: **Deepu**, and the nickname **Kuchu Puchu** (owner-editable in Settings; `{nick1}` or `ctx.site.her.nicknames`, empty entries ignored). Use the nickname sparingly, where it feels natural.
 
 ---
 

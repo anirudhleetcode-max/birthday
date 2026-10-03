@@ -16,12 +16,13 @@ export const MODEL_VERSION = 2;
 export const PHOTO_CHAPTERS = [
   { id: 'prologue', label: 'Prologue — the very first photo', short: 'Prologue', ratio: '4:5', min: 1, max: 1, recommended: 1, hint: 'Her prettiest solo portrait. This is the first photo she sees.' },
   { id: 'tower', label: 'Ch.1 · The tower walls (painted memories)', short: 'Tower', ratio: '3:4', min: 1, max: 16, recommended: 6, hint: 'Candid, warm, everyday moments.' },
+  { id: 'story', label: 'Ch · How it began (your memories)', short: 'Our story', ratio: null, min: 0, max: null, recommended: 8, hint: 'Photos for your memories. In the photo editor, choose which memory each photo belongs to.' },
   { id: 'hair', label: 'Ch.2 · The golden thread (hanging polaroids)', short: 'Golden thread', ratio: '3:4', min: 1, max: 24, recommended: 8, hint: 'Memories in order — the thread connects them.' },
-  { id: 'names', label: 'Ch.3 · Her names (Deepu, Pinky, Kuchi Puchi)', short: 'Names', ratio: '4:5', min: 3, max: 3, recommended: 3, hint: 'One photo per name, in that order.' },
+  { id: 'names', label: 'Ch · Her names (Deepu, Kuchu Puchu)', short: 'Names', ratio: '4:5', min: 1, max: 4, recommended: 2, hint: 'One photo per name, in the same order as the names in Settings.' },
   { id: 'dance', label: 'Ch.4 · The festival (3D dance)', short: 'Festival', ratio: '3:4', min: 3, max: 16, recommended: 8, hint: 'Happy, festive, fun.' },
   { id: 'lanterns', label: 'Ch.5 · Photo lanterns in the night sky', short: 'Lanterns', ratio: '1:1', min: 1, max: 16, recommended: 6, hint: 'Soft, glowy, emotional moments.' },
   { id: 'letter', label: 'Ch.6 · Pinned to the letter', short: 'Letter', ratio: '1:1', min: 0, max: 3, recommended: 2, hint: 'Photos of you two, ideally.' },
-  { id: 'finale', label: 'Finale · the grand reveal & you two together', short: 'Finale', ratio: '4:5', min: 2, max: 2, recommended: 2, hint: 'Her single best photo, and one of BOTH of you.' },
+  { id: 'finale', label: 'Finale · the final photograph (and, optionally, one of you two)', short: 'Finale', ratio: '4:5', min: 1, max: 2, recommended: 1, hint: 'Her single best photo. Optionally a second one of BOTH of you (mark it “together”).' },
   { id: 'album', label: 'Extra memories (album, finale heart, credits)', short: 'Extra memories', ratio: null, min: 0, max: null, recommended: 0, hint: 'Add as many as you like, any time.' },
 ];
 
@@ -31,6 +32,7 @@ export const FILM_CHAPTERS = [
   { id: 'invite', label: 'Invitation', toggle: false },
   { id: 'prologue', label: 'Prologue' },
   { id: 'tower', label: 'Chapter · The tower' },
+  { id: 'story', label: 'Chapter · How it began (your memories)' },
   { id: 'hair', label: 'Chapter · The golden thread' },
   { id: 'names', label: 'Chapter · Her names' },
   { id: 'dance', label: 'Chapter · The festival' },
@@ -206,7 +208,7 @@ const DEFAULT_SETTINGS = {
 export function normalize(site) {
   const s = site || {};
   s.version = MODEL_VERSION;
-  s.her = { name: 'Deepu', nicknames: ['Deepu', 'Pinky', 'Kuchi Puchi'], birthDate: '2007-01-03', ...(s.her || {}) };
+  s.her = { name: 'Deepu', nicknames: ['Deepu', 'Kuchu Puchu'], birthDate: '2007-01-03', ...(s.her || {}) };
   s.from = { name: 'Your best friend', signoff: 'Yours, in every lifetime', ...(s.from || {}) };
   const st = s.settings || {};
   s.settings = {
@@ -288,9 +290,27 @@ export function validate(site) {
     else if (ch.min && live.length < ch.min) warnings.push({ chapter: ch.id, message: `${ch.short}: needs at least ${ch.min} photo${ch.min > 1 ? 's' : ''}.` });
     if (ch.max && photosFor(site, ch.id).length > ch.max) warnings.push({ chapter: ch.id, message: `${ch.short}: only the first ${ch.max} will be used.` });
   }
-  for (const role of ROLES) {
+  for (const role of ['hero', 'reveal']) { // 'together' is optional: not everyone has a photo of the two of them
     if (!(site.photos || []).some((p) => p.role === role && p.enabled !== false)) warnings.push({ role, message: `No photo is marked as "${role}".` });
   }
+  for (const p of site.photos || []) {
+    if (p.duration != null && p.duration !== '' && !(Number(p.duration) > 0 && Number(p.duration) <= 60)) warnings.push({ id: p.id, message: `"${p.label || p.id}" has an invalid duration (${p.duration}); it will use the chapter's own timing.` });
+  }
+  // memories (How it began)
+  const mems = memoriesOf(site);
+  const memIds = new Set();
+  for (const [i, m] of mems.entries()) {
+    const name = m.when || `Memory ${i + 1}`;
+    if (!m.id || typeof m.id !== 'string') errors.push({ group: 'story', message: `${name} has no id (re-add it in Messages → How it began).` });
+    else if (memIds.has(m.id)) errors.push({ group: 'story', message: `Two memories share the id "${m.id}".` });
+    memIds.add(m.id);
+    if (!String(m.text || '').trim() && !(site.photos || []).some((p) => p.memory === m.id && p.src)) warnings.push({ group: 'story', message: `${name} has no words and no photos yet, so it is skipped.` });
+  }
+  for (const p of site.photos || []) {
+    if (p.memory && !memIds.has(p.memory)) warnings.push({ id: p.id, message: `"${p.label || p.id}" belongs to a memory that no longer exists; it will be shown with the last memory.` });
+  }
+  const big = site.text && site.text.birthday && site.text.birthday.big;
+  if (typeof big === 'string' && !big.trim()) errors.push({ group: 'birthday', message: 'The birthday headline (Messages → Finale · 7,305 days → Big headline) is empty.' });
   for (const k of ['music', 'video', 'voice']) if (site.media && site.media[k] && !safePath(site.media[k])) errors.push({ message: `The ${k} file path is not a safe repo path.` });
   const at = Date.parse(site.settings && site.settings.lock && site.settings.lock.unlockAt);
   if (site.settings && site.settings.lock && site.settings.lock.enabled && !Number.isFinite(at)) errors.push({ message: 'The unlock date/time is not a valid date.' });
@@ -366,6 +386,29 @@ export function personalGaps(site) {
     if (m) leftovers.push({ group: s.path[0], placeholder: m[0] });
   }
   return { empty, leftovers };
+}
+
+/** How a memory is staged in “How it began”. Anything else plays as a 'moment'. */
+export const MEMORY_KINDS = [
+  { id: 'moment', label: 'A moment (photo + words on the thread)' },
+  { id: 'beginning', label: 'The beginning (the first knot in the thread)' },
+  { id: 'daily', label: 'Every day (lights along the thread)' },
+  { id: 'journey', label: 'A journey (the view from a bus or train window)' },
+  { id: 'sharing', label: 'Sharing the day (little notes and lights)' },
+];
+
+/** The owner's memories, in film order: [{ id, kind, when, text }] (messages.json → story.memories). */
+export function memoriesOf(site) {
+  const list = site && site.text && site.text.story && site.text.story.memories;
+  return Array.isArray(list) ? list.filter((m) => m && typeof m === 'object') : [];
+}
+
+/** A short id for a new memory (stable once saved). */
+export function newMemoryId(existing = []) {
+  const taken = new Set(existing.map((m) => m && m.id));
+  let id;
+  do { id = `m-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`; } while (taken.has(id));
+  return id;
 }
 
 /** A plain relative repo path (no quotes, no '..', no scheme) — or an https/blob/data URL. */

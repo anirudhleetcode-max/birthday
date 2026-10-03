@@ -47,7 +47,8 @@ const CHAPTERS = [
   { id: 'invite', load: () => import('./scenes/invite.js'), nav: false, via: 'fade', grade: 'night' },
   { id: 'prologue', title: 'Once Upon a Deepu', load: () => import('./scenes/prologue.js'), via: 'lantern', grade: 'dawn', preload: ['prologue'] },
   { id: 'tower', title: 'A Tower Full of You', load: () => import('./scenes/tower.js'), via: 'sun', grade: 'day', preload: ['tower'] },
-  { id: 'hair', title: 'The Golden Thread', load: () => import('./scenes/hair.js'), via: 'ribbon', grade: 'sunset', preload: ['hair'] },
+  { id: 'story', title: 'How It Began', load: () => import('./scenes/story.js'), via: 'ribbon', grade: 'day', preload: ['story'] },
+  { id: 'hair', title: 'The Golden Thread', load: () => import('./scenes/hair.js'), via: 'glow', grade: 'sunset', preload: ['hair'] },
   { id: 'names', title: 'A Legend of Many Names', load: () => import('./scenes/names.js'), via: 'ember', grade: 'sunset', preload: ['names'] },
   { id: 'dance', title: 'Somewhere Between Chaos and Magic', load: () => import('./scenes/dance.js'), via: 'petals', grade: 'twilight', preload: ['dance'] },
   { id: 'lanterns', title: 'The Night of Lanterns', load: () => import('./scenes/lanterns.js'), via: 'lantern', grade: 'night', preload: ['lanterns'] },
@@ -323,8 +324,22 @@ function isLocked(site) {
   return Number.isFinite(at) && Date.now() < at;
 }
 
+/** A photo that fails to load (moved, renamed, slow network) shows a soft golden frame, never a broken-image icon. */
+const PHOTO_FALLBACK = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 150"><defs><radialGradient id="g" cx="50%" cy="42%" r="60%"><stop offset="0" stop-color="#7a4a78"/><stop offset="1" stop-color="#2c1736"/></radialGradient></defs><rect width="120" height="150" fill="url(#g)"/><circle cx="60" cy="62" r="13" fill="#f4c463" opacity=".85"/><g stroke="#f4c463" stroke-width="2" stroke-linecap="round" opacity=".55"><path d="M60 38v-8M60 94v8M36 62h-8M84 62h8M43 45l-6-6M77 45l6-6M43 79l-6 6M77 79l6 6"/></g></svg>')}`;
+function guardImages() {
+  document.addEventListener('error', (e) => {
+    const img = e.target;
+    if (!img || img.tagName !== 'IMG' || img.dataset.fallback) return;
+    img.dataset.fallback = '1';
+    img.removeAttribute('srcset');
+    img.src = PHOTO_FALLBACK;
+    console.warn('[film] a photo could not be loaded:', img.currentSrc || '');
+  }, true);
+}
+
 async function boot() {
   makeGrain();
+  guardImages();
   try {
     app.store = await loadSite({ draft: DRAFT });
   } catch (err) {
@@ -342,7 +357,7 @@ async function boot() {
   app.fx = createFX({ dustCanvas: document.getElementById('dust'), fxCanvas: document.getElementById('fx'), device, density: theme.particles ?? 1 });
   app.ui = createUI({ audio: app.audio, reducedMotion: device.reducedMotion });
   app.eggs = createEggs({ audio: app.audio, fx: app.fx });
-  const nick = site.her?.nicknames || [];
+  const nick = (site.her?.nicknames || []).map((n) => String(n || '').trim()).filter(Boolean);
   const tokens = {
     name: site.her?.name || '',
     nick1: nick[1] || nick[0] || site.her?.name || '',

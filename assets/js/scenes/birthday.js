@@ -602,6 +602,8 @@ function build(ctx, el) {
     rib20.setPath(pts);
     rib20.set({ head: 0 });
     sfx('magic');
+    // every memory a strand; tonight they all lead here
+    if (T.strands) ui.narrate([T.strands], { position: 'bottom', hold: reduced ? 2.4 : 3.4 }).catch(() => {});
     await rib20.draw({ duration: reduced ? 3.4 : 4.6, ease: 'sine.inOut' });
     // it glows
     sfx('chime');

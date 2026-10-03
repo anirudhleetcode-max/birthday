@@ -1,0 +1,119 @@
+/* ============================================================ How It Began (story) */
+.scene-story { overflow: hidden; background: #6b3d5e; }
+
+/* golden hour: a warm, original sky — plum-rose above (for the words), gold near the horizon */
+.st-sky {
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 40% at 78% 26%, rgba(255, 226, 168, .55), rgba(255, 226, 168, 0) 70%),
+    linear-gradient(180deg, #5e3058 0%, #8a4a68 22%, #c4767a 48%, #d99282 70%, #e2a687 88%, #e8b48e 100%);
+  transition: filter 3s ease;
+}
+.st-sky.is-dusk { filter: saturate(1.08) brightness(.82) hue-rotate(-8deg); }
+.st-sun {
+  position: absolute; width: 34vmin; height: 34vmin; right: 8%; top: 14%; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 244, 214, .95) 0%, rgba(255, 214, 140, .55) 26%, rgba(255, 190, 120, 0) 70%);
+  filter: blur(2px); animation: st-breathe 7s ease-in-out infinite;
+}
+.st-haze {
+  position: absolute; left: -10%; right: -10%; bottom: -6%; height: 36%;
+  background: radial-gradient(ellipse 60% 70% at 50% 100%, rgba(255, 236, 200, .55), rgba(255, 236, 200, 0) 70%);
+}
+@keyframes st-breathe { 0%, 100% { transform: scale(1); opacity: .9; } 50% { transform: scale(1.06); opacity: 1; } }
+
+.st-thread { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.st-beads { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 4; pointer-events: none; }
+.st-notes { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.st-prints { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
+
+/* the words of each memory: top of the frame, never over her photos */
+.st-words {
+  position: absolute; z-index: 8; left: 0; right: 0; top: calc(var(--safe-t, 0px) + 9vh);
+  padding: 0 8vw; text-align: center; pointer-events: none;
+}
+.st-when {
+  margin: 0 0 .7em; min-height: 1em; font-family: var(--f-caps); text-transform: uppercase;
+  letter-spacing: .38em; margin-right: -.38em; font-size: clamp(11px, 2.8vw, 14px); color: var(--gold-hi);
+  text-shadow: 0 1px 8px rgba(40, 14, 40, .7);
+}
+.st-text { display: grid; gap: .25em; }
+.st-line {
+  margin: 0; font-family: var(--f-serif); font-style: italic; font-weight: 500;
+  font-size: clamp(22px, 5.6vw, 40px); line-height: 1.28; color: var(--cream); text-wrap: balance;
+  text-shadow: 0 2px 14px rgba(46, 16, 44, .75), 0 0 2px rgba(46, 16, 44, .5);
+}
+.st-line .w { display: inline-block; white-space: pre; will-change: transform, opacity, filter; }
+
+/* her photographs: real prints, never retouched — only a paper border, a tilt and a shadow */
+.st-print {
+  position: absolute; margin: 0; padding: 7px 7px 9px; background: #fbf6ec; border-radius: 3px;
+  box-shadow: 0 18px 38px -14px rgba(46, 14, 40, .65), 0 3px 8px rgba(46, 14, 40, .25);
+  transform-origin: 50% 0;
+}
+.st-print .ph { overflow: hidden; border-radius: 1px; background: #e9dccb; }
+.st-print img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.st-print figcaption { padding: 6px 2px 0; font-family: var(--f-hand); font-size: 18px; color: #5b3b52; text-align: center; }
+
+/* the journey: a window, the world going by */
+.st-window {
+  position: absolute; z-index: 2; left: 50%; top: 30%; transform-origin: 50% 50%;
+  width: min(90vw, 760px); height: 42vh; margin-left: calc(min(90vw, 760px) / -2);
+  border-radius: 36px; padding: 12px; background: linear-gradient(180deg, #4a2c44, #2f1c2e);
+  box-shadow: 0 30px 60px -20px rgba(30, 8, 26, .7), inset 0 1px 0 rgba(255, 255, 255, .12);
+  transition: border-radius 1.6s ease;
+}
+.st-window.is-train { border-radius: 16px; }
+@media (orientation: landscape) {
+  .st-words { top: calc(var(--safe-t, 0px) + 7vh); }
+  .st-window { top: 28%; height: 54vh; width: min(64vw, 96vh); margin-left: calc(min(64vw, 96vh) / -2); }
+}
+.st-glass {
+  position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 26px;
+  background: linear-gradient(180deg, #f7d9a6 0%, #f1b892 46%, #e59a86 70%, #c77e83 100%);
+  transition: border-radius 1.6s ease;
+}
+.st-window.is-train .st-glass { border-radius: 8px; }
+.st-land { position: absolute; left: 0; width: 200%; background-repeat: repeat-x; animation: st-scroll linear infinite; }
+.st-far {
+  bottom: 22%; height: 34%; animation-duration: 46s; opacity: .75;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 120' preserveAspectRatio='none'%3E%3Cpath d='M0 90 C60 40 120 60 170 50 C230 36 270 80 330 64 C400 44 450 20 520 46 C560 60 580 70 600 90 L600 120 L0 120Z' fill='%239c6a8c'/%3E%3C/svg%3E");
+  background-size: 50% 100%;
+}
+.st-mid {
+  bottom: 12%; height: 30%; animation-duration: 15s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath d='M0 100 L0 70 C20 66 30 40 44 42 C58 44 60 66 80 64 C96 62 104 30 122 32 C140 34 140 62 160 66 C190 70 210 56 232 50 C250 44 262 20 280 24 C300 28 300 60 320 64 C346 68 370 58 400 70 L400 100Z' fill='%23633a5c'/%3E%3C/svg%3E");
+  background-size: 50% 100%;
+}
+.st-near {
+  bottom: 0; height: 16%; animation-duration: 6s;
+  background-image: linear-gradient(180deg, #3d2338, #2a1727);
+}
+.st-poles {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 200%; z-index: 1;
+  background-image:
+    linear-gradient(90deg, transparent 0 46%, rgba(42, 22, 38, .85) 46% 47.2%, transparent 47.2%),
+    linear-gradient(180deg, transparent 0 18%, rgba(42, 22, 38, .5) 18% 18.6%, transparent 18.6%);
+  background-size: 260px 100%, 100% 100%;
+  animation: st-scroll 2.6s linear infinite;
+}
+.st-window.is-train .st-poles { animation-duration: 1.2s; background-size: 180px 100%, 100% 100%; }
+@keyframes st-scroll { to { transform: translateX(-50%); } }
+.st-win-photos { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; }
+.st-win-photos .st-print { position: absolute; left: auto; top: auto; transform-origin: 50% 50%; }
+.st-sheen {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, .14) 42%, rgba(255, 255, 255, 0) 52%, rgba(255, 255, 255, 0) 70%, rgba(255, 255, 255, .08) 76%, rgba(255, 255, 255, 0) 82%);
+}
+.st-rail { position: absolute; left: 22px; right: 22px; top: 50%; height: 3px; border-radius: 2px; background: rgba(255, 236, 200, .18); }
+
+/* sharing the day: little blank notes (scribbles, never words) */
+.st-note { position: absolute; filter: drop-shadow(0 8px 14px rgba(40, 10, 34, .35)); }
+.st-note svg { display: block; width: 100%; height: auto; overflow: visible; }
+.st-note .st-paper { fill: #fbf3e4; }
+.st-note .st-fold { fill: none; stroke: #e7d6bd; stroke-width: 2; }
+.st-note .st-ink path { fill: none; stroke: #8b6a80; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; opacity: .8; }
+
+@media (prefers-reduced-motion: reduce) {
+  .st-land, .st-poles, .st-sun { animation-play-state: paused; }
+}
+.reduced-motion .st-land, .reduced-motion .st-poles, .reduced-motion .st-sun { animation-play-state: paused; }

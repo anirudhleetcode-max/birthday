@@ -10,16 +10,16 @@
     "insideJoke": ""
   },
   "gate": {
-    "kicker": "Not yet, {nick2}.",
+    "kicker": "Not yet, {nick1}.",
     "title": "Twenty lanterns, waiting for midnight",
-    "sub": "Refreshing won’t make it faster. I’ve tried.",
+    "sub": "Refreshing won’t make it faster.",
     "openKicker": "3 January · midnight",
     "openTitle": "The lanterns are awake.",
     "openSub": "All twenty of them. Look who’s twenty.",
     "button": "Come in"
   },
   "invite": {
-    "greeting": "Hey {nick1}.",
+    "greeting": "Hey {name}.",
     "lines": [
       "I made you something.",
       "It got slightly out of hand.",
@@ -52,16 +52,47 @@
     "windowLine": "Wait. Something golden just drifted past the window. Follow it.",
     "hint": "Drag to look around"
   },
+  "story": {
+    "kicker": "Chapter Two",
+    "title": "How It Began",
+    "memories": [
+      {
+        "id": "met",
+        "kind": "beginning",
+        "when": "",
+        "text": "It started at a college event. That’s where we met."
+      },
+      {
+        "id": "daily",
+        "kind": "daily",
+        "when": "",
+        "text": "After that, we talked every day."
+      },
+      {
+        "id": "journeys",
+        "kind": "journey",
+        "when": "",
+        "text": "College to home, and back again. By bus. By train."
+      },
+      {
+        "id": "your-day",
+        "kind": "sharing",
+        "when": "",
+        "text": "And you’d tell me about your day."
+      }
+    ],
+    "end": "Every memory, another strand."
+  },
   "hair": {
     "kicker": "Chapter Two",
     "title": "The Golden Thread",
     "lines": [
       "Some people keep their memories in a shoebox.",
       "Ours needed something longer. About the length of your hair.",
-      "Every laugh, every photo, every “remember when” — all on one golden thread."
+      "Every memory is another strand. Every year adds another."
     ],
     "heroHairLine": "The original. The golden thread is just doing an impression.",
-    "endLine": "Still plenty of thread left. Good — we’re nowhere near done."
+    "endLine": "Every moment connects to the next. And we’re nowhere near done."
   },
   "names": {
     "kicker": "Chapter Three (a very serious one)",
@@ -73,7 +104,7 @@
       "Confirmed sightings so far: {photoCount} photographs. We have the evidence.",
       "Approach slowly, ideally with cake. Never touch the hair.",
       "Do not startle her. She has access to a frying pan.",
-      "Remarkably, she answers to several names. Each more legendary than the last."
+      "Remarkably, she answers to more than one name. The second one is… a lot."
     ],
     "aka": "also known as…",
     "items": [
@@ -83,18 +114,13 @@
         "sub": "Twenty of them, as of tonight. She’s going to need a bigger sky."
       },
       {
-        "name": "Pinky",
-        "line": "The Softest Name in the Realm",
-        "sub": "Sounds harmless. Legends rarely are."
-      },
-      {
-        "name": "Kuchi Puchi",
+        "name": "Kuchu Puchu",
         "line": "The Final Form. Witnessed by very few.",
         "sub": "Threat level: dangerously huggable."
       }
     ],
     "scratch": "okay. we tried. this one is too cute for the scary font.",
-    "finale": "Three names. One legend. Absolutely impossible to recast."
+    "finale": "Two names. One legend. Absolutely impossible to recast."
   },
   "dance": {
     "kicker": "Chapter Four",
@@ -118,7 +144,7 @@
     "tapHint": "Tap the sky to send up a lantern of your own",
     "photoHint": "Some of these lanterns are carrying memories. Tap one.",
     "after": "All this light, and it’s still not the brightest thing in this film.",
-    "secret": "Of course you found the pink one, {nick1}. It was looking for you."
+    "secret": "Of course you found the pink one. It was looking for you."
   },
   "letter": {
     "kicker": "Chapter Six",
@@ -127,17 +153,19 @@
     "fasterHint": "Reading faster than I can write? Tap to skip ahead.",
     "salutation": "Dear {name},",
     "body": [
-      "Okay. Before you say anything: yes, I know this is a lot. Yes, I made you an entire film instead of just saying this to your face. No, I will not be taking questions. Please put the frying pan down.",
-      "To make it, I went through our photos one by one. Some of them I’d completely forgotten about. Some of them I will never, ever let you forget.",
+      "Okay. Before you say anything: yes, I made you an entire film instead of just saying this to your face. No, I will not be taking questions. Please put the frying pan down.",
+      "We met at a college event. After that, we talked every day. That’s the whole origin story: no dramatic music, no magic lanterns. Just a conversation that kept going.",
+      "Then there were the journeys, college to home and back again, by bus and by train. If you look closely, they’re in this film too: the windows, the light, the long way home.",
+      "And you’d tell me about your day. I liked hearing it. I still do.",
       "{memory1}",
       "{memory2}",
       "And yes, I’m still going to tease you about {tease}. Forever. Some traditions are sacred.",
       "If I had to pick one moment, though, it’s this one: {neverForget}",
       "The thing I admire most about you? {admire}",
-      "Here’s what I want for your twenties. The things you’re a little scared to want. Good days that run late. Hair that keeps growing, and worries that don’t. And on the days that go badly, because some will, I hope you remember exactly who to call.",
-      "So here’s my promise, in writing, so you can hold me to it: I’ll pick up. I’ll show up, for the big days and the boring ones. I’ll tell you the truth when you need it, and take your side when you need that more. I’ll keep making fun of you, because that’s how you’ll know everything’s fine. Twenty, thirty, eighty: I’m not going anywhere. Pinky promise.",
+      "You love Tangled, so I borrowed a little of its magic: the lanterns, the tower, a golden thread about as long as your hair. Every memory is another strand. Tonight, all of them lead to twenty.",
+      "Here’s what I want for your twenties: good days that run late, hair that keeps growing and worries that don’t, and more journeys, the kind worth telling me about.",
       "And if you only remember one line from this whole film, make it this one: {wantHerToKnow}",
-      "Happy birthday, {name}. Thank you for being my best friend. (You’re allowed to screenshot that part.) Now go back to the film. There’s cake."
+      "Happy 20th birthday, Kuchu Puchu. Thank you for being my best friend. (You’re allowed to screenshot that part.) Now go back to the film. There’s cake."
     ],
     "signoff": "Stuck with me forever. No refunds,",
     "ps": "P.S. {insideJoke}"
@@ -171,7 +199,7 @@
     "title": "The Last Lantern",
     "years": "20 years.",
     "months": "",
-    "days": "7,305 days.",
+    "days": "7,305 days of becoming you.",
     "memories": "Countless memories.",
     "somehow": "And somehow…",
     "beginning": "this is only the beginning.",
@@ -179,12 +207,12 @@
       "Every one of those days deserved a lantern.",
       "Tonight, they all get one."
     ],
+    "strands": "Tonight, all those strands lead to 20.",
     "big": "Happy 20th Birthday",
     "name": "{name}",
     "loved": [
       "In case you ever forget, on some bad day:",
       "you are loved. Not politely. Properly.",
-      "The ‘text me when you get home’ kind.",
       "The kind that would build you a whole sky. And did."
     ],
     "closing": "I’m really glad you were born. That’s the whole film."
@@ -211,60 +239,20 @@
         "{name}, as herself"
       ],
       [
-        "Written, designed & made with way too much effort by",
+        "Made by",
         "{creator}"
       ],
       [
-        "Featuring",
-        "{photoCount} photographs of {name}"
+        "Made with",
+        "{photoCount} photographs, one golden thread, and a lot of memories"
       ],
       [
-        "Special appearances by",
-        "Pinky · Kuchi Puchi · the chameleon · twenty candles · thousands of lanterns"
-      ],
-      [
-        "Best supporting role",
-        "Still me. Not giving it up."
-      ],
-      [
-        "Lighting",
-        "{name}. The lanterns were mostly for show."
-      ],
-      [
-        "Original score",
-        "Her laugh. Uncredited, unlicensed, irreplaceable."
-      ],
-      [
-        "Hair & makeup",
-        "Her hair, as itself. The longest-running role in the film."
-      ],
-      [
-        "Filmed on location",
-        "A tower, a lake, and one very patient chameleon"
-      ],
-      [
-        "Continuity",
-        "Said “one last thing” at least three times. Regrets: none."
-      ],
-      [
-        "Catering",
-        "One birthday cake, minus one slice (see post-credits)"
-      ],
-      [
-        "Emergency equipment",
-        "One frying pan. Purely decorative. Probably."
-      ],
-      [
-        "Certification",
-        "U/A: Unreasonably Adorable"
-      ],
-      [
-        "Special thanks",
-        "3 January 2007, the day the sun got careless"
+        "With special appearances by",
+        "one shy chameleon · twenty candles · a sky full of lanterns"
       ],
       [
         "",
-        "No chameleons were harmed in the making of this film. One was mildly embarrassed."
+        "Made for {name}. 3 January 2027."
       ]
     ],
     "end": "The end of chapter nineteen.",

@@ -17,10 +17,10 @@ export default {
     const t = ctx.text.gate || {};
     const unlockAt = Date.parse(ctx.site.settings?.lock?.unlockAt);
     const txt = {
-      kicker: words(ctx, t.kicker, 'Not yet, {nick2}.'),
+      kicker: words(ctx, t.kicker, 'Not yet, {nick1}.'),
       title: words(ctx, t.title, 'The lanterns rise in'),
       sub: words(ctx, t.sub, 'Some lights are meant to rise at midnight.'),
-      openKicker: words(ctx, t.openKicker, 'It’s time, {nick1}.'),
+      openKicker: words(ctx, t.openKicker, 'It’s time, {name}.'),
       openTitle: words(ctx, t.openTitle, 'Happy birthday, {name}.'),
       openSub: words(ctx, t.openSub, 'Twenty lanterns, one for every year of you.'),
       button: words(ctx, t.button, 'Open your gift'),
