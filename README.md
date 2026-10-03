@@ -12,6 +12,7 @@ It plays like a short animated film set in a lantern-lit fairy-tale world, inspi
 | 🏮 | **Invitation** | "Hey Deepu." She lights the lantern, which starts the music, and the film begins. |
 | ✨ | **Once Upon a Deepu** | A drop of sunlight falls through the night, a golden flower blooms, dawn breaks, and her photo appears. |
 | 🎨 | **A Tower Full of You** | A sunlit tower room where her photos are brush-painted onto the walls. A golden ribbon waits outside the window. |
+| 🚌 | **How It Began** | Your real memories on the golden thread: you met at a college event, then talked every day, the bus and train journeys between college and home (a window with the world sliding by), and her telling you about her day. Memories you add later (October, November, December…) appear here too. |
 | 💛 | **The Golden Thread** | Polaroids on a glowing golden thread, inspired by her long hair. They develop like instant film. |
 | 🦎 | **A Legend of Many Names** | A fake nature documentary, then an absurdly epic trailer-style reveal: Deepu… also known as… Kuchu Puchu. |
 | 🎪 | **Somewhere Between Chaos and Magic** | A twilight festival with her photos dancing in a 3D circle. |
@@ -45,12 +46,13 @@ Handy addresses:
 ## 2. Put it online (once)
 
 1. The repository currently has a single branch, `claude/focused-ramanujan-ntd4tc`. Create `main` from it: on GitHub, open the branch dropdown → type `main` → **Create branch: main from claude/focused-ramanujan-ntd4tc**. Then set `main` as the default branch under **Settings → General**.
-2. On GitHub: **Settings → Pages → Source: Deploy from a branch → `main` / `(root)` → Save**.
-3. About a minute later: **https://anirudhleetcode-max.github.io/birthday/**. The admin is at **/admin/**.
+2. On GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**. The workflow in `.github/workflows/pages.yml` then builds and publishes the site on every push to `main`, including every **Publish** from the admin. It deploys only the public site: film, admin, assets, data, photos and media, without tests, scripts or docs. The build fails, and nothing is published, if any file reference is broken.
+   *(Simpler alternative: **Source: Deploy from a branch → `main` / `(root)`**. That also works, but it serves the whole repository.)*
+3. A minute or two later: **https://anirudhleetcode-max.github.io/birthday/**. The admin is at **/admin/**.
 
 The admin publishes to the branch set under **Settings → GitHub (where the site lives)** in the admin (`main` by default). That must be the same branch that Pages serves.
 
-The repository must stay **public** for free GitHub Pages. Until the unlock moment, visitors only see the countdown.
+The repository must be **public** for free GitHub Pages. **It already is, so her photos, the letter and every word are visible on GitHub right now**, not only after 3 January. The countdown is an experience, not a lock: it hides the film, not the files. If you'd rather keep everything private until the day, make the repository private now (Settings → General → Danger zone) and switch it back to public, and set up Pages, on 2 January. Free GitHub Pages can't serve a private repository.
 
 ## 3. The admin portal: "The Lantern Room" (`/admin/`)
 
@@ -71,24 +73,28 @@ Privacy: before anything is published, the admin removes hidden photo details (G
 
 **Save draft** keeps your work on that device. **Reset** throws the draft away. Before publishing, the admin warns about missing photos and blocks real errors. It also warns you before you leave with unsaved changes.
 
-### Where the 36 photos go
-**Upload them through the admin.** Don't copy files into folders by hand. Open **Photo library** and use **Fill empty spots** (or **Replace** on each placeholder). The admin:
+### Her 36 photos (already in)
+The 36 photos from your PDF are imported and placed by character. [docs/PHOTOS.md](docs/PHOTOS.md) lists every page and where it appears: college photos for how you met, the window selfies for the journeys, festive outfits for the festival, night and fairy-light photos for the lanterns, and the long-hair photos on the golden thread. Captions and dates are left empty for you to add. Nothing was guessed. To move or replace a photo, use the Photo library.
+
+### Adding or replacing photos
+**Use the admin.** Don't copy files into folders by hand. The admin:
 - keeps your **original file untouched** in `photos/originals/`,
 - makes a cropped, gently colour-graded display copy in `photos/` and a thumbnail in `photos/thumbs/`,
 - records everything in `data/photos.json`.
 
-The initial spots and their shapes:
+Where photos live (counts are flexible, chapters adapt):
 
-| Chapter | Spots | Shape | Best photos |
+| Chapter | Now | Shape | Best photos |
 |---|---|---|---|
 | Prologue (first photo she sees) | 1 | 4:5 | Her prettiest solo portrait |
-| Tower walls | 6 | 3:4 · 1:1 · 4:5 · 4:3 | Candid, warm, everyday moments |
-| Golden thread (polaroids) | 8 | 3:4 | Memories in order, with captions |
+| Tower walls | 5 | 3:4 · 4:5 · 4:3 | Candid, warm, everyday moments |
+| How it began | 10 | any (its own shape) | Photos for each memory (link each to its memory) |
+| Golden thread (polaroids) | 5 | 3:4 | Her long hair; mark one **Hero-hair** |
 | Her names | 2 | 4:5 | One each for Deepu and Kuchu Puchu |
-| Festival | 8 | 3:4 | Happy, fun, festive |
-| Photo lanterns | 6 | 1:1 | Soft, glowy, emotional |
-| The letter | 2 | 1:1 · 3:4 | The two of you |
-| Finale | 2 | 4:5 | Her single best photo + one of **both of you** |
+| Festival | 6 | 3:4 | Happy, fun, festive |
+| Photo lanterns | 5 | 1:1 | Soft, glowy, night lights |
+| The letter | 1 | 3:4 | A warm one |
+| Finale | 1 | 4:5 | The final photograph (+ optionally one of **both of you**, marked *together*) |
 
 If one photo shows her **long hair** beautifully, open it and tick **Hero-hair photo**. It then gets its own cinematic moment on the golden thread.
 
@@ -134,7 +140,7 @@ A memory with no words and no photos is skipped. Deleting a memory never deletes
 ## 4. The January 3, 2027 release (checklist)
 
 1. In the admin, open **Settings**. Check the unlock time is **3 Jan 2027, 00:00 (IST)** and the countdown lock is **on**. (It's stored with the +05:30 offset, so it opens at midnight India time on any phone, in any time zone.)
-2. Fill every photo spot. The validation panel should show no "empty spot" warnings. Mark her strongest photo ★ featured, and set the special roles (first photo, grand reveal, the two of you) and the hero-hair photo.
+2. Photos are in. If you have a photo of the two of you, add it to the Finale and mark it *together* (the hug then shows it as "Deepu & me"). Add captions and dates where you know them.
 3. **Messages → Your memories**: fill the boxes (see above), then read the whole letter in Preview.
 4. Read through the rest of **Messages** once, especially the jokes, and change anything that doesn't sound like you.
 5. Publish, then run the post-upload checks (section 5) or ask Claude to run them and review every photo in place.
@@ -165,6 +171,8 @@ NODE_PATH=$(npm root -g) node tests/e2e/admin-qa.cjs      # deep admin QA (184 c
 NODE_PATH=$(npm root -g) node tests/e2e/admin-visual.cjs  # admin layout audit at 4 sizes (302 checks)
 npm run e2e:full  # plays the whole film start to finish (slow in headless Chromium)
 npm run e2e:release  # the real midnight-IST unlock, in 5 time zones
+npm run build     # production copy in dist/ + every file reference checked (what GitHub Actions deploys)
+NODE_PATH=$(npm root -g) node tests/tools/a11y.cjs   # accessibility audit, every chapter, phone + desktop
 ```
 
 After uploading the photos:
@@ -191,6 +199,9 @@ assets/js/shared/          content model, colour grading, drafts (shared with th
 assets/css/                styles (main.css + one file per chapter)
 docs/ARCHITECTURE.md       how it all fits together (contract + art bible)
 docs/SECURITY.md           the admin token, privacy, what's public
+docs/PHOTOS.md             the 36 photos: where each one is used
+scripts/                   release checks, photo check, build, photo import
+.github/workflows/         GitHub Pages deployment (build → dist/)
 tests/                     unit, e2e and visual QA tools
 dev/                       developer test pages (cake, ribbon, transitions), not linked from the film
 ```
