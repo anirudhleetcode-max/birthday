@@ -62,7 +62,7 @@ Privacy: before anything is published, the admin removes hidden photo details (G
 |---|---|
 | **Photo library** | Thumbnails of every photo by chapter. **Edit · Replace · Move · Delete · Preview**, **Add photo**, reorder (drag or arrows), turn a photo on or off, mark it ★ featured or as the *hero-hair* photo, assign the special roles (first photo, grand reveal, the two of you). |
 | **Chapters** | Turn chapters on or off and see how many photos each has. |
-| **Messages** | Every word in the film: greetings, chapter lines, captions, the letter, the credits. |
+| **Messages** | Every word in the film: greetings, chapter lines, captions, the letter, the credits. **Your memories** (at the top) is where the letter gets personal: see below. |
 | **Audio / Video** | Your own song, a voice note for the letter, a video message. |
 | **Theme** | Film grain, particle amount, golden ribbon on/off. |
 | **Settings** | Names, birth date, your name, the countdown unlock time (IST), WhatsApp number for the hug, colour-grading strength. |
@@ -103,29 +103,66 @@ If one photo shows her **long hair** beautifully, open it and tick **Hero-hair p
    Photos are never stretched or silently cropped.
 4. **Preview**, then **Publish**.
 
+### Making the letter yours (Messages → Your memories)
+Nothing in the film invents memories, inside jokes or stories about her. The letter is built around seven boxes only you can fill:
+
+| Box | Where it goes |
+|---|---|
+| [MEMORY 1], [MEMORY 2] | Each becomes its own paragraph, in your words |
+| [THING I ALWAYS TEASE HER ABOUT] | “And yes, I’m still going to tease you about ___. Forever.” |
+| [ONE MOMENT I WILL NEVER FORGET] | “If I had to pick one moment, though, it’s this one: ___” |
+| [WHAT I ADMIRE ABOUT HER] | “The thing I admire most about you? ___” |
+| [ONE THING I WANT HER TO KNOW] | “And if you only remember one line from this whole film, make it this one: ___” |
+| [INSIDE JOKE] (optional) | The P.S. under your signature |
+
+Until a box is filled, the line that uses it is **left out of her film**, so she never sees a placeholder. In **Preview** you'll see it as `[MEMORY 1]` and so on, so you know where it goes. The admin and `npm run check` list what's still empty. You can rewrite any paragraph of the letter (and every other line) under Messages. Nothing needs code.
+
+A few lines are jokes you may want to tune to your friendship: the documentary narrator and the three name cards in **Her names**, the festival lines, and the line after the lanterns. None of them assume what her name means. If “Deepu” comes from a name meaning *lamp* or *light* (Deepa, Deepika…) and that matters to you two, the admin shows where such a joke fits.
+
 ### Adding new photos (October, November, December, January…)
 Photo library → **Add photo** → choose the chapter (or **Extra memories**) → pick a shape → crop → add a caption and date → **Publish**. There is no limit. Chapters adapt to however many photos they have, and every enabled photo also appears in the finale heart, the credits and the album.
 
 ## 4. The January 3, 2027 release (checklist)
 
-1. In the admin, open **Settings**. Check the unlock time is **3 Jan 2027, 00:00 (IST)** and the countdown lock is **on**.
-2. Fill every photo spot. The validation panel should show no "empty spot" warnings.
-3. Read through **Messages** and personalise the letter and captions with your own memories.
-4. Preview the entire film once on your phone (`?preview&draft`), with headphones in.
-5. **Publish**. Wait two minutes, then open the live link in a private window: you should see the countdown.
-6. Send her the link a little before midnight on **2 January**, so she watches the countdown reach zero.
-7. Tell her: *headphones on, lights low, sound up*. The phone stays awake during the film, and on Android it goes full-screen.
+1. In the admin, open **Settings**. Check the unlock time is **3 Jan 2027, 00:00 (IST)** and the countdown lock is **on**. (It's stored with the +05:30 offset, so it opens at midnight India time on any phone, in any time zone.)
+2. Fill every photo spot. The validation panel should show no "empty spot" warnings. Mark her strongest photo ★ featured, and set the special roles (first photo, grand reveal, the two of you) and the hero-hair photo.
+3. **Messages → Your memories**: fill the boxes (see above), then read the whole letter in Preview.
+4. Read through the rest of **Messages** once, especially the jokes, and change anything that doesn't sound like you.
+5. Publish, then run the post-upload checks (section 5) or ask Claude to run them and review every photo in place.
+6. On your own **Android phone**, with headphones: watch the whole film once with `?preview` (see the real-phone checklist below).
+7. Open the live link in a private window: you should see the countdown.
+8. Send her the link a little before midnight on **2 January**, so she watches the countdown reach zero.
+9. Tell her: *headphones on, lights low, sound up*. The phone stays awake during the film, and on Android it goes full-screen.
+
+### Real-phone checklist (only a real phone can tell you these)
+- **Start:** the first screen appears within a few seconds on mobile data; music starts when she taps the lantern.
+- **Volume:** comfortable with headphones, and voices/sfx don't spike.
+- **Smoothness:** the tower, the festival and the lantern night move smoothly (no long stutters).
+- **Cake, microphone:** tapping the mic shows the permission prompt; allowing it shows LISTENING; a normal breath puts the candles out, talking or room noise doesn't; refusing it shows the "Blow them out" button.
+- **Cake, cutting:** a swipe across the cake cuts it (and if you wait, it cuts itself).
+- **Photos:** faces aren't cut off, text never sits on a face, colours look like her (not orange).
+- **Hug:** press and hold works with a thumb; a quick tap gets the "hold longer" nudge.
+- **Screen:** after the first tap, Android Chrome goes full-screen; the address bar never covers buttons; nothing scrolls sideways.
+- **Fallbacks:** the letter scrolls with a finger, and Continue buttons are easy to reach.
 
 ## 5. Quality checks
 
 ```bash
-npm run check     # content + files + 7,305-day check + secret scan
+npm run check     # content + files + 7,305-day check + secret scan + photo check (shape, weight, GPS/serial left in files)
 npm run lint      # ESLint (uses a global eslint)
 npm test          # unit tests (content model, admin logic)
 npm run e2e       # film smoke test on every chapter + admin flows (needs `npm run serve` running)
 NODE_PATH=$(npm root -g) node tests/e2e/admin-qa.cjs      # deep admin QA (184 checks)
 NODE_PATH=$(npm root -g) node tests/e2e/admin-visual.cjs  # admin layout audit at 4 sizes (302 checks)
 npm run e2e:full  # plays the whole film start to finish (slow in headless Chromium)
+npm run e2e:release  # the real midnight-IST unlock, in 5 time zones
+```
+
+After uploading the photos:
+```bash
+npm run check                                              # every photo: right shape, not too heavy, no GPS/serial in the public files
+NODE_PATH=$(npm root -g) node tests/tools/review-all.cjs   # screenshots of every chapter at the 3 phone sizes, to look at crops, faces and colour
+NODE_PATH=$(npm root -g) node tests/tools/perf.cjs         # downloads, memory and frame timing per chapter (headless = slower than a phone)
 ```
 
 ## Project structure

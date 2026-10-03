@@ -166,6 +166,7 @@ Own silhouette, proportions, palette and personality (e.g. rounder, tear-drop bo
 
 ## 4. messages.json schema (every key optional — scenes keep sensible fallbacks)
 ```
+personal { memory1, memory2, tease, neverForget, admire, wantHerToKnow, insideJoke }   ← the owner's own words
 invite   { greeting, lines[], button, foot }
 gate     { kicker, title, sub, openKicker, openTitle, openSub, button }
 prologue { kicker, title, lines[], titleSub, date }
@@ -174,15 +175,17 @@ hair     { kicker, title, lines[], heroHairLine, endLine }
 names    { kicker, title, documentary[], items:[{name, line, sub}], aka, finale }
 dance    { kicker, title, lines[], hint }
 lanterns { kicker, title, lines[], tapHint, photoHint, after, secret }
-letter   { kicker, title, salutation, body[], signoff, tapSeal, fasterHint }
+letter   { kicker, title, salutation, body[], signoff, ps, tapSeal, fasterHint }
 cake     { kicker, title, lines[], blowHint, tapFallback, afterBlow, cutHint, afterCut, wish }
 constellation { kicker, title, lines[], handwritten }
-birthday { years, months, days, somehow, interesting, lanterns[], big, name, loved[], closing }
-hug      { lines[], holdHint, done[], message }
+birthday { years, months ('' = no line), days, memories, somehow, beginning, lanterns[], big, name, loved[], closing }
+hug      { lines[], holdHint, holdLonger, done[], message }
 credits  { opening, roles:[[role, name]], end, endSub, postCredits[], extrasTitle, extrasSub, secrets }
 gallery  { allTitle, allKicker }
 ```
-Tokens allowed anywhere: `{name} {nick1} {nick2} {creator} {photoCount} {days} {age}`.
+Tokens allowed anywhere: `{name} {nick1} {nick2} {creator} {photoCount} {days} {age}`, plus the memories `{memory1} {memory2} {tease} {neverForget} {admire} {wantHerToKnow} {insideJoke}`.
+
+**Nothing personal is invented.** `fillText()` (shared/model.js) returns `''` for a line that uses a memory nobody has written yet, or that still holds a hand-typed `[PLACEHOLDER]`; `ui.narrate`, the letter and the credits leave such lines out. In `?preview` the line shows with its `[LABEL]` instead, so the owner can see where it goes. `validate()` / `npm run check` list what's still empty.
 
 ---
 
