@@ -84,7 +84,7 @@ Always use `object-fit: cover; object-position: photo.objectPosition` (faces liv
 
 **ctx.ui**: `narrate(lines, {hold, gap, style:'big'|'whisper'|'title'|'hand', position:'bottom'|'top'|'center', duck})`, `say(text)→{hide()}`, `chapterCard(kicker, title)`, `waitContinue(label)`, `hint(text)→{remove()}`, `fill(t)`.
 **ctx.fx** (2D overlay above scenes): `confetti({x,y,angle,spread,count,power,colors})`, `cannons()`, `rain(n)`, `colorBurst({x,y,colors,size})`, `sparkle(x,y,n,{spread,pink})`, `firework({x,y,color})`, `flash({color,duration,peak})`, `dust({density,speed,alpha})`, `trail(on)`, `clear()`.
-**ctx.audio**: `sfx(name)`, `setMood('hush'|'tender'|'wonder'|'festive'|'soar'|'quiet')`, `duck(level0to1, holdSeconds)` (falls to level, holds, restores smoothly), `happyBirthday()→Promise`, `context`. SFX: chime shimmer whoosh swell sparkle pop candleOut blow heartbeat pageTurn lanternRise tap magic (+ braam choir drumroll scratch clang wind bells — being added).
+**ctx.audio**: `sfx(name)`, `setMood('hush'|'tender'|'wonder'|'festive'|'soar'|'quiet')`, `duck(level0to1, holdSeconds)` (falls to level, holds, restores smoothly), `happyBirthday()→Promise`, `context`. SFX: chime shimmer whoosh swell sparkle pop candleOut blow heartbeat pageTurn lanternRise tap magic braam choir drumroll scratch clang wind bells.
 **ctx.eggs**: `found(id, message)`, `has(id)`, `count`, `total`. Secret ids are listed in `core/eggs.js` (`SECRETS`). Eggs are optional — the film never depends on them.
 
 ---
@@ -147,6 +147,17 @@ const r3 = createRibbon3D({ points, color, width }); r3.setProgress(0..1); r3.up
 ### core/transitions.js
 `transition(type, swap, opts)` where `opts = { handoff:{x,y,color,kind,from}, to, device, audio, letterbox }`.
 Types: `fade`, `glow`, `iris`, `curtain`, `dream` (existing) + **`lantern`** (a lantern rises through frame; its light becomes the next world), **`sun`** (storybook iris shaped like the sun motif), **`ribbon`** (golden strands enter, weave into a glowing path, the camera follows it into the next chapter — the major hair-inspired transition), **`ember`** (a spark travels from `handoff` and blooms), **`petals`** (a soft petal swirl), **`dust`** (the frame dissolves into golden dust), **`page`** (storybook page turn). All must respect `device.reducedMotion` (→ gentle crossfade) and be ≤ ~2.6s total.
+
+### scenes/cake.js + scenes/cake/ — Twenty Candles (Three.js)
+Phases: `reveal → wish → ignite → blow → dark → party → cut → served → done`.
+- `model.js` / `geometry.js` / `textures.js`: the cake (two cuttable fondant tiers, gold drips, sugar flowers, 20 spiral candles, sun-plaque topper). Every texture is painted at runtime, with no network.
+- `strand.js`: the golden strand (her hair motif) that travels along a spline and lights the 20 wicks.
+- `flames.js` / `smoke.js` / `particles.js`: instanced flames and halos, smoke wisps, glitter and crumbs (one draw call each).
+- `blow.js`: conservative mic breath detection (0.7 s calibration, 150 ms of broadband low-frequency energy over ≥4 frames). Fallbacks: "Blow them out" button, swipe across the candles, or hold Space. The fallback button appears after 12 s of silence or if the mic is denied. The mic track is stopped on exit.
+- `room.js`: the midnight room, bokeh lights and table.
+- Cutting: swipe (or Enter/Space) to cut, then the slice is plated. Exit disposes the renderer and forces context loss.
+- Tiers: low (DPR ≤ 1.25, no shadows/AA/bloom), mid (512 shadows), high (1024 shadows + light bloom). Reduced motion: no camera drift, a short strand sweep, shorter timings.
+- Dev harness: `dev/cake.html` with `dev/mock-ctx.js`.
 
 ### core/chameleon.js — an ORIGINAL tiny chameleon companion (not Pascal)
 Own silhouette, proportions, palette and personality (e.g. rounder, tear-drop body, star-shaped crest, freckles, a curly tail with a tiny leaf, sleepy half-lid eyes). API: `createChameleon(container, {size, color}) → { el, peek(side), hide(), colorTo(hex), blush(), react('surprised'|'happy'|'sleepy'|'proud'), lookAt(x,y), destroy() }`. Appears rarely: names (turns pink), credits, a hidden peek or two. Easter egg `chameleon` when tapped.
