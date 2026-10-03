@@ -135,7 +135,7 @@
 .tw-shade {
   position: absolute; inset: 0; pointer-events: none;
   background:
-    radial-gradient(ellipse 85% 70% at 50% 45%, rgba(255, 220, 170, 0) 55%, rgba(70, 30, 25, .32) 100%),
+    radial-gradient(ellipse 90% 75% at 50% 45%, rgba(255, 220, 170, 0) 60%, rgba(70, 30, 25, .2) 100%),
     linear-gradient(180deg, rgba(60, 28, 20, .12), rgba(60, 28, 20, 0) 22%, rgba(60, 28, 20, 0) 80%, rgba(50, 22, 16, .25));
 }
 .tw-shade::after {

@@ -941,12 +941,12 @@ class CakeScene {
       [1, -0.04, ['#f4c463', '#ffe3a3', '#fff4e0']],
       [0, -0.16, ['#b9a3e3', '#f4c463', '#f2a7c3']],
     ];
-    bursts.forEach(([dx, dy, colors], k) => this.later(0.15 + k * (red ? 0.15 : 0.34), () => {
+    bursts.forEach(([dx, dy, colors], k) => this.later(0.15 + k * (red ? 0.2 : 0.5), () => {
       this.fx('colorBurst', { x: top.x + dx * spread, y: clamp(top.y + dy * h, h * 0.12, h * 0.6), colors, size: k === 2 ? 0.7 : 0.85 });
     }));
     this.sfx('swell');
     // let the confetti fall through before the line arrives
-    await this.wait(red ? 1.2 : 2.6);
+    await this.wait(red ? 1.4 : 3.0);
     await this.narrate([T.afterBlow]);
   }
 

@@ -586,7 +586,7 @@ export function paintBay(g, o) {
   /* --- light: the window back-lights its own wall; the far wall is sunlit --- */
   const lightAt = (u) => {
     const d = Math.cos(((u - 0.5 * bayW) / circ) * TAU); // 1 at the window bay
-    return 0.2 * Math.max(0, d) ** 1.5;
+    return 0.11 * Math.max(0, d) ** 1.5;
   };
   const lg = g.createLinearGradient(0, 0, W, 0);
   for (let k = 0; k <= 4; k++) lg.addColorStop(k / 4, `rgba(96,52,40,${lightAt(u0 + (k / 4) * bayW).toFixed(3)})`);
