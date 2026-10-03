@@ -22,7 +22,7 @@ export function openGallery(ctx, { only = 'all' } = {}) {
     <div class="gal-grid">
       ${list.map((p, i) => `
         <figure class="gal-item" data-i="${i}">
-          <div class="ph" style="aspect-ratio:${p.ratio}"><img loading="lazy" alt="${esc(p.alt || '')}" src="${p.thumbUrl || p.url}" style="object-position:${p.objectPosition || '50% 40%'}"></div>
+          <div class="ph" style="aspect-ratio:${p.ratio}"><img loading="lazy" alt="${esc(p.alt || '')}" src="${esc(p.thumbUrl || p.url)}" style="object-position:${esc(p.objectPosition || '50% 40%')}"></div>
           ${p.caption || p.date ? `<figcaption>${esc(p.caption || '')}${p.date ? `<span class="gal-date">${esc(p.date)}</span>` : ''}</figcaption>` : ''}
         </figure>`).join('')}
       ${list.length ? '' : '<p class="gal-empty">More memories are on their way…</p>'}

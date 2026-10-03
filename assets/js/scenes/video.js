@@ -14,7 +14,7 @@ export default {
       <div class="vd-wrap">
         <p class="vd-cap">${esc(caption)}</p>
         <div class="vd-frame">
-          <video playsinline preload="metadata" src="${url}"></video>
+          <video playsinline preload="metadata" src="${esc(url)}"></video>
           <button type="button" class="vd-play" aria-label="Play">${sunEmblem({ glow: false })}<span>▶</span></button>
         </div>
       </div>`;

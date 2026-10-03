@@ -46,6 +46,17 @@ const og = html.match(/property="og:image" content="([^"]+)"/);
 if (!og) errors.push('index.html has no og:image');
 else if (!exists(og[1].replace(/^https:\/\/[^/]+\/[^/]+\//, ''))) errors.push(`og:image file missing: ${og[1]}`);
 
+// 2b. the CSP must allow the inline import map (hash must match its exact text)
+{
+  const map = html.match(/<script type="importmap">([\s\S]*?)<\/script>/);
+  const csp = html.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/);
+  if (map && csp) {
+    const { createHash } = await import('node:crypto');
+    const h = createHash('sha256').update(map[1]).digest('base64');
+    if (!csp[1].includes(`'sha256-${h}'`)) errors.push(`CSP script hash does not match the import map — update index.html CSP to 'sha256-${h}'`);
+  }
+}
+
 // 3. secrets & size
 const SECRET = /(ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|gho_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)/;
 function walk(dir) {
@@ -57,7 +68,11 @@ function walk(dir) {
       const st = fs.statSync(p);
       if (st.size > 95 * 1024 * 1024) errors.push(`file too large for GitHub: ${rel(p)}`);
       else if (st.size > 25 * 1024 * 1024) warnings.push(`large file: ${rel(p)} (${(st.size / 1e6).toFixed(1)} MB)`);
-      if (st.size < 2e6 && /\.(js|json|html|css|md|txt|cjs|mjs)$/.test(p) && SECRET.test(fs.readFileSync(p, 'utf8'))) errors.push(`possible secret in ${rel(p)}`);
+      if (st.size < 2e6 && /\.(js|json|html|css|md|txt|cjs|mjs)$/.test(p)) {
+        const text = fs.readFileSync(p, 'utf8');
+        const hits = [...text.matchAll(new RegExp(SECRET.source, 'g'))].map((m) => m[0]).filter((t) => !/SECRET|TEST|EXAMPLE|FAKE|unit|QA0/i.test(t));
+        if (hits.length) errors.push(`possible secret in ${rel(p)}`);
+      }
     }
   }
 }

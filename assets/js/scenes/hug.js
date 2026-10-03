@@ -43,7 +43,7 @@ export default {
       </div>
       <div class="hg-after" hidden>
         <figure class="polaroid hg-us">
-          <div class="ph" style="aspect-ratio:${us.ratio}"><img alt="${esc(us.alt)}" src="${us.url}" style="object-position:${us.objectPosition}"></div>
+          <div class="ph" style="aspect-ratio:${us.ratio}"><img alt="${esc(us.alt)}" src="${esc(us.url)}" style="object-position:${esc(us.objectPosition)}"></div>
           <figcaption class="cap">${esc(ctx.fill(`{name} & me`))}</figcaption>
         </figure>
         ${phone ? `<a class="btn-ghost hg-send" target="_blank" rel="noopener" href="https://wa.me/${phone}?text=${encodeURIComponent(ctx.fill(t.message || ''))}">Send it to me</a>` : ''}

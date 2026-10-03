@@ -24,7 +24,7 @@ export default {
     const voice = ctx.media('voice');
     const body = (t.body || []).filter(Boolean).map((b) => ctx.fill(b));
     const mid = Math.max(1, Math.ceil(body.length / 2));
-    const pin = (p, k) => p ? `<figure class="lt-pin lt-pin-${k + 1} polaroid"><i class="lt-tape"></i><div class="ph" style="aspect-ratio:${p.ratio}"><img alt="${esc(p.alt)}" src="${p.url}" style="object-position:${p.objectPosition}"></div>${p.caption ? `<figcaption class="cap">${esc(p.caption)}</figcaption>` : ''}</figure>` : '';
+    const pin = (p, k) => p ? `<figure class="lt-pin lt-pin-${k + 1} polaroid"><i class="lt-tape"></i><div class="ph" style="aspect-ratio:${p.ratio}"><img alt="${esc(p.alt)}" src="${esc(p.url)}" style="object-position:${esc(p.objectPosition)}"></div>${p.caption ? `<figcaption class="cap">${esc(p.caption)}</figcaption>` : ''}</figure>` : '';
 
     el.innerHTML = `
       <div class="lt-bg"></div>

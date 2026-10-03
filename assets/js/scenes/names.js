@@ -14,7 +14,7 @@
 // Photos: ctx.photos('names') in order, ANY count (reused / skipped gracefully).
 // Words: messages.names {kicker, title, documentary[], items[{name,line,sub}], aka, finale}.
 import { createChameleon } from '../core/chameleon.js';
-import { sunEmblem } from '../core/art.js';
+import { sunEmblem, esc } from '../core/art.js';
 
 const DOC_FALLBACK = [
   'Here, in the soft light of the golden hour, we observe one of nature’s rarest creatures.',
@@ -364,7 +364,7 @@ export default {
       f.className = 'nm-frame';
       f.style.setProperty('--ar', String(photo.ratio || 0.8));
       f.innerHTML = `
-        <div class="nm-portrait"><img alt="" src="${photo.url}"><i class="nm-shine"></i></div>
+        <div class="nm-portrait"><img alt="${esc(photo.alt || '')}" src="${esc(photo.url)}" style="object-position:${esc(photo.objectPosition || '50% 40%')}"><i class="nm-shine"></i></div>
         <i class="nm-frame-line"></i>
         <div class="nm-crest">${sunEmblem({ className: 'nm-crest-sun' })}</div>
         <i class="nm-co-l">${cornerOrn()}</i><i class="nm-co-r">${cornerOrn()}</i>`;
@@ -760,7 +760,7 @@ export default {
     trip.innerHTML = beats.map((b, i) => {
       const p = photoFor(i);
       return `<figure class="nm-tf">
-        ${p ? `<div class="nm-tf-ph"><img alt="" src="${p.thumbUrl || p.url}" style="object-position:${p.objectPosition}"></div>` : ''}
+        ${p ? `<div class="nm-tf-ph"><img alt="" src="${esc(p.thumbUrl || p.url)}" style="object-position:${esc(p.objectPosition)}"></div>` : ''}
         <figcaption class="${i === beats.length - 1 && beats.length > 1 ? 'script' : ''}"></figcaption>
       </figure>`;
     }).join('');

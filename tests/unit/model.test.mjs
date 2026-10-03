@@ -115,3 +115,15 @@ test('messages cover every chapter the film shows', () => {
   for (const key of ['invite', 'prologue', 'tower', 'hair', 'names', 'dance', 'lanterns', 'letter', 'cake', 'credits']) assert.ok(m[key], `messages.${key}`);
   assert.equal(m.cake.lines.length >= 3, true);
 });
+
+test('unsafe file paths are rejected', async () => {
+  const { safePath } = await import('../../assets/js/shared/model.js');
+  assert.ok(safePath('photos/tower-1-20261102-101500.webp'));
+  assert.ok(safePath('media/music-1.mp3'));
+  assert.ok(!safePath('photos/a".jpg'));
+  assert.ok(!safePath('../secret.jpg'));
+  assert.ok(!safePath('javascript:alert(1)'));
+  const site = loadSite();
+  site.photos[0].src = 'photos/x" onerror="alert(1).jpg';
+  assert.ok(validate(site).errors.some((e) => /unsafe file path/.test(e.message)));
+});

@@ -279,6 +279,7 @@ export function validate(site) {
     if (ids.has(p.id)) errors.push({ id: p.id, message: `Two photos share the id "${p.id}".` });
     ids.add(p.id);
     if (!/^\d+(\.\d+)?:\d+(\.\d+)?$/.test(String(p.ratio))) errors.push({ id: p.id, message: `"${p.label || p.id}" has an invalid shape (${p.ratio}).` });
+    for (const k of ['src', 'thumb', 'original']) if (p[k] && !safePath(p[k])) errors.push({ id: p.id, message: `"${p.label || p.id}" has an unsafe file path (${k}).` });
   }
   for (const ch of PHOTO_CHAPTERS) {
     const live = photosFor(site, ch.id).filter((p) => p.src);
@@ -290,10 +291,18 @@ export function validate(site) {
   for (const role of ROLES) {
     if (!(site.photos || []).some((p) => p.role === role && p.enabled !== false)) warnings.push({ role, message: `No photo is marked as "${role}".` });
   }
+  for (const k of ['music', 'video', 'voice']) if (site.media && site.media[k] && !safePath(site.media[k])) errors.push({ message: `The ${k} file path is not a safe repo path.` });
   const at = Date.parse(site.settings && site.settings.lock && site.settings.lock.unlockAt);
   if (site.settings && site.settings.lock && site.settings.lock.enabled && !Number.isFinite(at)) errors.push({ message: 'The unlock date/time is not a valid date.' });
   if (!site.her || !site.her.name) errors.push({ message: 'Her name is empty.' });
   return { errors, warnings, ok: errors.length === 0 };
+}
+
+/** A plain relative repo path (no quotes, no '..', no scheme) — or an https/blob/data URL. */
+export function safePath(p) {
+  const s = String(p);
+  if (/^(blob:|data:image\/|https:\/\/)/.test(s)) return !/["'<>\s]/.test(s);
+  return /^[A-Za-z0-9._\-/]+$/.test(s) && !s.includes('..') && !s.startsWith('/');
 }
 
 /** Days from her birth to `when` (defaults to the unlock moment). */

@@ -22,6 +22,7 @@ const IGNORE = [/favicon/i, /net::ERR_ABORTED.*\.mp3/i];
     await page.goto(url);
     // SwiftShader frames can take seconds; without this GSAP lag-smoothing freezes tweens in screenshots
     await page.waitForFunction(() => !!window.gsap).then(() => page.evaluate(() => window.gsap.ticker.lagSmoothing(0))).catch(() => {});
+    await page.waitForSelector(expectSelector, { timeout: 45000 }).catch(() => {}); // WebGL chapters mount slowly under SwiftShader
     await page.waitForTimeout(WAIT);
     const state = await page.evaluate((sel) => ({
       overflow: document.documentElement.scrollWidth > innerWidth + 1,
