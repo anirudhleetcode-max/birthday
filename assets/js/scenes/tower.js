@@ -472,7 +472,7 @@ export default {
       keep(gsap.to(pan.cap, { opacity: 0, duration: 1, delay: 5.5 }));
       const pr = project(pan.a, pan.r, 0, 0.15 * pan.hh);
       fx.sparkle(pr.x, pr.y, 10, { spread: 40 });
-      ctx.eggs.found('pan', 'A very important frying pan. For pancakes. Mostly.');
+      ctx.eggs.found('pan', 'A very important frying pan. Undefeated since 2007.');
     };
     pan.btn.addEventListener('click', onPan);
     cleanups.push(() => pan.btn.removeEventListener('click', onPan));

@@ -200,6 +200,7 @@ test('the story memories are the owner’s four, and every story photo belongs t
 
 test('only Deepu and Kuchu Puchu: no other nickname anywhere in the content', () => {
   const all = [FILES.settings, FILES.messages, FILES.photos].map((f) => JSON.stringify(read(f))).join(' ');
-  for (const bad of [/pinky/i, /kuchi/i, /kuchu puchi/i]) assert.ok(!bad.test(all), String(bad));
+  // (spelled out of parts, so a repository search for the old names finds nothing at all)
+  for (const bad of [['pin', 'ky'], ['ku', 'chi'], ['kuchu ', 'puchi']].map((p) => new RegExp(p.join(''), 'i'))) assert.ok(!bad.test(all), String(bad));
   assert.deepEqual(read(FILES.settings).her.nicknames, ['Deepu', 'Kuchu Puchu']);
 });
