@@ -169,6 +169,7 @@ img { -webkit-user-drag: none; user-select: none; }
   filter: drop-shadow(0 2px 5px rgba(26, 10, 34, .6)) drop-shadow(0 0 22px rgba(244, 196, 99, .3));
   animation: goldshift 6s ease-in-out infinite alternate;
   padding: 0 .1em;
+  text-wrap: balance; /* no lonely words on their own line */
 }
 /* animated letters get their own gold (background-clip on the parent can't paint into transformed children) */
 #chapter-card .cc-title .ch {
