@@ -103,7 +103,7 @@ fs.mkdirSync(OUT, { recursive: true });
       break;
     }
   }
-  const expected = ['gate', 'invite', 'prologue', 'tower', 'hair', 'names', 'dance', 'lanterns', 'letter', 'cake', 'constellation', 'birthday', 'hug', 'credits'];
+  const expected = ['gate', 'invite', 'prologue', 'tower', 'story', 'hair', 'names', 'dance', 'lanterns', 'letter', 'cake', 'constellation', 'birthday', 'hug', 'credits'];
   const missing = expected.filter((e) => !seen.some((s) => s.includes(e)));
   if (missing.length) errors.push(`never reached: ${missing.join(', ')}`);
   console.log(`\nchapters: ${seen.join(' → ')}\nscreenshots: ${OUT}\ntotal: ${elapsed()}s`);

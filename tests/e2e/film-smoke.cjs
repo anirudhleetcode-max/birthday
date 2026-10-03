@@ -5,7 +5,7 @@ const { chromium } = require('playwright');
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, v, i, all) => (v.startsWith('--') ? [...a, [v.slice(2), all[i + 1]]] : a), []));
 const PORT = args.port || '8090';
-const SCENES = (args.only || 'invite,prologue,tower,hair,names,dance,lanterns,letter,cake,constellation,birthday,hug,credits').split(',');
+const SCENES = (args.only || 'invite,prologue,tower,story,hair,names,dance,lanterns,letter,cake,constellation,birthday,hug,credits').split(',');
 const VPS = (args.vp || '390x844,1440x900').split(',').map((s) => s.split('x').map(Number));
 const WAIT = Number(args.wait || 9000);
 const IGNORE = [/favicon/i, /net::ERR_ABORTED.*\.mp3/i];

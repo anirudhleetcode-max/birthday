@@ -502,8 +502,9 @@ function createChapter(ctx, el) {
       audio.setMood('tender');
       // they appear one by one out of the dark, nearest first
       const order = [...items].sort((a, b) => b.z - a.z);
-      const spread = reduced ? 1.2 : 3.6;
-      order.forEach((it, i) => { it.appearAt = t + 0.2 + (i / Math.max(1, n - 1)) * spread + rnd(0, 0.25); });
+      // quick at first, then slower and slower: the last memories get time to be seen
+      const spread = reduced ? 1.2 : Math.min(7.5, 3 + n * 0.13);
+      order.forEach((it, i) => { it.appearAt = t + 0.2 + (i / Math.max(1, n - 1)) ** 1.8 * spread + rnd(0, 0.18); });
       tweens.push(gsap.to(S, { push: 1, duration: reduced ? 1 : 26, ease: 'none' }));
       await ctx.wait(reduced ? 0.6 : 1.4);
       await ui.narrate(first, { position: 'bottom' });

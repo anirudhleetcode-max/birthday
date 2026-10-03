@@ -28,7 +28,8 @@ admin/                     "The Lantern Room" CMS
 | invite | "Hey Deepu." + Enter | fade | night | — (first tap starts sound → hush) |
 | prologue | Once Upon a Deepu | lantern | dawn | hush → tender → wonder |
 | tower | A Tower Full of You | sun | day | tender |
-| hair | The Golden Thread | ribbon | sunset | wonder |
+| story | How It Began (the owner's real memories) | ribbon | day → sunset | tender → wonder → tender |
+| hair | The Golden Thread | glow | sunset | wonder |
 | names | A Legend of Many Names (funny) | ember | sunset | festive/sfx comedy |
 | dance | Somewhere Between Chaos and Magic | petals | twilight | festive |
 | lanterns | The Night of Lanterns | lantern | night | wonder → soar |
@@ -76,7 +77,8 @@ ctx.next(handoffInfo?)   ctx.restart()   ctx.openGallery({only:'extras'|'all'}) 
 **Photo object**
 ```js
 { id, chapter, order, role, label, caption, date, alt, ratio /*w/h number*/, ratioStr, focal:{x,y} /*0..1*/, objectPosition /*css*/,
-  featured, heroHair, animation, effect, duration, isPlaceholder, url /*display ≤1800px*/, thumbUrl /*≤640px*/ }
+  featured, heroHair, animation, effect, duration, isPlaceholder, memory /*story photos*/, url /*display ≤1800px*/, thumbUrl /*≤640px*/,
+  srcset /*'thumb 480w, display 960w' when the record has w/h — use with a sizes attribute on small <img>s*/ }
 ```
 Always use `object-fit: cover; object-position: photo.objectPosition` (faces live near the focal point). Use `thumbUrl` for small tiles (heart mosaics, galleries, textures < 400px on screen). `alt` on every `<img>`.
 
@@ -159,6 +161,14 @@ Phases: `reveal → wish → ignite → blow → dark → party → cut → serv
 - Tiers: low (DPR ≤ 1.25, no shadows/AA/bloom), mid (512 shadows), high (1024 shadows + light bloom). Reduced motion: no camera drift, a short strand sweep, shorter timings.
 - Dev harness: `dev/cake.html` with `dev/mock-ctx.js`.
 
+### scenes/story.js — How It Began
+The owner's memories (`messages.story.memories`, in order) on one golden thread that continues from the tower window. Each memory is staged by `kind`: **beginning** (the thread ties its first knot; her photos develop like prints), **daily** (lights bead along the thread, faster and faster), **journey** (a bus/train window with the world sliding past; her photos in the glass; the thread runs below like a road/rail), **sharing** (blank paper notes with scribbles, never words, drift in and gather onto the thread), **moment** (any memory added later: a "when" label, the words, its photos). Photos come from the `story` photo chapter, linked by `photo.memory`; untagged ones join the last memory. A memory with no words and no photos is skipped; words that need an unwritten personal memory fill to '' and are left out.
+
+### Photos & build tooling
+- `scripts/import-photos.cjs` + `scripts/photo-import-spec.json`: bulk import through the admin's own pipeline (`admin/images.js` in Chromium). Originals kept byte-for-byte (metadata stripped), display copies cropped to each spot's shape around the focal point and graded, thumbnails. Used for the first 36 photos.
+- `scripts/check-photos.mjs` (in `npm run check`): shape, weight, and no GPS/serial/XMP/IPTC/hidden images in any published photo.
+- `scripts/build.mjs` (`npm run build`): copies only the public site to `dist/` and checks every local reference (exact case, no root-absolute paths) plus the release checks. `.github/workflows/pages.yml` deploys `dist/` to GitHub Pages on every push to `main`.
+
 ### core/chameleon.js — an ORIGINAL tiny chameleon companion (not Pascal)
 Own silhouette, proportions, palette and personality (e.g. rounder, tear-drop body, star-shaped crest, freckles, a curly tail with a tiny leaf, sleepy half-lid eyes). API: `createChameleon(container, {size, color}) → { el, peek(side), hide(), colorTo(hex), blush(), react('surprised'|'happy'|'sleepy'|'proud'), lookAt(x,y), destroy() }`. Appears rarely: names (turns pink), credits, a hidden peek or two. Easter egg `chameleon` when tapped.
 
@@ -171,6 +181,7 @@ invite   { greeting, lines[], button, foot }
 gate     { kicker, title, sub, openKicker, openTitle, openSub, button }
 prologue { kicker, title, lines[], titleSub, date }
 tower    { kicker, title, lines[], windowLine, hint }
+story    { kicker, title, memories:[{ id, kind: moment|beginning|daily|journey|sharing, when, text }], end }
 hair     { kicker, title, lines[], heroHairLine, endLine }
 names    { kicker, title, documentary[], items:[{name, line, sub}], aka, finale }
 dance    { kicker, title, lines[], hint }

@@ -15,6 +15,7 @@ const PLAN = {
   invite: { at: '4,12' },
   prologue: { at: '22,30' },
   tower: { at: '14,30,45' },
+  story: { at: '10,22,34,46,58' },
   hair: { at: '10,20,30,40' },
   names: { at: '20,35,50,65' },
   dance: { at: '12,24,36' },
