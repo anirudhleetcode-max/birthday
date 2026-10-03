@@ -265,7 +265,6 @@ export default {
     const fsvg = flower.querySelector('svg');
     const bloomlight = el.querySelector('.pro-bloomlight');
     const reveal = el.querySelector('.pro-reveal');
-    const portrait = el.querySelector('.pro-portrait');
     const heroEl = el.querySelector('.pro-hero');
     const sun = el.querySelector('.pro-sun');
     const sunIn = el.querySelector('.pro-sun-in');

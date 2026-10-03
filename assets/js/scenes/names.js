@@ -67,11 +67,6 @@ function cornerOrn() {
     <circle cx="4" cy="56" r="2.4" fill="#f4c463"/></g></svg>`;
 }
 
-function rgba(hex, a) {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
-}
-
 /** Embers rising through the trailer (a small, capped particle canvas). */
 function makeEmbers(canvas, device) {
   const g = canvas.getContext('2d');
