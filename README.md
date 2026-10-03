@@ -146,6 +146,7 @@ assets/css/                styles (main.css + one file per chapter)
 docs/ARCHITECTURE.md       how it all fits together (contract + art bible)
 docs/SECURITY.md           the admin token, privacy, what's public
 tests/                     unit, e2e and visual QA tools
+dev/                       developer test pages (cake, ribbon, transitions), not linked from the film
 ```
 
 Libraries (vendored, no CDN): three.js (MIT), GSAP (standard no-charge licence). Fonts are self-hosted Google Fonts (SIL Open Font License).
