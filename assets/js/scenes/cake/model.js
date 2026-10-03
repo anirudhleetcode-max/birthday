@@ -32,7 +32,7 @@ export const DIM = {
   wedgeAngle: (38 * Math.PI) / 180,
   wedgeCentre: (34 * Math.PI) / 180, // front-right, toward the camera & the plate
   topperLift: 1.08,
-  plateAt: new THREE.Vector3(2.25, 0, 0.45),
+  plateAt: new THREE.Vector3(2.5, 0, 0.45), // just out of a phone's frame until the slice is served
 };
 
 export function buildCake({ lowPower = false, quality = 2, name = 'Deepu', anisotropy = 4, shadows = false } = {}) {

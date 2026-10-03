@@ -30,6 +30,7 @@ export const BLOW = {
   maxPeakiness: 12.5,    // smoothed max/mean: breath ≈ 3–11; music ≈ 14–18; a pure tone ≈ 40+
   smoothSec: 0.12,
   sustainSec: 0.15,      // >= 150 ms
+  minFrames: 4,          // ...spread over at least 4 analysis frames
   dropoutSec: 0.08,
   attack: 0.06, release: 0.22,
 };
@@ -42,7 +43,7 @@ export class BlowDetector {
     this.state = 'idle'; // idle | starting | calibrating | listening | stopped
     this.base = { rms: 0, lowDb: -120 };
     this.cal = [];
-    this.calT = 0; this.run = 0; this.quiet = 0;
+    this.calT = 0; this.run = 0; this.runN = 0; this.quiet = 0;
     this.intensity = 0; this.level = 0; this.active = false;
     this.lastHeard = 0; this.listenT = 0;
     this.sm = null; // smoothed spectral features
@@ -140,7 +141,8 @@ export class BlowDetector {
       return 0;
     }
     this.listenT += dt;
-    const k = Math.min(1, dt / B.smoothSec);
+    // (capped so that even a slow phone averages at least two frames)
+    const k = Math.min(0.5, dt / B.smoothSec);
     if (!this.sm) this.sm = { flat: m.flatness, peak: m.peak, low: m.lowFrac };
     const sm = this.sm;
     sm.flat += (m.flatness - sm.flat) * k;
@@ -157,10 +159,10 @@ export class BlowDetector {
     let score = 0;
     if (gates) {
       score = Math.min(1, 0.3 + (m.rms - thr) / 0.25 + Math.max(0, rise - B.lowRiseDb) / 60);
-      this.run += dt; this.quiet = 0;
+      this.run += dt; this.runN++; this.quiet = 0;
     } else {
       this.quiet += dt;
-      if (this.quiet > B.dropoutSec) this.run = 0;
+      if (this.quiet > B.dropoutSec) { this.run = 0; this.runN = 0; }
       if (this.run === 0) {
         const kd = Math.min(1, dt * 2.0), ku = Math.min(1, dt * 0.12);
         const tr = Math.min(m.rms, this.base.rms * 1.5 + 1e-4), tl = Math.min(m.lowDb, this.base.lowDb + 3);
@@ -168,7 +170,9 @@ export class BlowDetector {
         this.base.lowDb += (tl - this.base.lowDb) * (tl < this.base.lowDb ? kd : loud ? 0 : ku);
       }
     }
-    this.active = this.run >= B.sustainSec;
+    // >= 150 ms AND several analysis frames: one slow frame over a click or a
+    // knock must never count as a breath
+    this.active = this.run >= B.sustainSec && this.runN >= B.minFrames;
     const target = this.active ? Math.max(score, 0.25) : 0;
     const tau = target > this.intensity ? B.attack : B.release;
     this.intensity += (target - this.intensity) * Math.min(1, dt / tau);

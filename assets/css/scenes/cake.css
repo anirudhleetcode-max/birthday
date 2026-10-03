@@ -28,6 +28,7 @@
 .ck-btn.on { opacity: 1; transform: none; }
 .ck-btn:hover { box-shadow: 0 0 0 1px rgba(255, 230, 170, .16) inset, 0 10px 30px rgba(2, 3, 12, .6), 0 0 38px rgba(244, 196, 99, .38); }
 .ck-btn:active { transform: scale(.97); }
+.ck-btn:focus-visible { outline: 2px solid rgba(255, 227, 163, .85); outline-offset: 3px; }
 .ck-btn .ck-ico { font-size: 18px; line-height: 1; }
 .ck-btn.primary.on { animation: ck-breathe 3.2s ease-in-out infinite; }
 .ck-btn.alt {

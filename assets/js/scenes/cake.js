@@ -211,6 +211,9 @@ class CakeScene {
     this.cake = buildCake({ lowPower: this.low, quality: this.quality, name, anisotropy: aniso, shadows });
     scene.add(this.cake.root);
     this.plateShadow = this.table.mkShadow(0.62, DIM.plateAt.x, DIM.plateAt.z, 0.6);
+    // the serving plate glides in only when there is a slice to serve (so no
+    // screen ever shows half an empty plate at its edge)
+    this.cake.plateGroup.visible = this.plateShadow.visible = false;
     const t2y = this.cake.t2.group.position.y;
     this.cutTop = t2y + DIM.t2.H;
 
@@ -281,11 +284,14 @@ class CakeScene {
       k.shadow.normalBias = 0.025;
       k.shadow.radius = 3;
     }
-    this.rim = new THREE.DirectionalLight(0x9aa8ff, 0.6);
-    this.rim.position.set(1.5, 7, -7);
+    // the rim: a narrow spot from behind, so it outlines the cake without
+    // flooding the table (a directional rim turned the whole table mustard)
+    this.rim = new THREE.SpotLight(0x9aa8ff, 0.6, 0, 0.3, 0.7, 0);
+    this.rim.position.set(1.5, 4.5, -7);
+    this.rim.target.position.set(0, 1.5, 0);
     this.fillLight = new THREE.DirectionalLight(0xffc9a0, 0);
     this.fillLight.position.set(3, 2, 6);
-    scene.add(...this.pl, this.hemi, this.key, this.key.target, this.rim, this.fillLight);
+    scene.add(...this.pl, this.hemi, this.key, this.key.target, this.rim, this.rim.target, this.fillLight);
     this.colors = {
       candle0: new THREE.Color(0xffa24f), candle1: new THREE.Color(0xffb867), gold: new THREE.Color(0xff9c62),
       rimCool: new THREE.Color(0x9aa8ff), rimGold: new THREE.Color(0xffc86e),
@@ -348,7 +354,9 @@ class CakeScene {
 
     // warm up shaders, then start the loop
     this.updateCamera();
+    this.cake.plateGroup.visible = true; // (compiled now, shown later)
     try { renderer.compile(scene, camera); } catch (e) { /* ignore */ }
+    this.cake.plateGroup.visible = false;
     this.last = performance.now();
     this.raf = requestAnimationFrame(this.tick);
     this.guard();
@@ -433,7 +441,7 @@ class CakeScene {
     // fit the whole cake (stand → sun topper) with air above the topper and
     // room below for the subtitles and the blowing controls; tall phones are
     // width-bound anyway and keep the cake a little above centre
-    const W = portrait ? 3.3 : 3.6, H = aspect < 0.62 ? 4.5 : 5.4;
+    const W = portrait ? 3.3 : 3.6, H = aspect < 0.62 ? 4.5 : aspect < 1 ? 6.0 : 5.4;
     const dist = Math.max(H / 2 / t, W / 2 / (t * aspect)) * 1.02;
     const vh = 2 * dist * t;
     const ty = Math.max(1.75 - vh * 0.07, 3.62 + 0.06 * vh - vh / 2);
@@ -533,13 +541,13 @@ class CakeScene {
     this.hemi.groundColor.copy(C.groundCool).lerp(C.groundGold, g);
     this.key.color.copy(C.keyCool).lerp(C.keyGold, g);
     this.key.intensity = (1.0 + 1.0 * frac) * L.room * (1 - 0.55 * L.party) + 0.6 * L.party + 0.4 * kick;
-    this.rim.intensity = 0.75 * L.room + 0.7 * g;
+    this.rim.intensity = 0.75 * L.room * (1 - 0.4 * g) + 0.45 * g;
     this.rim.color.copy(C.rimCool).lerp(C.rimGold, g);
     this.fillLight.intensity = 0.35 * frac * L.room + 0.28 * L.party;
     const envLevel = 0.06 + 0.22 * L.room * (1 - 0.4 * L.party) + 0.5 * frac * (0.9 + 0.1 * flick) + 0.32 * g + 0.15 * L.party + 0.1 * kick;
     for (const [m, k] of this.envMats) m.envMapIntensity = envLevel * k;
     this.bokeh.uniforms.uTime.value = t;
-    this.bokeh.uniforms.uBright.value = (0.1 + 0.75 * L.room + 0.2 * L.party + 0.15 * g) * (1 - 0.6 * hush);
+    this.bokeh.uniforms.uBright.value = (0.1 + 0.75 * L.room * (1 - 0.3 * g) + 0.12 * L.party + 0.12 * g) * (1 - 0.6 * hush);
     this.dust.uniforms.uTime.value = t;
     this.dust.uniforms.uBright.value = 0.18 + 0.8 * frac + 0.6 * g;
     // the room stays a midnight room even in the celebration: the gold lives on the cake
@@ -551,7 +559,7 @@ class CakeScene {
     A.uniforms.uTime.value = t;
     A.aura.material.opacity = clamp(0.2 * frac * flick * (1 - 0.4 * g) + 0.08 * this.headOn, 0, 1);
     const cool = 0.014 * clamp(L.room / 0.45, 0, 1.5) * (1 - 0.7 * hush);
-    const warm = 0.012 * g * (0.55 + 0.45 * L.party) + 0.014 * kick;
+    const warm = 0.009 * g * (0.55 + 0.45 * L.party) + 0.012 * kick;
     A.uniforms.uIntensity.value = cool * (1 - g) + warm;
     A.uniforms.uColor.value.copy(C.shaftCool).lerp(C.shaftWarm, g);
     if (this.bloom) this.bloom.strength = 0.35 + 0.2 * kick;
@@ -942,7 +950,7 @@ class CakeScene {
       [0, -0.16, ['#b9a3e3', '#f4c463', '#f2a7c3']],
     ];
     bursts.forEach(([dx, dy, colors], k) => this.later(0.15 + k * (red ? 0.2 : 0.5), () => {
-      this.fx('colorBurst', { x: top.x + dx * spread, y: clamp(top.y + dy * h, h * 0.12, h * 0.6), colors, size: k === 2 ? 0.7 : 0.85 });
+      this.fx('colorBurst', { x: top.x + dx * spread, y: clamp(top.y + dy * h, h * 0.12, h * 0.6), colors, size: k === 2 ? 0.55 : 0.7 });
     }));
     this.sfx('swell');
     // let the confetti fall through before the line arrives
@@ -1086,7 +1094,27 @@ class CakeScene {
     if (this.kn) { this.kn.on = false; }
     this.swipe = null;
     this.sfx('whoosh');
+    this.bringPlate();
     this.serve().then(() => { const r = this.onCut; this.onCut = null; r && r(); }).catch((e) => { if (!isAbort(e) && !this.dead) console.error('[cake]', e); });
+  }
+
+  bringPlate() {
+    const P = this.cake.plateGroup, S = this.plateShadow;
+    if (P.visible) return;
+    const end = DIM.plateAt.clone(), start = end.clone().add(new THREE.Vector3(1.5, 0, 0.6));
+    const alpha = S.material.opacity;
+    P.position.copy(start);
+    S.material.opacity = 0;
+    P.visible = S.visible = true;
+    const o = { k: 0 };
+    this.to(o, {
+      k: 1, duration: this.reduced ? 0.5 : 1.2, ease: 'power3.out',
+      onUpdate: () => {
+        P.position.lerpVectors(start, end, o.k);
+        S.position.x = P.position.x; S.position.z = P.position.z;
+        S.material.opacity = alpha * o.k;
+      },
+    });
   }
 
   // the knife's pose with its blade in the vertical plane of the cut at angle phi
@@ -1192,7 +1220,7 @@ class CakeScene {
     const proxy = { t: 0 };
     this.to(this.cam, { ...shot, duration: red ? 1.4 : 2.6, ease: 'power2.inOut' });
     // the key light follows the slice to its plate
-    this.to(this.key.target.position, { x: 1.0, y: 0.8, z: 0.25, duration: red ? 1.4 : 2.6, ease: 'power2.inOut' });
+    this.to(this.key.target.position, { x: 1.25, y: 0.8, z: 0.25, duration: red ? 1.4 : 2.6, ease: 'power2.inOut' });
     const ease = this.gsap.parseEase('power1.inOut');
     await this.to(proxy, {
       t: 1, duration: red ? 1.0 : 1.8, ease: 'power2.inOut',
@@ -1227,8 +1255,8 @@ class CakeScene {
   // sun topper and the plate (with the narration under it) both fit.
   serveShot() {
     const f = this.fit;
-    if (!f.portrait) return { az: 0.55, el: 0.14, tx: 1.6, tz: 0.5, distK: 0.6, ty: -0.7 };
-    const base = { az: 0.98, el: 0.34, tx: 1.3, tz: 0.4 };
+    if (!f.portrait) return { az: 0.55, el: 0.14, tx: 1.85, tz: 0.5, distK: 0.6, ty: -0.7 };
+    const base = { az: 0.98, el: 0.34, tx: 1.55, tz: 0.4 };
     const cam = new THREE.PerspectiveCamera(f.fov, f.aspect, 0.05, 120);
     const top = new THREE.Vector3(0, 3.62, 0);
     const front = new THREE.Vector3(DIM.plateAt.x, 0.05, DIM.plateAt.z + 0.68);
