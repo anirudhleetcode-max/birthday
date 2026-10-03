@@ -49,7 +49,7 @@ export const SCHEMA = {
 
 const ORDER = ['personal', 'invite', 'gate', 'prologue', 'tower', 'hair', 'names', 'dance', 'lanterns', 'letter', 'cake', 'constellation', 'birthday', 'hug', 'credits', 'gallery'];
 const TOKENS = ['name', 'nick1', 'nick2', 'creator', 'photoCount', 'days', 'age'];
-const open = new Set(['personal']);
+const open = new Set(['personal', 'invite']);
 
 export function humanize(key) {
   if (typeof key === 'number') return `#${key + 1}`;
