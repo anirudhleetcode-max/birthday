@@ -52,7 +52,9 @@ The repository must stay **public** for free GitHub Pages. Until the unlock mome
 
 ## 3. The admin portal: "The Lantern Room" (`/admin/`)
 
-Connect once with a GitHub token. The admin shows step-by-step instructions, and [docs/SECURITY.md](docs/SECURITY.md) explains what the token can do and how to revoke it. The token stays in your browser and is never stored in the site.
+Connect once with a GitHub token. The admin shows step-by-step instructions, and [docs/SECURITY.md](docs/SECURITY.md) explains what the token can do and how to revoke it. The token stays in your browser (switch off **Remember on this device** to keep it only until the tab closes). It is only ever sent to GitHub and is never stored in the site, the drafts or exports.
+
+Privacy: before anything is published, the admin removes hidden photo details (GPS location, camera serial number, embedded thumbnails) from your originals without re-compressing them, and blanks the recording location in videos and voice notes. Everything you publish is public on the internet (that's how free GitHub Pages works). The countdown only hides the film itself.
 
 | Section | What you can do |
 |---|---|
@@ -119,6 +121,8 @@ npm run check     # content + files + 7,305-day check + secret scan
 npm run lint      # ESLint (uses a global eslint)
 npm test          # unit tests (content model, admin logic)
 npm run e2e       # film smoke test on every chapter + admin flows (needs `npm run serve` running)
+NODE_PATH=$(npm root -g) node tests/e2e/admin-qa.cjs      # deep admin QA (184 checks)
+NODE_PATH=$(npm root -g) node tests/e2e/admin-visual.cjs  # admin layout audit at 4 sizes (302 checks)
 npm run e2e:full  # plays the whole film start to finish (slow in headless Chromium)
 ```
 
