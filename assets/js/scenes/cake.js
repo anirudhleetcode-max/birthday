@@ -1209,7 +1209,6 @@ class CakeScene {
     await this.to(W.position, { x: bis.x * 0.16, y: 0.012, z: bis.z * 0.16, duration: red ? 0.45 : 0.8, ease: 'power2.out' });
     this.guard();
     // 2. lift & carry it to the plate, turning its layers toward her
-    const portrait = this.fit.portrait;
     const shot = this.serveShot();
     const camAz = shot.az;
     const rotY = camAz + Math.PI / 2 - wA - 0.55;

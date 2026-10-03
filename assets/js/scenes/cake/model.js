@@ -198,7 +198,7 @@ export function buildCake({ lowPower = false, quality = 2, name = 'Deepu', aniso
     const geo = flowerGeometry();
     const cols = [new THREE.Color(0xf2a7c3), new THREE.Color(0xf3cf6e), new THREE.Color(0xa9c8f2), new THREE.Color(0xf7c0d6)];
     const n = lowPower ? 14 : 18;
-    const items = [], centres = [], leaves = [];
+    const items = [], centres = [];
     const Rr = DIM.t2.R + 0.1;
     for (let i = 0; i < n; i++) {
       const phi = ((i + 0.25) / n) * TAU + (R() - 0.5) * 0.08;
