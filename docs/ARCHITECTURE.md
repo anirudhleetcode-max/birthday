@@ -69,6 +69,7 @@ ctx.wait(seconds)        // abortable sleep
 ctx.letterbox(true|false|'8vh')
 ctx.grade(name)          // override the film grade: night | dawn | day | sunset | twilight | candle | deep | golden
 ctx.handoff({x, y, color, kind})  // tell the NEXT transition where its light comes from (continuity); also ctx.next(handoffInfo)
+ctx.incoming             // the previous chapter's hand-off {x, y, color, kind, from} | null (use it for seamless 'none' transitions)
 ctx.next(handoffInfo?)   ctx.restart()   ctx.openGallery({only:'extras'|'all'})   ctx.immersive()   ctx.startSound()
 ```
 
