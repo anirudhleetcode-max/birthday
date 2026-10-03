@@ -127,7 +127,7 @@ export function createFX({ dustCanvas, fxCanvas, device, density = 1 }) {
   const rockets = [];
 
   function confettiBurst({ x = W / 2, y = H, angle = -90, spread = 60, count = 90, power = 1, colors = PALETTE } = {}) {
-    const n = Math.round(count * (device.lowPower ? 0.6 : 1));
+    const n = Math.max(1, Math.round(count * (device.lowPower ? 0.6 : 1) * (device.reducedMotion ? 0.5 : 1)));
     for (let i = 0; i < n; i++) {
       const a = ((angle + (Math.random() - 0.5) * spread) * Math.PI) / 180;
       const v = (520 + Math.random() * 680) * power * Math.min(1.3, Math.max(0.7, H / 800));
@@ -152,6 +152,8 @@ export function createFX({ dustCanvas, fxCanvas, device, density = 1 }) {
   }
 
   function cannons() {
+    // reduced motion: a light, slow fall instead of two fast cannons across the subtitles
+    if (device.reducedMotion) return rain(50);
     confettiBurst({ x: -10, y: H + 10, angle: -62, spread: 34, count: 110, power: 1.08 });
     confettiBurst({ x: W + 10, y: H + 10, angle: -118, spread: 34, count: 110, power: 1.08 });
   }

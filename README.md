@@ -44,9 +44,11 @@ Handy addresses:
 
 ## 2. Put it online (once)
 
-1. Make sure this work is on the `main` branch.
+1. The repository currently has a single branch, `claude/focused-ramanujan-ntd4tc`. Create `main` from it: on GitHub, open the branch dropdown → type `main` → **Create branch: main from claude/focused-ramanujan-ntd4tc**. Then set `main` as the default branch under **Settings → General**.
 2. On GitHub: **Settings → Pages → Source: Deploy from a branch → `main` / `(root)` → Save**.
 3. About a minute later: **https://anirudhleetcode-max.github.io/birthday/**. The admin is at **/admin/**.
+
+The admin publishes to the branch set under **Settings → GitHub (where the site lives)** in the admin (`main` by default). That must be the same branch that Pages serves.
 
 The repository must stay **public** for free GitHub Pages. Until the unlock moment, visitors only see the countdown.
 
