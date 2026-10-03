@@ -220,19 +220,22 @@ async function mockGitHub(context, git) {
 
 const read = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
 const text = (o) => `${JSON.stringify(o, null, 2)}\n`;
-/** The repo as shipped + one published hero photo (with display/thumb/original) + extra files. */
+// The placeholder state (36 empty photo spots) with the current settings and words: tests/fixtures/*.json
+// (the live data/*.json hold the real photos).
+const FIXTURE = (name) => `tests/fixtures/${name}.json`;
+/** The repo in its placeholder state + one published hero photo (with display/thumb/original) + extra files. */
 function repoFiles(IMG) {
-  const photos = read('data/photos.json');
+  const photos = read(FIXTURE('photos'));
   const hero = photos.photos.find((p) => p.role === 'hero');
   Object.assign(hero, { src: 'photos/hero-old.jpg', thumb: 'photos/thumbs/hero-old.jpg', original: 'photos/originals/hero-old.jpg' });
-  const settings = read('data/settings.json');
+  const settings = read(FIXTURE('settings'));
   settings.settings.github = { owner: 'o', repo: 'r', branch: 'main' };
   settings.media.music = 'media/music-old.mp3';
   return {
     'index.html': '<!doctype html>',
     'README.md': '# readme',
     'data/settings.json': text(settings),
-    'data/messages.json': text(read('data/messages.json')),
+    'data/messages.json': text(read(FIXTURE('messages'))),
     'data/photos.json': text(photos),
     'photos/hero-old.jpg': IMG.p45,
     'photos/thumbs/hero-old.jpg': IMG.p45,

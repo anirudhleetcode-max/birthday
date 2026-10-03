@@ -30,16 +30,19 @@ const section = (t) => console.log(`\n▸ ${t}`);
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `${name}.png`) }); };
 
 /* ---------------------------------------------------------------- mock repository */
+// The repo starts in the placeholder state (36 empty photo spots): tests/fixtures/*.json. The live data/*.json
+// hold the real photos; the fixtures keep the current settings and words.
+const FIXTURE = (name) => path.join('tests/fixtures', `${name}.json`);
 function makeRepo(images) {
   const read = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
-  const photos = read('data/photos.json');
+  const photos = read(FIXTURE('photos'));
   const hero = photos.photos.find((p) => p.role === 'hero') || photos.photos[0];
   Object.assign(hero, { src: 'photos/hero-old.jpg', thumb: 'photos/thumbs/hero-old.jpg', original: 'photos/originals/hero-old.jpg', crop: null });
   const text = (o) => `${JSON.stringify(o, null, 2)}\n`;
   const files = {
     'index.html': Buffer.from('<!doctype html>'),
-    'data/settings.json': Buffer.from(text(read('data/settings.json'))),
-    'data/messages.json': Buffer.from(text(read('data/messages.json'))),
+    'data/settings.json': Buffer.from(text(read(FIXTURE('settings')))),
+    'data/messages.json': Buffer.from(text(read(FIXTURE('messages')))),
     'data/photos.json': Buffer.from(text(photos)),
     'photos/hero-old.jpg': images.p45,
     'photos/thumbs/hero-old.jpg': images.p45,
