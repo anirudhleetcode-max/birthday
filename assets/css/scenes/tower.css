@@ -148,8 +148,6 @@
   background: radial-gradient(ellipse 80% 42% at 50% 47%, rgba(40, 16, 34, .62), rgba(40, 16, 34, .25) 60%, rgba(40, 16, 34, 0) 100%);
 }
 
-/* shared keyframe still used by other chapters (letter, dance) */
-@keyframes candle { 0%, 100% { opacity: .9; } 30% { opacity: .75; } 55% { opacity: 1; } 78% { opacity: .82; } }
 
 /* reduced motion: the room stays still (no drifting clouds, curtains, branches, birds) */
 .reduced-motion .tw-cloud, .reduced-motion .tw-birds, .reduced-motion .tw-branch, .reduced-motion .tw-curtain { animation: none; }

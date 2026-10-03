@@ -85,13 +85,14 @@ export default {
     const T = clamp(6 + n * 2.5, 10, 45); // the whole dolly (the hero moment is extra)
 
     el.innerHTML = `
-      <div class="hr-world">
+      <div class="hr-fit"><div class="hr-world">
         <div class="hr-back"></div>
         <div class="hr-track"><div class="hr-threads"></div><div class="hr-cards"></div></div>
         <div class="hr-front"></div>
-      </div>
+      </div></div>
       <div class="hr-hero" aria-hidden="true"><div class="hr-veil"></div><div class="hr-herorib"></div><canvas class="hr-motes"></canvas></div>
       <div class="hr-ember" aria-hidden="true"><i></i></div>`;
+    const fitEl = el.querySelector('.hr-fit');
     const world = el.querySelector('.hr-world');
     const back = el.querySelector('.hr-back');
     const trackEl = el.querySelector('.hr-track');
@@ -288,6 +289,25 @@ export default {
       el.removeEventListener('pointercancel', up);
     });
 
+    // keyboard: ← / → scrub too (→ only until the Continue button is up)
+    const key = (e) => {
+      if (state.hold || state.dragging || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+      if (!document.getElementById('continue').hidden) return;
+      const lim = state.heroDone ? camEnd : heroCamX;
+      if (dolly) dolly.pause();
+      const to = clamp(cam.x + (e.key === 'ArrowRight' ? 1 : -1) * vw * 0.35, 0, lim);
+      keep(gsap.to(cam, { x: to, duration: 0.6, ease: 'power2.out', overwrite: 'auto', onComplete: () => { if (!state.dragging && resume) resume(); } }));
+    };
+    window.addEventListener('keydown', key);
+    // the journey was laid out for the first screen size; a rotated phone gets it scaled to fit
+    const fit = { k: 1 };
+    const onResize = () => {
+      fit.k = window.innerHeight / vh;
+      fitEl.style.transform = Math.abs(fit.k - 1) < 0.01 ? '' : `scale(${fit.k})`;
+    };
+    window.addEventListener('resize', onResize);
+    cleanups.push(() => { window.removeEventListener('keydown', key); window.removeEventListener('resize', onResize); });
+
     /** Travel to `target`, letting the viewer scrub on the way; resolves on arrival. */
     const travelTo = (target, ease) => new Promise((res, rej) => {
       const go = () => {
@@ -318,7 +338,7 @@ export default {
     await ui.chapterCard(t.kicker || 'Chapter Two', t.title || 'The Golden Thread');
 
     const lines = t.lines || [];
-    (async () => {
+    const narration = (async () => {
       await ctx.wait(0.6);
       say(lines.slice(0, 1));
       await until(() => !camEnd || cam.x / camEnd > 0.3);
@@ -334,13 +354,14 @@ export default {
     }
     await travelTo(camEnd, heroIndex >= 0 ? 'power1.inOut' : 'sine.inOut');
     state.hold = true;
+    await narration;
     await narr;
 
     /* ------------------------------------------------ the ember at the end */
     const out = segs[segs.length - 1];
     if (!out.rib) makeRibbon(out);
     const rib = out.rib;
-    const hp = { x: ember.x - cam.x, y: ember.y };
+    const hp = { x: (ember.x - cam.x) * fit.k, y: ember.y * fit.k };
     for (const s of segs) if (s !== out && s.rib) s.rib.fade(0.5, 2.4);
     rib.follow(null);
     audio.sfx('swell');
@@ -440,7 +461,7 @@ export default {
 
       // the photograph rejoins its place on the thread
       const seg = segs.find((s) => s.from === c.i) || segs[segs.length - 1];
-      const target = seg.pts.map((p) => ({ x: p.x - cam.x, y: p.y }));
+      const target = seg.pts.map((p) => ({ x: (p.x - cam.x) * fit.k, y: p.y * fit.k }));
       hrib.morph(target, { duration: 1.8, lag: 0.4 });
       keep(gsap.to(sparkEl, { opacity: 0, duration: 0.6 }));
       keep(gsap.to(veil, { opacity: 0, duration: 1.8, ease: 'power1.inOut' }));

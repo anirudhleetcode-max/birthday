@@ -52,7 +52,7 @@ export default {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     /* ------------------------------------------------------------ geometry */
-    const bwOf = (w, h) => Math.min(w * 0.92, h * 0.62);
+    const bwOf = (w, h) => Math.min(w * 0.92, h * (w > h ? 0.8 : 0.62)); // wider bays on landscape keep the lens gentle
     const Bw = bwOf(vw0, vh0); // apparent bay width straight ahead
     const bayW = Bw / S;
     const circ = NB * bayW;
@@ -128,7 +128,7 @@ export default {
     tmp.width = Math.round(bayW * ts);
     tmp.height = Math.round(Hwall * ts);
     const tg = tmp.getContext('2d');
-    const opening = { w: 0.6, f0: -0.32, f1: 0.2 };
+    const opening = { w: Math.min(0.6, (0.26 * VH) / bayW), f0: -0.32, f1: 0.2 }; // a tall arch on every screen
     const strips = [];
     for (let k = 0; k < NS; k++) {
       const c = document.createElement('canvas');
@@ -160,9 +160,9 @@ export default {
     };
     // the bays we see first are painted right away; the rest follow over the next frames
     const order = [WIN, DECOR, 1, 2, 6, 3, 5, 4];
-    order.slice(0, 3).forEach(paintOne);
+    paintOne(WIN); // the iris opens on the window; the other bays follow frame by frame
     const paintRest = (async () => {
-      for (const j of order.slice(3)) {
+      for (const j of order.slice(1)) {
         await new Promise((r) => requestAnimationFrame(r));
         if (signal.aborted) return;
         paintOne(j);
@@ -181,7 +181,7 @@ export default {
         items.push({ el: cd.el, a, r: Rw - 3, hw: s });
       }
     }
-    [WIN, DECOR, 1].forEach(addCandles);
+    addCandles(WIN);
 
     /* -------------------------------------------------------- the window */
     const a0 = bayAngle(WIN);
@@ -537,13 +537,12 @@ export default {
     const scrim = el.querySelector('.tw-scrim');
     if (!reduced) keep(gsap.to(cam, { rot: rotFor(WIN), dolly: 0, duration: 7, ease: 'power2.out' }));
     keep(gsap.fromTo(room, { opacity: 0.4 }, { opacity: 1, duration: 1.6, ease: 'power1.out' }));
-    const FAST = location.search.includes('twfast'); // TEMPDEBUG
-    if (!FAST) await ui.chapterCard(t.kicker || 'Chapter One', t.title || 'A Tower Full of You'); // TEMPDEBUG
+    await ui.chapterCard(t.kicker || 'Chapter One', t.title || 'A Tower Full of You');
     keep(gsap.to(scrim, { opacity: 0, duration: 1.8, ease: 'power1.inOut' }));
     await paintRest;
     if (signal.aborted) return;
 
-    const lines = FAST ? [] : t.lines || []; // TEMPDEBUG
+    const lines = t.lines || [];
     const mainArts = arts.slice(0, mains);
     const lineAt = new Map();
     lines.forEach((l, k) => {
@@ -551,7 +550,7 @@ export default {
       lineAt.set(at, (lineAt.get(at) || []).concat(l));
     });
 
-    if (!mains && !FAST) { // TEMPDEBUG
+    if (!mains) {
       // no photos yet: a slow tour of the murals while the words play
       say(lines);
       await turnTo(rotFor(2), 5, 'sine.inOut');
@@ -597,7 +596,7 @@ export default {
       const el2 = performance.now() - t0;
       const idle = performance.now() - look.idleSince;
       if (look.dragging) continue;
-      if ((el2 > (FAST ? 1000 : 7000) && idle > 1800) || el2 > 26000) break; // TEMPDEBUG
+      if ((el2 > 7000 && idle > 1800) || el2 > 26000) break;
     }
     hint.remove();
     look.on = false;

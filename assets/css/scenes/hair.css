@@ -4,7 +4,8 @@
   background: linear-gradient(180deg, #24133f 0%, #4a2766 18%, #87457c 38%, #c86a77 54%, #ec9a6c 66%, #f8c27a 74%, #ffdc9c 77%, #e9a77c 80%, #6a3456 88%, #2b1433 100%);
 }
 .scene-hair:active { cursor: grabbing; }
-.hr-world, .hr-back, .hr-front { position: absolute; inset: 0; }
+.hr-fit, .hr-world, .hr-back, .hr-front { position: absolute; inset: 0; }
+.hr-fit { transform-origin: 0 0; }
 .hr-front { pointer-events: none; }
 .hr-layer { position: absolute; left: 0; top: 0; height: 100%; will-change: transform; pointer-events: none; }
 .hr-layer svg { display: block; }
@@ -70,13 +71,21 @@
   animation: hr-pulse 1.8s ease-in-out infinite alternate;
 }
 
-/* the ember at the end */
+/* the ember at the end: a small, warm, breathing coal of light with sparks lifting off it */
 .hr-ember { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
 .hr-ember i {
-  position: absolute; left: -60px; top: -60px; width: 120px; height: 120px; border-radius: 50%;
-  background: radial-gradient(circle, #fffaf0 0 6%, #ffd27a 14%, rgba(255, 159, 67, .55) 30%, rgba(255, 120, 60, .16) 50%, rgba(255, 120, 60, 0) 70%);
-  animation: hr-pulse 2.2s ease-in-out infinite alternate;
+  position: absolute; left: -42px; top: -42px; width: 84px; height: 84px; border-radius: 50%;
+  background: radial-gradient(circle, #fff4d6 0 5%, #ffc867 11%, rgba(255, 146, 52, .7) 21%, rgba(255, 110, 40, .2) 40%, rgba(255, 110, 40, 0) 62%);
+  animation: hr-coal 1.7s ease-in-out infinite alternate;
 }
+.hr-ember::before, .hr-ember::after {
+  content: ''; position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%;
+  background: #ffd98a; box-shadow: 0 0 6px 2px rgba(255, 180, 90, .8); opacity: 0;
+  animation: hr-lift 2.6s ease-out infinite;
+}
+.hr-ember::after { animation-delay: 1.3s; left: 3px; }
+@keyframes hr-coal { 0% { scale: .92; opacity: .88; } 40% { scale: 1.04; opacity: 1; } 100% { scale: .97; opacity: .93; } }
+@keyframes hr-lift { 0% { opacity: 0; translate: 0 0; } 15% { opacity: 1; } 100% { opacity: 0; translate: 10px -46px; } }
 @keyframes hr-pulse { from { scale: .9; opacity: .85; } to { scale: 1.08; opacity: 1; } }
-.reduced-motion .hr-ember i, .reduced-motion .hr-spark { animation: none; }
+.reduced-motion .hr-ember i, .reduced-motion .hr-spark, .reduced-motion .hr-ember::before, .reduced-motion .hr-ember::after { animation: none; }
 .reduced-motion .hr-card.in:not(.wrapped) .hr-sway { animation: none; }

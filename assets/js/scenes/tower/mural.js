@@ -39,9 +39,9 @@ function grain() {
   c.width = c.height = 160;
   const g = c.getContext('2d');
   const r = rng(99);
-  for (let i = 0; i < 2600; i++) {
+  for (let i = 0; i < 1500; i++) {
     const v = r();
-    g.fillStyle = v < 0.5 ? `rgba(120,80,50,${0.03 + r() * 0.06})` : `rgba(255,250,235,${0.04 + r() * 0.08})`;
+    g.fillStyle = v < 0.4 ? `rgba(140,90,55,${0.02 + r() * 0.04})` : `rgba(255,250,235,${0.05 + r() * 0.09})`;
     const s = 0.6 + r() * 1.6;
     g.fillRect(r() * 160, r() * 160, s, s);
   }
@@ -600,11 +600,17 @@ export function paintBay(g, o) {
   vg.addColorStop(1, 'rgba(48,24,16,0.45)');
   g.fillStyle = vg;
   g.fillRect(0, 0, W, HT);
-  // a warm glow over the whole wall
-  const warm = g.createRadialGradient(W / 2, Y(-0.05), 0, W / 2, Y(-0.05), W * 1.2);
-  warm.addColorStop(0, 'rgba(255,214,150,0.10)');
-  warm.addColorStop(1, 'rgba(255,214,150,0)');
+  // sunlight: the walls facing the window glow warm, everything is a little golden
+  const sunAt = (u) => 0.5 - 0.5 * Math.cos(((u - 0.5 * bayW) / circ) * TAU); // 1 opposite the window
+  const sun = sunAt(u0 + bayW / 2);
+  g.globalCompositeOperation = 'lighter';
+  const warm = g.createRadialGradient(W / 2, Y(-0.02), 0, W / 2, Y(-0.02), W * 1.1);
+  warm.addColorStop(0, `rgba(255,190,110,${(0.06 + 0.1 * sun).toFixed(3)})`);
+  warm.addColorStop(1, 'rgba(255,190,110,0)');
   g.fillStyle = warm;
+  g.fillRect(0, 0, W, HT);
+  g.globalCompositeOperation = 'source-over';
+  g.fillStyle = 'rgba(255,196,130,0.06)';
   g.fillRect(0, 0, W, HT);
 
   if (o.kind === 'window' && o.opening) {
@@ -765,39 +771,8 @@ function paintPhotoBayMural(g, r, o, { X, Y, W, sc, free }) {
     paintedSun(g, X(0), Y(-0.06), W * 0.24, { a: 1, rot: 0.1 });
     for (let i = 0; i < 9; i++) star4(g, X((r() - 0.5) * 0.7), Y(-0.28 + r() * 0.45), (4 + r() * 6) * sc, '#fff1cf', 0.9);
   } else if (variant === 1) {
-    // a little patch of painted dusk with lanterns rising (violet accent)
-    const cx = X(0);
-    const cy = Y(-0.05);
-    const rx = W * 0.34;
-    const ry = (Y(0.2) - Y(-0.28)) * 0.5;
-    g.save();
-    g.beginPath();
-    g.ellipse(cx, cy, rx, ry, 0, 0, TAU);
-    const dusk = g.createLinearGradient(0, cy - ry, 0, cy + ry);
-    dusk.addColorStop(0, '#5a3f86');
-    dusk.addColorStop(0.6, '#8d67a9');
-    dusk.addColorStop(1, '#e3a58f');
-    g.globalAlpha = 0.85;
-    g.fillStyle = dusk;
-    g.fill();
-    g.clip();
-    g.globalAlpha = 1;
-    for (let i = 0; i < 18; i++) star4(g, cx + (r() - 0.5) * rx * 2, cy - ry + r() * ry * 1.2, (1.5 + r() * 3) * sc, '#fff4dc', 0.9);
-    for (let i = 0; i < 7; i++) paintedLantern(g, cx + (r() - 0.5) * rx * 1.5, cy - ry * 0.6 + r() * ry * 1.3, (12 + r() * 16) * sc, { a: 0.95 });
-    g.fillStyle = '#4b3a5e';
-    g.beginPath();
-    g.moveTo(cx - rx, cy + ry);
-    for (let x = cx - rx; x <= cx + rx; x += 6) g.lineTo(x, cy + ry * 0.72 + Math.sin(x * 0.02) * ry * 0.05);
-    g.lineTo(cx + rx, cy + ry);
-    g.fill();
-    g.restore();
-    g.globalAlpha = 0.6;
-    g.strokeStyle = C.goldDk;
-    g.lineWidth = 3 * sc;
-    g.beginPath();
-    g.ellipse(cx, cy, rx + 4 * sc, ry + 4 * sc, 0, 0, TAU);
-    g.stroke();
-    g.globalAlpha = 1;
+    // a patch of painted dusk with lanterns rising (violet accent)
+    duskPatch(g, r, X(0), Y(-0.05), W * 0.34, (Y(0.2) - Y(-0.28)) * 0.5, sc, 7);
   } else {
     // a flowering tree
     const bx = X(0);

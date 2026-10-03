@@ -21,3 +21,6 @@
 .lantern-svg.is-lit .l-halo { animation: halo 2.4s ease-in-out infinite alternate; transform-origin: 60px 100px; }
 @keyframes flicker { from { transform: scale(1, 1); } to { transform: scale(.92, 1.08); } }
 @keyframes halo { from { transform: scale(1); } to { transform: scale(1.12); opacity: .85; } }
+
+/* shared by tower, letter, dance: a candle-light flicker */
+@keyframes candle { 0%, 100% { opacity: .9; } 30% { opacity: .75; } 55% { opacity: 1; } 78% { opacity: .82; } }
