@@ -167,12 +167,16 @@ npm run check     # content + files + 7,305-day check + secret scan + photo chec
 npm run lint      # ESLint (uses a global eslint)
 npm test          # unit tests (content model, admin logic)
 npm run e2e       # film smoke test on every chapter + admin flows (needs `npm run serve` running)
-NODE_PATH=$(npm root -g) node tests/e2e/admin-qa.cjs      # deep admin QA (184 checks)
-NODE_PATH=$(npm root -g) node tests/e2e/admin-visual.cjs  # admin layout audit at 4 sizes (302 checks)
+NODE_PATH=$(npm root -g) node tests/e2e/admin-qa.cjs      # deep admin QA (209 checks)
+NODE_PATH=$(npm root -g) node tests/e2e/admin-visual.cjs  # admin layout audit at 4 sizes (340 checks)
 npm run e2e:full  # plays the whole film start to finish (slow in headless Chromium)
 npm run e2e:release  # the real midnight-IST unlock, in 5 time zones
 npm run build     # production copy in dist/ + every file reference checked (what GitHub Actions deploys)
 NODE_PATH=$(npm root -g) node tests/tools/a11y.cjs   # accessibility audit, every chapter, phone + desktop
+NODE_PATH=$(npm root -g) node tests/e2e/cake-mic.cjs        # the cake microphone: granted, a real breath, denied, unsupported, no device (run on an idle machine)
+NODE_PATH=$(npm root -g) node tests/e2e/audio.cjs           # no autoplay, mute, and the finale's real silences, measured at the output
+NODE_PATH=$(npm root -g) node tests/e2e/finale-montage.cjs  # the final montage: a chosen 9–14, film order, slowing down, no repeats, the last frame
+NODE_PATH=$(npm root -g) node tests/e2e/future-memory.cjs   # a memory added later plays; an empty one shows nothing
 ```
 
 After uploading the photos:

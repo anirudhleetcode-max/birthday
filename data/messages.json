@@ -84,7 +84,7 @@
     "end": "Every memory, another strand."
   },
   "hair": {
-    "kicker": "Chapter Two",
+    "kicker": "Chapter Three",
     "title": "The Golden Thread",
     "lines": [
       "Some people keep their memories in a shoebox.",
@@ -95,7 +95,7 @@
     "endLine": "Every moment connects to the next. And we’re nowhere near done."
   },
   "names": {
-    "kicker": "Chapter Three (a very serious one)",
+    "kicker": "Chapter Four (a very serious one)",
     "title": "A Legend of Many Names",
     "fieldKicker": "Field notes",
     "subject": "Subject: {name} (extremely rare)",
@@ -123,7 +123,7 @@
     "finale": "Two names. One legend. Absolutely impossible to recast."
   },
   "dance": {
-    "kicker": "Chapter Four",
+    "kicker": "Chapter Five",
     "title": "Somewhere Between Chaos and Magic",
     "lines": [
       "Every good festival is about sixty percent chaos.",
@@ -133,7 +133,7 @@
     "hint": "Swipe to spin"
   },
   "lanterns": {
-    "kicker": "Chapter Five",
+    "kicker": "Chapter Six",
     "title": "The Night of Lanterns",
     "lines": [
       "One lantern is just a little light.",
@@ -147,7 +147,7 @@
     "secret": "You found the pink one. It was looking for you."
   },
   "letter": {
-    "kicker": "Chapter Six",
+    "kicker": "Chapter Seven",
     "title": "A Letter You Were Supposed to Read",
     "tapSeal": "Tap the seal to open",
     "fasterHint": "Reading faster than I can write? Tap to skip ahead.",
@@ -171,7 +171,7 @@
     "ps": "P.S. {insideJoke}"
   },
   "cake": {
-    "kicker": "Chapter Seven",
+    "kicker": "Chapter Eight",
     "title": "Twenty Candles",
     "lines": [
       "Okay… one last thing.",
@@ -187,7 +187,7 @@
     "wish": "I snuck in a wish too: that you get yours, plus whatever you forgot to ask for."
   },
   "constellation": {
-    "kicker": "Chapter Eight",
+    "kicker": "Chapter Nine",
     "title": "Every Little Piece of You",
     "lines": [
       "On their own, they’re just moments.",

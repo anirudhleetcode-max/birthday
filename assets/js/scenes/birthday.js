@@ -654,10 +654,11 @@ function build(ctx, el) {
     rib20 = null;
     await wait(reduced ? 1.4 : 2.4);
 
-    // …and the lanterns rise away. A breath of silence, then her title
+    // …and the lanterns rise away. A real breath of silence (~2.5 s), then her title; the music
+    // comes back under it
     field.releaseShape({ indices: idx20, speed: [2.6, 4.4] });
-    audio.duck(0, reduced ? 1.6 : 2.6, 1.2);
-    await wait(reduced ? 1.6 : 3);
+    audio.duck(0, reduced ? 2.4 : 4.2, 1.2);
+    await wait(reduced ? 2.2 : 3.8);
     await reveal();
   }
 
