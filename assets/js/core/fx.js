@@ -222,7 +222,11 @@ export function createFX({ dustCanvas, fxCanvas, device, density = 1 }) {
         s: 5 + Math.random() * 5,
       });
     }
-    sparkle(x, y, 10, { spread: 40 });
+    // a soft gold bloom at the heart of the burst (no clip-art star sparkles)
+    const bloom = ember('#ffe3a3');
+    for (let i = 0; i < 4; i++) {
+      embers.push({ x, y, px: x, py: y, vx: (Math.random() - 0.5) * 30, vy: (Math.random() - 0.5) * 30, life: 0, max: 0.5 + i * 0.12, img: bloom, s: 26 - i * 4 });
+    }
   }
 
   /* ---------------- touch trail ---------------- */
