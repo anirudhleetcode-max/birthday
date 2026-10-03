@@ -7,6 +7,7 @@ import { createUI, sleep } from './core/ui.js';
 import { transition } from './core/transitions.js';
 import { createEggs } from './core/eggs.js';
 import { fillText, personalValues } from './shared/model.js';
+import { setRibbonGlow } from './core/ribbon.js';
 
 const params = new URLSearchParams(location.search);
 const PREVIEW = params.has('preview') || params.has('draft');
@@ -351,6 +352,9 @@ async function boot() {
   const site = store.site;
   document.title = `For ${site.her?.name || 'you'}`;
   const theme = site.settings.theme || {};
+  // the owner's Theme choices: a calmer film for everyone, and the golden thread's glow
+  if (theme.calm && !device.reducedMotion) { device.reducedMotion = true; root.classList.add('reduced-motion'); }
+  setRibbonGlow(theme.threadGlow ?? 1);
   root.style.setProperty('--grain', String(0.075 * (theme.grain ?? 0.6) / 0.6));
 
   app.audio = await makeAudio(store.mediaUrl('music'));

@@ -29,7 +29,9 @@
     "theme": {
       "grain": 0.6,
       "particles": 1,
-      "ribbon": true
+      "ribbon": true,
+      "threadGlow": 1,
+      "calm": false
     }
   },
   "media": {

@@ -23,6 +23,10 @@ const smooth = (e0, e1, x) => {
 };
 const now = () => performance.now();
 
+/** Film-wide golden-thread intensity (admin → Theme → Golden thread glow), 0.5…1.5. */
+const LOOK = { glow: 1 };
+export function setRibbonGlow(k) { LOOK.glow = clamp(Number(k) || 1, 0.4, 1.6); }
+
 /* ------------------------------------------------------------------ easing */
 const BUILTIN_EASES = {
   linear: (t) => t,
@@ -756,9 +760,10 @@ export function createRibbon(container, opts = {}) {
   }
 
   function drawGlow(A) {
-    if (st.glow <= 0.01) return;
+    const glow = st.glow * LOOK.glow;
+    if (glow <= 0.01) return;
     const breath = living ? 1 + 0.08 * Math.sin(phase * 0.71) + 0.05 * Math.sin(phase * 1.63 + 2) : 1;
-    const r = (st.width * 6.5 + 10) * st.glow * breath * (0.75 + 0.25 * clamp(st.split, 0, 1)) * zoomK(st.zoomGlow);
+    const r = (st.width * 6.5 + 10) * glow * breath * (0.75 + 0.25 * clamp(st.split, 0, 1)) * zoomK(st.zoomGlow);
     const spacing = Math.max(2, r * 0.62);
     const total = visLen;
     let k = 0;
@@ -769,7 +774,7 @@ export function createRibbon(container, opts = {}) {
       const t = clamp((target - rs[k]) / span, 0, 1);
       const u = lerp(ru[k], ru[k + 1], t);
       const f = lerp(rfade[k], rfade[k + 1], t);
-      const al = A * f * 0.3 * (0.55 + 0.45 * u) * bandBoost(u) * Math.min(1, st.glow);
+      const al = A * f * 0.3 * (0.55 + 0.45 * u) * bandBoost(u) * Math.min(1.3, glow);
       if (al < 0.003) continue;
       const x = lerp(rx[k], rx[k + 1], t);
       const y = lerp(ry[k], ry[k + 1], t);
